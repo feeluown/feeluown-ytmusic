@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "feeluown-ytmusic"
+version = "0.1.0"
+description = ""
+authors = ["Bruce Zhang <zttt183525594@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+feeluown = "^3.7.13"
+ytmusicapi = "^0.19.4"
+youtube_dl = "^2021.6.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
