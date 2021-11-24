@@ -1,39 +1,35 @@
-#!/usr/bin/env python3
-
+# -*- coding: utf-8 -*-
 from setuptools import setup
 
+packages = \
+['feeluown_ytmusic']
 
-from fuo_TEMPLATE import __version__
+package_data = \
+{'': ['*']}
+
+install_requires = \
+['feeluown>=3.7.13', 'youtube_dl', 'ytmusicapi']
+
+entry_points = \
+{'fuo.plugins_v1': ['ytmusic = fuo_ytmusic']}
+
+setup_kwargs = {
+    'name': 'feeluown-ytmusic',
+    'version': '0.1.0',
+    'description': 'feeluown Youtube Music plugin',
+    'long_description': '# YouTube Music plugin for FeelUOwn player\n',
+    'author': 'Bruce Zhang',
+    'author_email': 'zttt183525594@gmail.com',
+    'maintainer': None,
+    'maintainer_email': None,
+    'url': 'https://github.com/BruceZhang1993/feeluown-ytmusic',
+    'packages': packages,
+    'package_data': package_data,
+    'install_requires': install_requires,
+    'entry_points': entry_points,
+    'python_requires': '>=3.6.1,<4.0',
+}
 
 
-setup(
-    name='fuo_TEMPLATE',
-    version=__version__,
-    description='feeluown TEMPLATE plugin',
+setup(**setup_kwargs)
 
-    author='AUTHOR',
-    author_email='EMAIL',
-
-    # packages=[
-    #     'fuo_TEMPLATE',
-    # ],
-    py_modules=['fuo_TEMPLATE'],
-    url='https://github.com/feeluown/feeluown-TEMPLATE',
-    keywords=['feeluown', 'plugin', 'TEMPLATE'],
-    classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3 :: Only',
-    ],
-    install_requires=[
-        'feeluown>=3.7.11',
-    ],
-    entry_points={
-        'fuo.plugins_v1': [
-            'TEMPLATE = fuo_TEMPLATE',
-        ]
-    },
-)

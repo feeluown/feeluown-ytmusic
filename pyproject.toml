@@ -1,18 +1,25 @@
 [tool.poetry]
 name = "feeluown-ytmusic"
 version = "0.1.0"
-description = ""
+description = "feeluown Youtube Music plugin"
 authors = ["Bruce Zhang <zttt183525594@gmail.com>"]
+keywords = ["feeluown", "ytmusic", "youtube"]
+homepage = "https://github.com/BruceZhang1993/feeluown-ytmusic"
+readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-feeluown = "^3.7.13"
-ytmusicapi = "^0.19.4"
-youtube_dl = "^2021.6.6"
+python = ">=3.6.1,<4.0"
+feeluown = ">=3.7.13"
+ytmusicapi = "*"
+youtube_dl = "*"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "*"
+poetry2setup = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."fuo.plugins_v1"]
+"ytmusic" = "fuo_ytmusic"
