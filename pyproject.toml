@@ -8,15 +8,17 @@ homepage = "https://github.com/BruceZhang1993/feeluown-ytmusic"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.6.1,<4.0"
+python = ">=3.7,<4.0"
 feeluown = ">=3.7.13"
 ytmusicapi = "*"
-youtube_dl = "*"
 pydantic = "*"
+ipython = "*"
+cachetools = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
 poetry2setup = "*"
+types-cachetools = '*'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

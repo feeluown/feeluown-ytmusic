@@ -8,7 +8,7 @@ package_data = \
 {'': ['*']}
 
 install_requires = \
-['feeluown>=3.7.13', 'youtube_dl', 'ytmusicapi']
+['cachetools', 'feeluown>=3.7.13', 'ipython', 'pydantic', 'ytmusicapi']
 
 entry_points = \
 {'fuo.plugins_v1': ['ytmusic = fuo_ytmusic']}
@@ -27,7 +27,7 @@ setup_kwargs = {
     'package_data': package_data,
     'install_requires': install_requires,
     'entry_points': entry_points,
-    'python_requires': '>=3.6.1,<4.0',
+    'python_requires': '>=3.7,<4.0',
 }
 
 

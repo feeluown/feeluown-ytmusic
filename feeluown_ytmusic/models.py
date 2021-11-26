@@ -141,6 +141,59 @@ class ArtistInfo(BaseModel):
     related: RelatedArtists
 
 
+class AlbumInfo(BaseModel):
+    title: str  # 专辑名
+    type: str
+    thumbnails: List[SearchNestedThumbnail]  # 封面信息
+    artists: List[SearchNestedArtist]  # 歌手信息
+    year: str
+    trackCount: int
+    duration: str  # eg.5 minutes, 14 seconds
+    audioPlaylistId: str
+    tracks: List[YtmusicSearchSong]  # 专辑歌曲
+
+
+class SongInfo(BaseModel):
+    class VideoDetails(BaseModel):
+        class Thumbnails(BaseModel):
+            thumbnails: List[SearchNestedThumbnail]
+
+        videoId: str
+        title: str
+        lengthSeconds: int
+        channelId: str
+        isOwnerViewing: bool
+        isCrawlable: bool
+        thumbnail: Thumbnails
+        averageRating: float
+        allowRatings: bool
+        viewCount: int
+        author: str
+        isPrivate: bool
+        musicVideoType: str
+        isLiveContent: bool
+
+    class StreamingData(BaseModel):
+        class Format(BaseModel):
+            itag: int
+            url: str
+            mimeType: str
+            bitrate: int
+            initRange: dict
+            indexRange: dict
+            lastModified: str
+            contentLength: int
+            audioQuality: str  # AUDIO_QUALITY_LOW AUDIO_QUALITY_MEDIUM
+            audioSampleRate: int  # 48000
+
+        expiresInSeconds: int
+        formats: List[Format]
+        adaptiveFormats: List[Format]
+
+    videoDetails: VideoDetails
+    streamingData: StreamingData
+
+
 class UserInfo(BaseModel):
     class Playlists(BaseModel):
         class PlaylistResult(BaseModel):
