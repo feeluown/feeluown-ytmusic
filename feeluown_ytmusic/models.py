@@ -1,6 +1,7 @@
 from typing import Optional, Union, List
 from pydantic import BaseModel as PydanticBaseModel
 # noinspection PyProtectedMember
+from pydantic.fields import Field
 from pydantic.main import ModelMetaclass
 
 
@@ -55,6 +56,10 @@ class YtmusicSearchSong(YtmusicSearchBase):
     thumbnails: List[SearchNestedThumbnail]  # 封面信息
 
 
+class YtmusicLibrarySong(YtmusicSearchSong):
+    likeStatus: str  # LIKE
+
+
 class YtmusicSearchAlbum(YtmusicSearchBase):
     title: str  # 专辑名
     type: str  # 专辑类型
@@ -71,6 +76,10 @@ class YtmusicSearchArtist(YtmusicSearchBase):
     radioId: str
     browseId: str  # 查询ID
     thumbnails: List[SearchNestedThumbnail]  # 封面信息
+
+
+class YtmusicLibraryArtist(YtmusicSearchArtist):
+    subscribers: str  # 歌曲数量
 
 
 class YtmusicSearchPlaylist(YtmusicSearchBase):
@@ -194,15 +203,16 @@ class SongInfo(BaseModel):
     streamingData: StreamingData
 
 
+class PlaylistNestedResult(BaseModel):
+    title: str
+    playlistId: str
+    thumbnails: List[SearchNestedThumbnail]
+
+
 class UserInfo(BaseModel):
     class Playlists(BaseModel):
-        class PlaylistResult(BaseModel):
-            title: str
-            playlistId: str
-            thumbnails: List[SearchNestedThumbnail]
-
         browseId: str
-        results: List[PlaylistResult]
+        results: List[PlaylistNestedResult]
         params: str
 
     class Videos(BaseModel):
@@ -212,3 +222,33 @@ class UserInfo(BaseModel):
     name: str
     playlists: Playlists
     videos: Videos
+
+
+class Categories(BaseModel):
+    class Category(BaseModel):
+        title: str
+        params: str
+
+    forYou: List[Category] = Field(alias="For you")
+    moods: List[Category] = Field(alias="Moods & moments")
+    genres: List[Category] = Field(alias="Genres")
+
+
+class TopCharts(BaseModel):
+    class Countries(BaseModel):
+        class Selected(BaseModel):
+            text: str
+
+        selected: Selected
+        options: List[str]
+
+    class Videos(BaseModel):
+        playlist: str  # PlaylistID
+        items: List[YtmusicSearchVideo]  # 视频列表（部分）
+
+    class Artists(BaseModel):
+        items: List[YtmusicSearchArtist]  # 歌手列表
+
+    countries: Countries
+    videos: Videos
+    artists: Artists
