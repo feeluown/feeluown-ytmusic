@@ -1,4 +1,4 @@
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Tuple
 from pydantic import BaseModel as PydanticBaseModel
 # noinspection PyProtectedMember
 from pydantic.fields import Field
@@ -293,17 +293,17 @@ class SongInfo(BaseModel):
                 qualities.add(Quality.Video.ld)
         return list(qualities)
 
-    def get_media(self, quality: Quality.Audio) -> Optional[int]:
+    def get_media(self, quality: Quality.Audio) -> Tuple[Optional[int], Optional[int], Optional[str]]:
         for format_ in self.streamingData.adaptiveFormats:
             if format_.audioQuality is None:
                 continue
             if quality in (Quality.Audio.hq, Quality.Audio.shq) and format_.audioQuality == 'AUDIO_QUALITY_HIGH':
-                return format_.itag
+                return format_.itag, int(format_.bitrate / 1024), format_.mimeType
             if quality == Quality.Audio.sq and format_.audioQuality == 'AUDIO_QUALITY_MEDIUM':
-                return format_.itag
+                return format_.itag, int(format_.bitrate / 1024), format_.mimeType
             if quality == Quality.Audio.lq and format_.audioQuality == 'AUDIO_QUALITY_LOW':
-                return format_.itag
-        return None
+                return format_.itag, int(format_.bitrate / 1024), format_.mimeType
+        return None, None, None
 
     def get_mv(self, quality) -> Optional[int]:
         for format_ in self.streamingData.adaptiveFormats:

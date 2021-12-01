@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongProtocol, ModelState, \
     SongModel, VideoModel
-from feeluown.media import Quality, Media, VideoAudioManifest
+from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.models import SearchType, SearchModel
 
 from fuo_ytmusic.service import YtmusicService, YtmusicType
@@ -46,9 +46,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
         song_info = self.service.song_info(song.identifier)
-        format_code = song_info.get_media(quality)
+        format_code, bitrate, format_str = song_info.get_media(quality)
         url = self.service.stream_url(song.identifier, format_code)
-        return Media(url) if url is not None else None
+        return Media(url, type_=MediaType.audio, bitrate=bitrate, format=format_str) if url is not None else None
 
     def song_get_lyric(self, song):
         # 歌词获取报错的 workaround
@@ -63,7 +63,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         song_info = self.service.song_info(video.identifier)
         format_code = song_info.get_mv(quality)
         audio_formats = song_info.list_formats()
-        audio_code = song_info.get_media(audio_formats[0])
+        audio_code, _, __ = song_info.get_media(audio_formats[0])
         url = self.service.stream_url(video.identifier, format_code)
         audio_url = self.service.stream_url(video.identifier, audio_code)
         if url is None or audio_url is None:
