@@ -4,7 +4,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic.fields import Field
 from pydantic.main import ModelMetaclass
 
-from feeluown.media import Quality
+from feeluown.media import Quality, Media
 from feeluown.library import SongModel, BriefArtistModel, BriefAlbumModel, VideoModel
 from feeluown.models import AlbumModel, AlbumType, ArtistModel, PlaylistModel
 
@@ -276,6 +276,18 @@ class SongInfo(BaseModel):
             elif format_.audioQuality == 'AUDIO_QUALITY_HIGH':
                 qualities.add(Quality.Audio.hq)
         return list(qualities)
+
+    def get_media(self, quality: Quality.Audio) -> Optional[int]:
+        for format_ in self.streamingData.adaptiveFormats:
+            if format_.audioQuality is None:
+                continue
+            if quality in (Quality.Audio.hq, Quality.Audio.shq) and format_.audioQuality == 'AUDIO_QUALITY_HIGH':
+                return format_.itag
+            if quality == Quality.Audio.sq and format_.audioQuality == 'AUDIO_QUALITY_MEDIUM':
+                return format_.itag
+            if quality == Quality.Audio.lq and format_.audioQuality == 'AUDIO_QUALITY_LOW':
+                return format_.itag
+        return None
 
 
 class PlaylistNestedResult(BaseModel, YtmusicCoverMixin):

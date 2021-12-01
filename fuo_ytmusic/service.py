@@ -4,6 +4,7 @@ from typing import Optional, Union, List
 
 import cachetools
 import requests
+import youtube_dl
 
 from feeluown.models import SearchType
 from fuo_ytmusic.consts import HEADER_FILE
@@ -136,7 +137,18 @@ class YtmusicService:
         response = self._api.get_history()
         return [YtmusicHistorySong(**data) for data in response]
 
+    @cachetools.cached(cache=CACHE)
+    def stream_url(self, video_id: str, format_code: int) -> Optional[str]:
+        with youtube_dl.YoutubeDL({
+            'format': str(format_code)
+        }) as ydl:
+            info = ydl.extract_info(f'https://www.youtube.com/watch?v={video_id}', download=False)
+            return info.get('url', None)
+
 
 if __name__ == '__main__':
+    import json
+
     service = YtmusicService()
-    print(service.search('21 Guns', YtmusicType.so))
+    # print(service.song_info('U0XcqF7rqHk'))
+    print(service.stream_url('U0XcqF7rqHk', 251))

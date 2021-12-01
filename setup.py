@@ -8,7 +8,7 @@ package_data = \
 {'': ['*'], 'fuo_ytmusic': ['assets/*']}
 
 install_requires = \
-['cachetools', 'feeluown>=3.7.13', 'pydantic', 'ytmusicapi']
+['cachetools', 'feeluown>=3.7.13', 'pydantic', 'youtube_dl', 'ytmusicapi']
 
 entry_points = \
 {'fuo.plugins_v1': ['ytmusic = fuo_ytmusic']}

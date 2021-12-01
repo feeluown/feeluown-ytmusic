@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Optional
 
-from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongProtocol, ModelState
-from feeluown.media import Quality
+from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongProtocol, ModelState, \
+    SongModel
+from feeluown.media import Quality, Media
 from feeluown.models import SearchType, SearchModel
 
 from fuo_ytmusic.service import YtmusicService, YtmusicType
@@ -14,7 +15,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
 
-    class Meta:
+    class meta:
         identifier = 'ytmusic'
         name = 'Youtube Music'
         flags = {
@@ -42,3 +43,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         id_ = song.identifier
         song_ = self.service.song_info(id_)
         return song_.list_formats() if song_ is not None else []
+
+    def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
+        song_info = self.service.song_info(song.identifier)
+        format_code = song_info.get_media(quality)
+        url = self.service.stream_url(song.identifier, format_code)
+        print(url)
+        return Media(url) if url is not None else None
+
+    def song_get_lyric(self, song):
+        return None
