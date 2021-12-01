@@ -4,6 +4,7 @@ from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFl
     SongModel, VideoModel
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.models import SearchType, SearchModel
+from feeluown.library.model_protocol import VideoProtocol, BriefSongProtocol
 
 from fuo_ytmusic.service import YtmusicService, YtmusicType
 
@@ -15,12 +16,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
 
+    # noinspection PyPep8Naming
     class meta:
         identifier = 'ytmusic'
         name = 'YouTube Music'
         flags = {
             ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric),
-            ModelType.video: (Pf.multi_quality),
+            ModelType.video: Pf.multi_quality,
         }
 
     @property
@@ -69,3 +71,14 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         if url is None or audio_url is None:
             return None
         return Media(VideoAudioManifest(url, audio_url))
+
+    def song_get_mv(self, song: BriefSongProtocol) -> Optional[VideoProtocol]:
+        protocol = VideoProtocol
+        protocol.identifier = song.identifier
+        protocol.source = song.source
+        protocol.title = song.title
+        protocol.artists_name = song.artists_name
+        protocol.duration_ms = song.duration_ms
+        protocol.artists = []
+        protocol.cover = ''
+        return protocol
