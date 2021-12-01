@@ -6,6 +6,7 @@ authors = ["Bruce Zhang <zttt183525594@gmail.com>"]
 keywords = ["feeluown", "ytmusic", "youtube"]
 homepage = "https://github.com/BruceZhang1993/feeluown-ytmusic"
 readme = "README.md"
+include = ["feeluown_ytmusic/assets/*.svg"]
 
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
@@ -19,6 +20,7 @@ cachetools = "*"
 pytest = "*"
 poetry2setup = "*"
 types-cachetools = '*'
+PyQt5 = "^5.15.6"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -138,4 +138,5 @@ class YtmusicService:
 
 
 if __name__ == '__main__':
-    print(YtmusicType.parse(SearchType.al))
+    service = YtmusicService()
+    print(service.search('21 Guns', YtmusicType.so))

@@ -5,7 +5,7 @@ packages = \
 ['feeluown_ytmusic']
 
 package_data = \
-{'': ['*']}
+{'': ['*'], 'feeluown_ytmusic': ['assets/*']}
 
 install_requires = \
 ['cachetools', 'feeluown>=3.7.13', 'ipython', 'pydantic', 'ytmusicapi']

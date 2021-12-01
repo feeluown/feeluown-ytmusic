@@ -8,7 +8,7 @@ from feeluown.media import Quality
 from feeluown.library import SongModel, BriefArtistModel, BriefAlbumModel, VideoModel
 from feeluown.models import AlbumModel, AlbumType, ArtistModel, PlaylistModel
 
-import time
+from feeluown_ytmusic.timeparse import timeparse
 
 
 class AllowOptional(ModelMetaclass):
@@ -27,7 +27,9 @@ class AllowOptional(ModelMetaclass):
 
 
 class BaseModel(PydanticBaseModel, metaclass=AllowOptional):
-    source: str = 'ytmusic'
+    @property
+    def source(self):
+        return 'ytmusic'
 
 
 class SearchNestedArtist(BaseModel):
@@ -35,10 +37,10 @@ class SearchNestedArtist(BaseModel):
     name: str
 
     def model(self) -> BriefArtistModel:
-        return BriefArtistModel(identifier=self.id, source=self.source, name=self.name)
+        return BriefArtistModel(identifier=self.id or '', source=self.source, name=self.name)
 
 
-class YtmusicArtistsMixin(BaseModel):
+class YtmusicArtistsMixin:
     artists: List[SearchNestedArtist]  # 歌手信息
 
     @property
@@ -54,7 +56,7 @@ class SearchNestedThumbnail(BaseModel):
     height: int
 
 
-class YtmusicCoverMixin(BaseModel):
+class YtmusicCoverMixin:
     thumbnails: List[SearchNestedThumbnail]  # 封面信息
 
     @property
@@ -64,12 +66,12 @@ class YtmusicCoverMixin(BaseModel):
         return None
 
 
-class YtmusicDurationMixin(BaseModel):
+class YtmusicDurationMixin:
     duration: str  # 歌曲时长 eg.3:50
 
     @property
     def duration_ms(self) -> int:
-        return int(time.mktime(time.strptime(self.duration, '%M:%S')) * 1000)
+        return int(timeparse(self.duration) * 1000)
 
 
 class YtmusicSearchBase(BaseModel):
@@ -108,7 +110,7 @@ class YtmusicHistorySong(YtmusicLibrarySong):
     played: str  # 上次播放 eg November 2021
 
 
-class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin):
+class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin):
     title: str  # 专辑名
     type: str  # 专辑类型
     year: int  # 年
@@ -223,11 +225,12 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
 
 class SongInfo(BaseModel):
     class VideoDetails(BaseModel):
-        class Thumbnails(YtmusicCoverMixin):
+        class Thumbnails(BaseModel, YtmusicCoverMixin):
             pass
 
         videoId: str
         title: str
+        lengthSeconds: int
         lengthSeconds: int
         channelId: str
         isOwnerViewing: bool

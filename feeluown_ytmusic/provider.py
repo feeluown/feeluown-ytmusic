@@ -35,7 +35,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         ytmusic_type = YtmusicType.parse(type_)
         results = self.service.search(keyword, ytmusic_type)
         model = SearchModel(q=keyword)
-        setattr(model, ytmusic_type.value, [])
+        setattr(model, ytmusic_type.value, [r.model() for r in results])
         return model
 
     def song_list_quality(self, song) -> List[Quality.Audio]:
