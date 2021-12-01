@@ -3,11 +3,14 @@ from enum import Enum
 from typing import Optional, Union, List
 
 import cachetools
+import requests
 
+from feeluown.models import SearchType
 from feeluown_ytmusic.consts import HEADER_FILE
 from feeluown_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
-    SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist
+    SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
+    YtmusicHistorySong
 from ytmusicapi import YTMusic
 from cachetools import TTLCache
 
@@ -22,6 +25,10 @@ class YtmusicType(Enum):
     al = 'albums'
     pl = 'playlists'
 
+    @classmethod
+    def parse(cls, type_: SearchType) -> 'YtmusicType':
+        return cls._value2member_map_.get(type_.value + 's')
+
 
 class YtmusicScope(Enum):
     li = 'library'
@@ -30,10 +37,16 @@ class YtmusicScope(Enum):
 
 class YtmusicService:
     def __init__(self):
+        self._session = requests.Session()
+        self._session.hooks['response'].append(self._do_logging)
         if HEADER_FILE.exists():
-            self._api = YTMusic(HEADER_FILE)
+            self._api = YTMusic(HEADER_FILE, requests_session=self._session)
         else:
-            self._api = YTMusic()
+            self._api = YTMusic(requests_session=self._session)
+
+    @staticmethod
+    def _do_logging(r, *_, **__):
+        print(r.url)
 
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
                page_size: int = GLOBAL_LIMIT) \
@@ -110,12 +123,19 @@ class YtmusicService:
         response = self._api.get_library_subscriptions(limit)
         return [YtmusicLibraryArtist(**data) for data in response]
 
-    def playlist_info(self, playlist_id: str, limit: int = GLOBAL_LIMIT):
-        return self._api.get_playlist(playlist_id, limit)
+    @cachetools.cached(cache=CACHE)
+    def playlist_info(self, playlist_id: str, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
+        return PlaylistInfo(**self._api.get_playlist(playlist_id, limit))
+
+    @cachetools.cached(cache=CACHE)
+    def liked_songs(self, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
+        return PlaylistInfo(**self._api.get_liked_songs(limit))
+
+    @cachetools.cached(cache=CACHE)
+    def history(self) -> List[YtmusicHistorySong]:
+        response = self._api.get_history()
+        return [YtmusicHistorySong(**data) for data in response]
 
 
 if __name__ == '__main__':
-    import json
-
-    service = YtmusicService()
-    print(json.dumps(service.playlist_info('PLyO-uBUg5jNS6QPAcU0AKj4TCYkE-aQt1')))
+    print(YtmusicType.parse(SearchType.al))

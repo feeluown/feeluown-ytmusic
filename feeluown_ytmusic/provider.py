@@ -1,9 +1,10 @@
 from typing import List
 
-from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongProtocol
+from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongProtocol, ModelState
 from feeluown.media import Quality
+from feeluown.models import SearchType, SearchModel
 
-from feeluown_ytmusic.service import YtmusicService
+from feeluown_ytmusic.service import YtmusicService, YtmusicType
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
@@ -17,7 +18,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         identifier = 'ytmusic'
         name = 'Youtube Music'
         flags = {
-            ModelType.song: (Pf.model_v2, Pf.get, Pf.multi_quality)
+            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv),
+            ModelType.video: (Pf.multi_quality),
         }
 
     @property
@@ -28,11 +30,15 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def name(self):
         return self.meta.name
 
-    def search(self, *args, **kwargs):
-        pass
-
-    def song_get(self, identifier) -> SongProtocol:
-        pass
+    def search(self, keyword, type_, *args, **kwargs):
+        type_ = SearchType.parse(type_)
+        ytmusic_type = YtmusicType.parse(type_)
+        results = self.service.search(keyword, ytmusic_type)
+        model = SearchModel(q=keyword)
+        setattr(model, ytmusic_type.value, [])
+        return model
 
     def song_list_quality(self, song) -> List[Quality.Audio]:
-        pass
+        id_ = song.identifier
+        song_ = self.service.song_info(id_)
+        return song_.list_formats() if song_ is not None else []

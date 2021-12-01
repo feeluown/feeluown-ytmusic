@@ -4,6 +4,12 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic.fields import Field
 from pydantic.main import ModelMetaclass
 
+from feeluown.media import Quality
+from feeluown.library import SongModel, BriefArtistModel, BriefAlbumModel, VideoModel
+from feeluown.models import AlbumModel, AlbumType, ArtistModel, PlaylistModel
+
+import time
+
 
 class AllowOptional(ModelMetaclass):
     def __new__(mcs, name, bases, namespaces, **kwargs):
@@ -21,12 +27,25 @@ class AllowOptional(ModelMetaclass):
 
 
 class BaseModel(PydanticBaseModel, metaclass=AllowOptional):
-    pass
+    source: str = 'ytmusic'
 
 
 class SearchNestedArtist(BaseModel):
     id: str
     name: str
+
+    def model(self) -> BriefArtistModel:
+        return BriefArtistModel(identifier=self.id, source=self.source, name=self.name)
+
+
+class YtmusicArtistsMixin(BaseModel):
+    artists: List[SearchNestedArtist]  # 歌手信息
+
+    @property
+    def artists_model(self) -> Optional[List[BriefArtistModel]]:
+        if self.artists is not None:
+            return [artist.model() for artist in self.artists]
+        return None
 
 
 class SearchNestedThumbnail(BaseModel):
@@ -35,69 +54,111 @@ class SearchNestedThumbnail(BaseModel):
     height: int
 
 
+class YtmusicCoverMixin(BaseModel):
+    thumbnails: List[SearchNestedThumbnail]  # 封面信息
+
+    @property
+    def cover(self) -> Optional[str]:
+        if self.thumbnails is not None and len(self.thumbnails) > 0:
+            return self.thumbnails[-1].url
+        return None
+
+
+class YtmusicDurationMixin(BaseModel):
+    duration: str  # 歌曲时长 eg.3:50
+
+    @property
+    def duration_ms(self) -> int:
+        return int(time.mktime(time.strptime(self.duration, '%M:%S')) * 1000)
+
+
 class YtmusicSearchBase(BaseModel):
     category: str
     resultType: str
 
 
-class YtmusicSearchSong(YtmusicSearchBase):
+class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin, YtmusicDurationMixin):
     class Album(BaseModel):
         id: str
         name: str
+
+        def model(self) -> BriefAlbumModel:
+            return BriefAlbumModel(identifier=self.id, source=self.source, name=self.name)
 
     title: str  # 歌名
     album: Album  # 专辑信息
     feedbackTokens: dict
     videoId: str  # 歌曲ID
-    duration: str  # 歌曲时长 eg.3:50
-    artists: List[SearchNestedArtist]  # 歌手信息
     isAvailable: bool
     isExplicit: bool
-    thumbnails: List[SearchNestedThumbnail]  # 封面信息
+
+    def model(self) -> SongModel:
+        song = SongModel(identifier=self.videoId, source=self.source, title=self.title, artists=self.artists_model,
+                         duration=self.duration_ms)
+        if self.album is not None:
+            song.album = self.album.model()
+        return song
 
 
 class YtmusicLibrarySong(YtmusicSearchSong):
     likeStatus: str  # LIKE
 
 
-class YtmusicSearchAlbum(YtmusicSearchBase):
+class YtmusicHistorySong(YtmusicLibrarySong):
+    played: str  # 上次播放 eg November 2021
+
+
+class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin):
     title: str  # 专辑名
     type: str  # 专辑类型
     year: int  # 年
-    artists: List[SearchNestedArtist]  # 歌手信息
     browseId: str  # 查询ID
     isExplicit: bool
-    thumbnails: List[SearchNestedThumbnail]  # 封面信息
+
+    @property
+    def album_type(self) -> AlbumType:
+        if self.type == 'Single':
+            return AlbumType.single
+        return AlbumType.standard
+
+    def model(self) -> AlbumModel:
+        return AlbumModel(identifier=self.browseId, source=self.source, name=self.title, type=self.album_type,
+                          cover=self.cover, artists=self.artists_model)
 
 
-class YtmusicSearchArtist(YtmusicSearchBase):
+class YtmusicSearchArtist(YtmusicSearchBase, YtmusicCoverMixin):
     artist: str  # 歌手名
     shuffleId: str
     radioId: str
     browseId: str  # 查询ID
-    thumbnails: List[SearchNestedThumbnail]  # 封面信息
+
+    def model(self) -> ArtistModel:
+        return ArtistModel(identifier=self.browseId, source=self.source, name=self.artist, cover=self.cover)
 
 
 class YtmusicLibraryArtist(YtmusicSearchArtist):
     subscribers: str  # 歌曲数量
 
 
-class YtmusicSearchPlaylist(YtmusicSearchBase):
+class YtmusicSearchPlaylist(YtmusicSearchBase, YtmusicCoverMixin):
     title: str  # 歌单名
     itemCount: int  # 歌曲数量
     author: str  # 歌单作者
     browseId: str  # 查询ID
-    thumbnails: List[SearchNestedThumbnail]  # 封面信息
+
+    def model(self) -> PlaylistModel:
+        return PlaylistModel(identifier=self.browseId, source=self.source, name=self.title, cover=self.cover)
 
 
-class YtmusicSearchVideo(YtmusicSearchBase):
+class YtmusicSearchVideo(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin, YtmusicDurationMixin):
     title: str  # 视频标题
     views: str  # 播放量 eg:13K
     videoId: str  # 视频ID
-    duration: str  # 视频时长 eg.3:50
-    artists: List[SearchNestedArtist]  # 歌手信息
-    thumbnails: List[SearchNestedThumbnail]  # 封面信息
     playlistId: str
+
+    def model(self) -> VideoModel:
+        return VideoModel(identifier=self.videoId, source=self.source, title=self.title, cover=self.cover,
+                          artists=self.artists_model, duration=self.duration_ms)
 
 
 class YtmusicDispatcher:
@@ -150,11 +211,9 @@ class ArtistInfo(BaseModel):
     related: RelatedArtists
 
 
-class AlbumInfo(BaseModel):
+class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     title: str  # 专辑名
     type: str
-    thumbnails: List[SearchNestedThumbnail]  # 封面信息
-    artists: List[SearchNestedArtist]  # 歌手信息
     year: str
     trackCount: int
     duration: str  # eg.5 minutes, 14 seconds
@@ -164,8 +223,8 @@ class AlbumInfo(BaseModel):
 
 class SongInfo(BaseModel):
     class VideoDetails(BaseModel):
-        class Thumbnails(BaseModel):
-            thumbnails: List[SearchNestedThumbnail]
+        class Thumbnails(YtmusicCoverMixin):
+            pass
 
         videoId: str
         title: str
@@ -202,11 +261,23 @@ class SongInfo(BaseModel):
     videoDetails: VideoDetails
     streamingData: StreamingData
 
+    def list_formats(self) -> List[Quality.Audio]:
+        qualities = set()
+        for format_ in self.streamingData.adaptiveFormats:
+            if format_.audioQuality is None:
+                continue
+            if format_.audioQuality == 'AUDIO_QUALITY_LOW':
+                qualities.add(Quality.Audio.lq)
+            elif format_.audioQuality == 'AUDIO_QUALITY_MEDIUM':
+                qualities.add(Quality.Audio.sq)
+            elif format_.audioQuality == 'AUDIO_QUALITY_HIGH':
+                qualities.add(Quality.Audio.hq)
+        return list(qualities)
 
-class PlaylistNestedResult(BaseModel):
+
+class PlaylistNestedResult(BaseModel, YtmusicCoverMixin):
     title: str
     playlistId: str
-    thumbnails: List[SearchNestedThumbnail]
 
 
 class UserInfo(BaseModel):
@@ -252,3 +323,19 @@ class TopCharts(BaseModel):
     countries: Countries
     videos: Videos
     artists: Artists
+
+
+class PlaylistInfo(BaseModel, YtmusicCoverMixin):
+    class Author(BaseModel):
+        id: str
+        name: str
+
+    id: str
+    privacy: str  # PUBLIC
+    title: str  # 歌单名
+    description: str
+    author: Author
+    year: int
+    duration: str
+    trackCount: int
+    tracks: List[YtmusicLibrarySong]
