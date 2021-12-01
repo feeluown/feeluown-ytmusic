@@ -2,10 +2,10 @@
 from setuptools import setup
 
 packages = \
-['feeluown_ytmusic']
+['fuo_ytmusic']
 
 package_data = \
-{'': ['*'], 'feeluown_ytmusic': ['assets/*']}
+{'': ['*'], 'fuo_ytmusic': ['assets/*']}
 
 install_requires = \
 ['cachetools', 'feeluown>=3.7.13', 'pydantic', 'ytmusicapi']
@@ -14,7 +14,7 @@ entry_points = \
 {'fuo.plugins_v1': ['ytmusic = fuo_ytmusic']}
 
 setup_kwargs = {
-    'name': 'feeluown-ytmusic',
+    'name': 'fuo-ytmusic',
     'version': '0.1.0',
     'description': 'feeluown Youtube Music plugin',
     'long_description': '# YouTube Music plugin for FeelUOwn player\n',

@@ -4,7 +4,7 @@ from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFl
 from feeluown.media import Quality
 from feeluown.models import SearchType, SearchModel
 
-from feeluown_ytmusic.service import YtmusicService, YtmusicType
+from fuo_ytmusic.service import YtmusicService, YtmusicType
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):

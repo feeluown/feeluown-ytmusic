@@ -8,7 +8,7 @@ from feeluown.media import Quality
 from feeluown.library import SongModel, BriefArtistModel, BriefAlbumModel, VideoModel
 from feeluown.models import AlbumModel, AlbumType, ArtistModel, PlaylistModel
 
-from feeluown_ytmusic.timeparse import timeparse
+from fuo_ytmusic.timeparse import timeparse
 
 
 class AllowOptional(ModelMetaclass):

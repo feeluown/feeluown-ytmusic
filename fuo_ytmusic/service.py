@@ -6,8 +6,8 @@ import cachetools
 import requests
 
 from feeluown.models import SearchType
-from feeluown_ytmusic.consts import HEADER_FILE
-from feeluown_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
+from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
     SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
     YtmusicHistorySong
