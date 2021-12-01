@@ -1,8 +1,8 @@
 from typing import List, Optional
 
 from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongProtocol, ModelState, \
-    SongModel
-from feeluown.media import Quality, Media
+    SongModel, VideoModel
+from feeluown.media import Quality, Media, VideoAudioManifest
 from feeluown.models import SearchType, SearchModel
 
 from fuo_ytmusic.service import YtmusicService, YtmusicType
@@ -17,9 +17,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     class meta:
         identifier = 'ytmusic'
-        name = 'Youtube Music'
+        name = 'YouTube Music'
         flags = {
-            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv),
+            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric),
             ModelType.video: (Pf.multi_quality),
         }
 
@@ -48,8 +48,24 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         song_info = self.service.song_info(song.identifier)
         format_code = song_info.get_media(quality)
         url = self.service.stream_url(song.identifier, format_code)
-        print(url)
         return Media(url) if url is not None else None
 
     def song_get_lyric(self, song):
+        # 歌词获取报错的 workaround
         return None
+
+    def video_list_quality(self, video) -> List[Quality.Video]:
+        id_ = video.identifier
+        song_ = self.service.song_info(id_)
+        return song_.list_video_formats() if song_ is not None else []
+
+    def video_get_media(self, video, quality) -> Optional[Media]:
+        song_info = self.service.song_info(video.identifier)
+        format_code = song_info.get_mv(quality)
+        audio_formats = song_info.list_formats()
+        audio_code = song_info.get_media(audio_formats[0])
+        url = self.service.stream_url(video.identifier, format_code)
+        audio_url = self.service.stream_url(video.identifier, audio_code)
+        if url is None or audio_url is None:
+            return None
+        return Media(VideoAudioManifest(url, audio_url))

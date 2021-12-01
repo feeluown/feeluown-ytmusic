@@ -256,6 +256,7 @@ class SongInfo(BaseModel):
             contentLength: int
             audioQuality: str  # AUDIO_QUALITY_LOW AUDIO_QUALITY_MEDIUM
             audioSampleRate: int  # 48000
+            quality: str
 
         expiresInSeconds: int
         formats: List[Format]
@@ -277,6 +278,21 @@ class SongInfo(BaseModel):
                 qualities.add(Quality.Audio.hq)
         return list(qualities)
 
+    def list_video_formats(self) -> List[Quality.Video]:
+        qualities = set()
+        for format_ in self.streamingData.adaptiveFormats:
+            if format_.audioQuality is not None:
+                continue
+            if format_.quality == 'hd1080':
+                qualities.add(Quality.Video.fhd)
+            if format_.quality == 'hd720':
+                qualities.add(Quality.Video.hd)
+            if format_.quality == 'large':
+                qualities.add(Quality.Video.sd)
+            if format_.quality == 'medium':
+                qualities.add(Quality.Video.ld)
+        return list(qualities)
+
     def get_media(self, quality: Quality.Audio) -> Optional[int]:
         for format_ in self.streamingData.adaptiveFormats:
             if format_.audioQuality is None:
@@ -286,6 +302,20 @@ class SongInfo(BaseModel):
             if quality == Quality.Audio.sq and format_.audioQuality == 'AUDIO_QUALITY_MEDIUM':
                 return format_.itag
             if quality == Quality.Audio.lq and format_.audioQuality == 'AUDIO_QUALITY_LOW':
+                return format_.itag
+        return None
+
+    def get_mv(self, quality) -> Optional[int]:
+        for format_ in self.streamingData.adaptiveFormats:
+            if format_.audioQuality is not None:
+                continue
+            if quality == Quality.Video.fhd and format_.quality == 'hd1080':
+                return format_.itag
+            if quality == Quality.Video.hd and format_.quality == 'hd720':
+                return format_.itag
+            if quality == Quality.Video.sd and format_.quality == 'large':
+                return format_.itag
+            if quality == Quality.Video.ld and format_.quality == 'medium':
                 return format_.itag
         return None
 

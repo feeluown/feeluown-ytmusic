@@ -150,5 +150,5 @@ if __name__ == '__main__':
     import json
 
     service = YtmusicService()
-    # print(service.song_info('U0XcqF7rqHk'))
-    print(service.stream_url('U0XcqF7rqHk', 251))
+    print(service.song_info('U0XcqF7rqHk'))
+    # print(service.stream_url('U0XcqF7rqHk', 251))
