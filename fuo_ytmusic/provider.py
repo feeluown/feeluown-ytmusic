@@ -60,8 +60,10 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
 
     def user_get(self, identifier):
-        if identifier is None or identifier == '':
+        if identifier is None:
             return None
+        if identifier == '':
+            return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
         user = self.service.user_info(identifier)
         return BriefUserModel(identifier=identifier, source=self.meta.identifier, name=user.name)
 

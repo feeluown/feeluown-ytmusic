@@ -1,27 +1,29 @@
 import json
 from pathlib import Path
 
-from feeluown.gui.widgets.login import InvalidCookies, CookiesLoginDialog
+from feeluown.gui.widgets.login import CookiesLoginDialog
+from feeluown.uimodels.my_music import MyMusicUiManager
 from feeluown.uimodels.provider import ProviderUiManager
-from feeluown.utils import aio
 
 from fuo_ytmusic import YtmusicProvider
 from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
 
 
 class YtmusicUiManager:
-    def __init__(self, app, provider: YtmusicProvider):
+    def __init__(self, app):
         self._app = app
-        self._provider = provider
+        self._provider = app.library.get('ytmusic')
         self._pvd_uimgr: ProviderUiManager = app.pvd_uimgr
         self._pvd_item = self._pvd_uimgr.create_item(
-            name=provider.identifier,
-            text=provider.name,
-            desc=provider.name,
+            name=self._provider.identifier,
+            text=self._provider.name,
+            desc=self._provider.name,
             colorful_svg=(Path(__file__).parent / 'assets' / 'icon.svg').as_posix()
         )
         self._pvd_item.clicked.connect(self.login_or_show)
         self._pvd_uimgr.add_item(self._pvd_item)
+        from .page_fav import render as fav_render
+        app.browser.route('/providers/ytmusic/fav')(fav_render)
 
     def login_or_show(self):
         if self._provider.user is None:
@@ -32,10 +34,17 @@ class YtmusicUiManager:
 
     def load_user(self):
         user = self._provider.user
+        self._app.ui.left_panel.my_music_con.hide()
+        self._app.ui.left_panel.playlists_con.hide()
         self._app.ui.left_panel.my_music_con.show()
-        self._app.ui.left_panel.playlists_con.show()
-        self._app.pl_uimgr.clear()
-        # self._app.pl_uimgr.add(user.playlists)
+
+        mymusic_mgr: MyMusicUiManager = self._app.mymusic_uimgr
+
+        my_fav_item = mymusic_mgr.create_item('♥ 收藏与关注')
+        my_fav_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/fav'), weak=False)
+        mymusic_mgr.clear()
+        mymusic_mgr.add_item(my_fav_item)
+
         self._pvd_item.text = f'{user.name} - 已登录'
 
 
