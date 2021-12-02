@@ -1,8 +1,10 @@
 from datetime import timedelta
 from enum import Enum
+from functools import partial
 from typing import Optional, Union, List
 
 import cachetools
+import cachetools.keys
 import requests
 import youtube_dl
 
@@ -15,7 +17,7 @@ from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSea
 from ytmusicapi import YTMusic
 from cachetools import TTLCache
 
-CACHE = TTLCache(maxsize=50, ttl=timedelta(minutes=10).seconds)
+CACHE = TTLCache(maxsize=100, ttl=timedelta(minutes=10).seconds)
 GLOBAL_LIMIT = 20
 
 
@@ -57,39 +59,40 @@ class YtmusicService:
                                     page_size)
         return [YtmusicDispatcher.search_result_dispatcher(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE)
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'artist_info'))
     def artist_info(self, channel_id: str) -> ArtistInfo:
         return ArtistInfo(**self._api.get_artist(channel_id))
 
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'artist_albums'))
     def artist_albums(self, channel_id: str, params: str) -> List[YtmusicSearchAlbum]:
         response = self._api.get_artist_albums(channel_id, params)
         return [YtmusicSearchAlbum(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE)
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'user_info'))
     def user_info(self, channel_id: str) -> UserInfo:
         return UserInfo(**self._api.get_user(channel_id))
 
     def user_playlists(self, channel_id: str, params: str):
         return self._api.get_user_playlists(channel_id, params)
 
-    @cachetools.cached(cache=CACHE)
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'album_info'))
     def album_info(self, browse_id: str) -> AlbumInfo:
         return AlbumInfo(**self._api.get_album(browse_id))
 
-    @cachetools.cached(cache=CACHE)
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'song_info'))
     def song_info(self, video_id: str) -> SongInfo:
         return SongInfo(**self._api.get_song(video_id))
 
-    @cachetools.cached(cache=CACHE)
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'categories'))
     def categories(self) -> Categories:
         return Categories(**self._api.get_mood_categories())
 
-    @cachetools.cached(cache=CACHE)
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'category_playlist'))
     def category_playlists(self, params: str) -> List[PlaylistNestedResult]:
         response = self._api.get_mood_playlists(params)
         return [PlaylistNestedResult(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE)
+    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'top_charts'))
     def get_charts(self, country: str = 'ZZ') -> TopCharts:
         # temp workaround for ytmusicapi#236
         # sees: https://github.com/sigma67/ytmusicapi/issues/236
@@ -99,22 +102,18 @@ class YtmusicService:
         self._api.auth = auth
         return TopCharts(**response)
 
-    @cachetools.cached(cache=CACHE)
     def library_playlists(self, limit: int = GLOBAL_LIMIT) -> List[PlaylistNestedResult]:
         response = self._api.get_library_playlists(limit)
         return [PlaylistNestedResult(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE)
     def library_songs(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibrarySong]:
         response = self._api.get_library_songs(limit)
         return [YtmusicLibrarySong(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE)
     def library_albums(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicSearchAlbum]:
         response = self._api.get_library_albums(limit)
         return [YtmusicSearchAlbum(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE)
     def library_artists(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibraryArtist]:
         response = self._api.get_library_artists(limit)
         return [YtmusicLibraryArtist(**data) for data in response]

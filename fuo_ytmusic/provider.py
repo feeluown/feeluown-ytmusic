@@ -48,6 +48,14 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         songs = self.service.library_songs(100)
         return [song.model() for song in songs]
 
+    def library_albums(self):
+        albums = self.service.library_albums(100)
+        return [album.model() for album in albums]
+
+    def library_artists(self):
+        artists = self.service.library_artists(100)
+        return [artist.model() for artist in artists]
+
     def user_from_cookie(self, _):
         return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
 

@@ -16,7 +16,6 @@ async def render(req, **kwargs):
 
     provider: YtmusicProvider = app.library.get('ytmusic')
     tab_id = Tab(int(req.query.get('tab_id', Tab.songs.value)))
-    # FIXM
     renderer = FavRenderer(tab_id, provider)
     await app.ui.table_container.set_renderer(renderer)
 
@@ -33,10 +32,10 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
 
         if self.tab_id == Tab.songs:
             self.show_songs(await aio.run_fn(lambda: self._provider.library_songs()))
-        # elif self.tab_id == Tab.albums:
-        #     self.show_albums(await aio.run_fn(lambda: self._user.fav_albums))
-        # elif self.tab_id == Tab.artists:
-        #     self.show_artists(await aio.run_fn(lambda: self._user.fav_artists))
+        elif self.tab_id == Tab.albums:
+            self.show_albums(await aio.run_fn(lambda: self._provider.library_albums()))
+        elif self.tab_id == Tab.artists:
+            self.show_artists(await aio.run_fn(lambda: self._provider.library_artists()))
 
     def show_by_tab_id(self, tab_id):
         query = {'tab_id': tab_id.value}
@@ -46,10 +45,8 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
         super().render_tabbar()
         try:
             self.tabbar.songs_btn.setText('喜欢的歌曲')
-            # self.tabbar.albums_btn.setText('收藏的专辑')
-            # self.tabbar.artists_btn.setText('关注的歌手')
-            self.tabbar.albums_btn.hide()
-            self.tabbar.artists_btn.hide()
+            self.tabbar.albums_btn.setText('收藏的专辑')
+            self.tabbar.artists_btn.setText('关注的歌手')
             self.tabbar.videos_btn.hide()
             self.tabbar.playlists_btn.hide()
         except Exception as e:
