@@ -42,6 +42,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     @user.setter
     def user(self, user):
+        self.service.setup()
         self._user = user
 
     def library_songs(self):

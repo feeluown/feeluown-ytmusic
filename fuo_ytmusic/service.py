@@ -51,6 +51,9 @@ class YtmusicService:
     def _do_logging(r, *_, **__):
         print(r.url)
 
+    def setup(self):
+        self._api.setup(HEADER_FILE)
+
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
                page_size: int = GLOBAL_LIMIT) \
             -> List[Union[YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo,
