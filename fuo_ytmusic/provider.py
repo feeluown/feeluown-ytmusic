@@ -1,11 +1,13 @@
 from typing import List, Optional
 
-from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongProtocol, ModelState, \
-    SongModel, VideoModel
+from feeluown.excs import NoUserLoggedIn
+from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongModel, BriefVideoModel, \
+    BriefUserModel
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.models import SearchType, SearchModel
-from feeluown.library.model_protocol import VideoProtocol, BriefSongProtocol
+from feeluown.library.model_protocol import BriefSongProtocol
 
+from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.service import YtmusicService, YtmusicType
 
 
@@ -15,6 +17,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def __init__(self):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
+        self._user = None
 
     # noinspection PyPep8Naming
     class meta:
@@ -32,6 +35,35 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     @property
     def name(self):
         return self.meta.name
+
+    @property
+    def user(self):
+        return self._user
+
+    @user.setter
+    def user(self, user):
+        self._user = user
+
+    def library_songs(self):
+        songs = self.service.library_songs(100)
+        return [song.model() for song in songs]
+
+    def user_from_cookie(self, _):
+        return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
+
+    def has_current_user(self) -> bool:
+        return HEADER_FILE.exists()
+
+    def get_current_user(self):
+        if not HEADER_FILE.exists():
+            raise NoUserLoggedIn
+        return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
+
+    def user_get(self, identifier):
+        if identifier is None or identifier == '':
+            return None
+        user = self.service.user_info(identifier)
+        return BriefUserModel(identifier=identifier, source=self.meta.identifier, name=user.name)
 
     def search(self, keyword, type_, *args, **kwargs):
         type_ = SearchType.parse(type_)
@@ -72,13 +104,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             return None
         return Media(VideoAudioManifest(url, audio_url))
 
-    def song_get_mv(self, song: BriefSongProtocol) -> Optional[VideoProtocol]:
-        protocol = VideoProtocol
-        protocol.identifier = song.identifier
-        protocol.source = song.source
-        protocol.title = song.title
-        protocol.artists_name = song.artists_name
-        protocol.duration_ms = song.duration_ms
-        protocol.artists = []
-        protocol.cover = ''
-        return protocol
+    def song_get_mv(self, song: BriefSongProtocol) -> BriefVideoModel:
+        return BriefVideoModel(identifier=song.identifier, source=song.source, title=song.title,
+                               artists_name=song.artists_name, duration_ms=song.duration_ms)
