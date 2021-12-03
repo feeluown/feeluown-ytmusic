@@ -3,13 +3,13 @@ from enum import Enum
 from functools import partial
 from typing import Optional, Union, List
 
-import cachetools
 import cachetools.keys
 import requests
 import youtube_dl
 
 from feeluown.models import SearchType
 from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
     SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
@@ -38,7 +38,7 @@ class YtmusicScope(Enum):
     up = 'uploads'
 
 
-class YtmusicService:
+class YtmusicService(metaclass=Singleton):
     def __init__(self):
         self._session = None
         self._api = None

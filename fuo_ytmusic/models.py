@@ -1,11 +1,11 @@
 from typing import Optional, Union, List, Tuple
 from pydantic import BaseModel as PydanticBaseModel
-# noinspection PyProtectedMember
 from pydantic.fields import Field
+# noinspection PyProtectedMember
 from pydantic.main import ModelMetaclass
 
-from feeluown.media import Quality, Media
-from feeluown.library import SongModel, BriefArtistModel, BriefAlbumModel, VideoModel
+from feeluown.media import Quality
+from feeluown.library import SongModel, BriefArtistModel, BriefAlbumModel, VideoModel, ModelState
 from feeluown.models import AlbumModel, AlbumType, ArtistModel, PlaylistModel
 
 from fuo_ytmusic.timeparse import timeparse
@@ -71,6 +71,8 @@ class YtmusicDurationMixin:
 
     @property
     def duration_ms(self) -> int:
+        if self.duration is None:
+            return 0
         return int(timeparse(self.duration) * 1000)
 
 
@@ -85,7 +87,10 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
         name: str
 
         def model(self) -> BriefAlbumModel:
-            return BriefAlbumModel(identifier=self.id, source=self.source, name=self.name)
+            album = BriefAlbumModel(identifier=self.id or '', source=self.source, name=self.name)
+            if self.id is None:
+                album.state = ModelState.not_exists
+            return album
 
     title: str  # 歌名
     album: Album  # 专辑信息
@@ -95,10 +100,14 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
     isExplicit: bool
 
     def model(self) -> SongModel:
-        song = SongModel(identifier=self.videoId, source=self.source, title=self.title, artists=self.artists_model,
+        song = SongModel(identifier=self.videoId or '', source=self.source, title=self.title, artists=self.artists_model,
                          duration=self.duration_ms)
         if self.album is not None:
             song.album = self.album.model()
+        else:
+            song.album = BriefAlbumModel(identifier='', source=self.source, name='', state=ModelState.not_exists)
+        if self.videoId is None:
+            song.state = ModelState.not_exists
         return song
 
 
@@ -320,9 +329,21 @@ class SongInfo(BaseModel):
         return None
 
 
+class YtmusicPlaylistModel(PlaylistModel):
+    provider = None
+
+    @classmethod
+    def get(cls, identifier):
+        return cls.provider.playlist_info(identifier)
+
+
 class PlaylistNestedResult(BaseModel, YtmusicCoverMixin):
     title: str
     playlistId: str
+
+    def model(self, provider=None) -> YtmusicPlaylistModel:
+        YtmusicPlaylistModel.provider = provider
+        return YtmusicPlaylistModel(identifier=self.playlistId, source=self.source, name=self.title, cover=self.cover)
 
 
 class UserInfo(BaseModel):
@@ -384,3 +405,7 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     duration: str
     trackCount: int
     tracks: List[YtmusicLibrarySong]
+
+    def model(self) -> YtmusicPlaylistModel:
+        return YtmusicPlaylistModel(identifier=self.id, source=self.source, name=self.title, cover=self.cover,
+                                    songs=[song.model() for song in self.tracks])

@@ -3,9 +3,9 @@ from pathlib import Path
 
 from feeluown.gui.widgets.login import CookiesLoginDialog
 from feeluown.uimodels.my_music import MyMusicUiManager
+from feeluown.uimodels.playlist import PlaylistUiManager
 from feeluown.uimodels.provider import ProviderUiManager
 
-from fuo_ytmusic import YtmusicProvider
 from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
 
 
@@ -34,16 +34,19 @@ class YtmusicUiManager:
 
     def load_user(self):
         user = self._provider.user
-        self._app.ui.left_panel.my_music_con.hide()
-        self._app.ui.left_panel.playlists_con.hide()
+        self._app.ui.left_panel.playlists_con.show()
         self._app.ui.left_panel.my_music_con.show()
 
         mymusic_mgr: MyMusicUiManager = self._app.mymusic_uimgr
+        playlists_mgr: PlaylistUiManager = self._app.pl_uimgr
 
         my_fav_item = mymusic_mgr.create_item('♥ 收藏与关注')
         my_fav_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/fav'), weak=False)
         mymusic_mgr.clear()
         mymusic_mgr.add_item(my_fav_item)
+
+        playlists_mgr.clear()
+        playlists_mgr.add(self._provider.library_playlists())
 
         self._pvd_item.text = f'{user.name} - 已登录'
 

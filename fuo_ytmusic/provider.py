@@ -4,7 +4,7 @@ from feeluown.excs import NoUserLoggedIn
 from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongModel, BriefVideoModel, \
     BriefUserModel
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
-from feeluown.models import SearchType, SearchModel
+from feeluown.models import SearchType, SearchModel, PlaylistModel, ArtistModel
 from feeluown.library.model_protocol import BriefSongProtocol
 
 from fuo_ytmusic.consts import HEADER_FILE
@@ -53,9 +53,16 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         albums = self.service.library_albums(100)
         return [album.model() for album in albums]
 
-    def library_artists(self):
-        artists = self.service.library_artists(100)
+    def library_artists(self) -> List[ArtistModel]:
+        artists = self.service.library_subscription_artists(100)
         return [artist.model() for artist in artists]
+
+    def library_playlists(self) -> List[PlaylistModel]:
+        playlists = self.service.library_playlists(100)
+        return [playlist.model(self) for playlist in playlists]
+
+    def playlist_info(self, identifier) -> PlaylistModel:
+        return self.service.playlist_info(identifier, limit=20).model()
 
     def user_from_cookie(self, _):
         return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
