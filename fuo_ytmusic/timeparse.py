@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 timeparse.py
 (c) Will Roberts <wildwilhelm@gmail.com>  1 February, 2014
 
 Implements a single function, `timeparse`, which can parse various
 kinds of time expressions.
-'''
+"""
 
 # MIT LICENSE
 #
@@ -118,7 +118,7 @@ def _interpret_as_minutes(sval, mdict):
 
 
 def timeparse(sval, granularity='seconds'):
-    '''
+    """
     Parse a time expression, returning it as a number of seconds.  If
     possible, the return value will be an `int`; if this is not
     possible, the return will be a `float`.  Returns `None` if a time
@@ -154,7 +154,7 @@ def timeparse(sval, granularity='seconds'):
     90
     >>> timeparse('1:30', granularity='minutes')
     5400
-    '''
+    """
     match = COMPILED_SIGN.match(sval)
     sign = -1 if match.groupdict()['sign'] == '-' else 1
     sval = match.groupdict()['unsigned']
