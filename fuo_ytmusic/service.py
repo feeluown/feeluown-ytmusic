@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from enum import Enum
 from functools import partial
@@ -8,6 +9,8 @@ import requests
 import youtube_dl
 
 from feeluown.models import SearchType
+from requests import Response
+
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
@@ -19,6 +22,8 @@ from cachetools import TTLCache
 
 CACHE = TTLCache(maxsize=100, ttl=timedelta(minutes=10).seconds)
 GLOBAL_LIMIT = 20
+
+logger = logging.getLogger(__name__)
 
 
 class YtmusicType(Enum):
@@ -45,8 +50,8 @@ class YtmusicService(metaclass=Singleton):
         self.setup()
 
     @staticmethod
-    def _do_logging(r, *_, **__):
-        print(r.url)
+    def _do_logging(r: Response, *_, **__):
+        logger.debug(f'[ytmusic] Requesting: [{r.request.method.upper()}] {r.url}; Response: [{r.status_code}] {len(r.content)} bytes.')
 
     def setup(self):
         del self._api, self._session
