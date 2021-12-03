@@ -136,7 +136,7 @@ python-versions = "*"
 
 [[package]]
 name = "ipython"
-version = "7.30.0"
+version = "7.30.1"
 description = "IPython: Productive Interactive Computing"
 category = "dev"
 optional = false
@@ -372,6 +372,27 @@ optional = false
 python-versions = ">=3.5"
 
 [[package]]
+name = "pyqtwebengine"
+version = "5.15.5"
+description = "Python bindings for the Qt WebEngine framework"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+PyQt5 = ">=5.15.4"
+PyQt5-sip = ">=12.8,<13"
+PyQtWebEngine-Qt5 = ">=5.15.2"
+
+[[package]]
+name = "pyqtwebengine-qt5"
+version = "5.15.2"
+description = "The subset of a Qt installation needed by PyQtWebEngine."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pytest"
 version = "6.2.5"
 description = "pytest: simple powerful testing with Python"
@@ -493,7 +514,7 @@ python-versions = "*"
 
 [[package]]
 name = "ytmusicapi"
-version = "0.19.4"
+version = "0.19.5"
 description = "Unofficial API for YouTube Music"
 category = "main"
 optional = false
@@ -520,7 +541,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0"
-content-hash = "41766591830097fa1ca61626f3364adc7b9f4f92758e5bd3c5d065d8d5612e40"
+content-hash = "8abe6a98ba7d43b1cfb6520247cef2d9e82fe5dd1e521c242e083317a2812eee"
 
 [metadata.files]
 appnope = [
@@ -575,8 +596,8 @@ iniconfig = [
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 ipython = [
-    {file = "ipython-7.30.0-py3-none-any.whl", hash = "sha256:c8f3e07aefb9cf9e067f39686f035ce09b27a1ee602116a3030b91b6fc138ee4"},
-    {file = "ipython-7.30.0.tar.gz", hash = "sha256:d41f8e80b99690122400f9b2069b12f670246a1b4cc5d332bd6c4e2500e6d6fb"},
+    {file = "ipython-7.30.1-py3-none-any.whl", hash = "sha256:fc60ef843e0863dd4e24ab2bb5698f071031332801ecf8d1aeb4fb622056545c"},
+    {file = "ipython-7.30.1.tar.gz", hash = "sha256:cb6aef731bf708a7727ab6cde8df87f0281b1427d41e65d62d4b68934fa54e97"},
 ]
 janus = [
     {file = "janus-0.7.0-py3-none-any.whl", hash = "sha256:41e267f50b10f981c1d29f9fd065ec27086d32f823cefb39808ba7887b39f860"},
@@ -676,6 +697,10 @@ pyqt5-qt5 = [
     {file = "PyQt5_Qt5-5.15.2-py3-none-win_amd64.whl", hash = "sha256:750b78e4dba6bdf1607febedc08738e318ea09e9b10aea9ff0d73073f11f6962"},
 ]
 pyqt5-sip = [
+    {file = "PyQt5_sip-12.9.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:6d5bca2fc222d58e8093ee8a81a6e3437067bb22bc3f86d06ec8be721e15e90a"},
+    {file = "PyQt5_sip-12.9.0-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:d59af63120d1475b2bf94fe8062610720a9be1e8940ea146c7f42bb449d49067"},
+    {file = "PyQt5_sip-12.9.0-cp310-cp310-win32.whl", hash = "sha256:0fc9aefacf502696710b36cdc9fa2a61487f55ee883dbcf2c2a6477e261546f7"},
+    {file = "PyQt5_sip-12.9.0-cp310-cp310-win_amd64.whl", hash = "sha256:485972daff2fb0311013f471998f8ec8262ea381bded244f9d14edaad5f54271"},
     {file = "PyQt5_sip-12.9.0-cp36-cp36m-macosx_10_6_intel.whl", hash = "sha256:d85002238b5180bce4b245c13d6face848faa1a7a9e5c6e292025004f2fd619a"},
     {file = "PyQt5_sip-12.9.0-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:83c3220b1ca36eb8623ba2eb3766637b19eb0ce9f42336ad8253656d32750c0a"},
     {file = "PyQt5_sip-12.9.0-cp36-cp36m-win32.whl", hash = "sha256:d8b2bdff7bbf45bc975c113a03b14fd669dc0c73e1327f02706666a7dd51a197"},
@@ -693,6 +718,19 @@ pyqt5-sip = [
     {file = "PyQt5_sip-12.9.0-cp39-cp39-win32.whl", hash = "sha256:4f8e05fe01d54275877c59018d8e82dcdd0bc5696053a8b830eecea3ce806121"},
     {file = "PyQt5_sip-12.9.0-cp39-cp39-win_amd64.whl", hash = "sha256:b09f4cd36a4831229fb77c424d89635fa937d97765ec90685e2f257e56a2685a"},
     {file = "PyQt5_sip-12.9.0.tar.gz", hash = "sha256:d3e4489d7c2b0ece9d203ae66e573939f7f60d4d29e089c9f11daa17cfeaae32"},
+]
+pyqtwebengine = [
+    {file = "PyQtWebEngine-5.15.5-cp36-abi3-macosx_10_13_x86_64.whl", hash = "sha256:5c77f71d88d871bc7400c68ef6433fadc5bd57b86d1a9c4d8094cea42f3607f1"},
+    {file = "PyQtWebEngine-5.15.5-cp36-abi3-manylinux1_x86_64.whl", hash = "sha256:782aeee6bc8699bc029fe5c169a045c2bc9533d781cf3f5e9fb424b85a204e68"},
+    {file = "PyQtWebEngine-5.15.5-cp36-abi3-win32.whl", hash = "sha256:b827ad7ba0a65d5cd176797478f0ec8f599df6746b06c548649ff5674482a022"},
+    {file = "PyQtWebEngine-5.15.5-cp36-abi3-win_amd64.whl", hash = "sha256:30cebf455406990d5a0b859eac261ba6b45c32ce18956271733e0e96dbdca9b7"},
+    {file = "PyQtWebEngine-5.15.5.tar.gz", hash = "sha256:ab47608dccf2b5e4b950d5a3cc704b17711af035024d07a9b71ad29fc103b941"},
+]
+pyqtwebengine-qt5 = [
+    {file = "PyQtWebEngine_Qt5-5.15.2-py3-none-macosx_10_13_intel.whl", hash = "sha256:bc7b1fd1f4f8138d59b0b0245d601fb2c5c0aa1e1e7e853b713e52a3165d147e"},
+    {file = "PyQtWebEngine_Qt5-5.15.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:ec2acb1780c0124ef060c310e00ca701f388d8b6c35bba9127f7a6f0dc536f77"},
+    {file = "PyQtWebEngine_Qt5-5.15.2-py3-none-win32.whl", hash = "sha256:9e80b408d8de09d4e708d5d84c3ceaf3603292ff8f5e566ae44bb0320fa59c33"},
+    {file = "PyQtWebEngine_Qt5-5.15.2-py3-none-win_amd64.whl", hash = "sha256:24231f19e1595018779977de6722b5c69f3d03f34a5f7574ff21cd1e764ef76d"},
 ]
 pytest = [
     {file = "pytest-6.2.5-py3-none-any.whl", hash = "sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134"},
@@ -739,8 +777,8 @@ youtube-dl = [
     {file = "youtube_dl-2021.6.6.tar.gz", hash = "sha256:cb2d3ee002158ede783e97a82c95f3817594df54367ea6a77ce5ceea4772f0ab"},
 ]
 ytmusicapi = [
-    {file = "ytmusicapi-0.19.4-py3-none-any.whl", hash = "sha256:d0e980b35cf290eae409dcdc6ee31c5c358b28baebf1052e9fc9f446fc7901b7"},
-    {file = "ytmusicapi-0.19.4.tar.gz", hash = "sha256:0001947daf757fd6aab8f2d066cf644036d95eb06bc6348115d588af10790ff2"},
+    {file = "ytmusicapi-0.19.5-py3-none-any.whl", hash = "sha256:23ed35df2b7977e3e7662c0ac478864fb23d025ba5de8f2c269cabf2903b8d25"},
+    {file = "ytmusicapi-0.19.5.tar.gz", hash = "sha256:85a65ee5a7f0914f300fcb3696b98726e568e933b709c43fd13b896c73e6aaf5"},
 ]
 zipp = [
     {file = "zipp-3.6.0-py3-none-any.whl", hash = "sha256:9fe5ea21568a0a70e50f273397638d39b03353731e6cbbb3fd8502a33fec40bc"},
