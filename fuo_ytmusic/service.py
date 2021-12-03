@@ -40,19 +40,22 @@ class YtmusicScope(Enum):
 
 class YtmusicService:
     def __init__(self):
-        self._session = requests.Session()
-        self._session.hooks['response'].append(self._do_logging)
-        if HEADER_FILE.exists():
-            self._api = YTMusic(HEADER_FILE, requests_session=self._session)
-        else:
-            self._api = YTMusic(requests_session=self._session)
+        self._session = None
+        self._api = None
+        self.setup()
 
     @staticmethod
     def _do_logging(r, *_, **__):
         print(r.url)
 
     def setup(self):
-        self._api.setup(HEADER_FILE)
+        del self._api, self._session
+        self._session = requests.Session()
+        self._session.hooks['response'].append(self._do_logging)
+        if HEADER_FILE.exists():
+            self._api = YTMusic(HEADER_FILE, requests_session=self._session)
+        else:
+            self._api = YTMusic(requests_session=self._session)
 
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
                page_size: int = GLOBAL_LIMIT) \
