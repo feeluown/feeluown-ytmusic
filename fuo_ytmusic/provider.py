@@ -8,6 +8,7 @@ from feeluown.models import SearchType, SearchModel, PlaylistModel, ArtistModel
 from feeluown.library.model_protocol import BriefSongProtocol
 
 from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.models import YtmusicPlaylistModel, Categories
 from fuo_ytmusic.service import YtmusicService, YtmusicType
 
 
@@ -57,12 +58,15 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         artists = self.service.library_subscription_artists(100)
         return [artist.model() for artist in artists]
 
-    def library_playlists(self) -> List[PlaylistModel]:
+    def library_playlists(self) -> List[YtmusicPlaylistModel]:
         playlists = self.service.library_playlists(100)
         return [playlist.model(self) for playlist in playlists]
 
-    def playlist_info(self, identifier) -> PlaylistModel:
+    def playlist_info(self, identifier) -> YtmusicPlaylistModel:
         return self.service.playlist_info(identifier, limit=20).model()
+
+    def categories(self) -> Categories:
+        return self.service.categories()
 
     def user_from_cookie(self, _):
         return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')

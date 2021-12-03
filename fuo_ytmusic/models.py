@@ -276,6 +276,8 @@ class SongInfo(BaseModel):
 
     def list_formats(self) -> List[Quality.Audio]:
         qualities = set()
+        if self.streamingData is None:
+            return []
         for format_ in self.streamingData.adaptiveFormats:
             if format_.audioQuality is None:
                 continue
@@ -333,7 +335,7 @@ class YtmusicPlaylistModel(PlaylistModel):
     provider = None
 
     @classmethod
-    def get(cls, identifier):
+    def get(cls, identifier: str):
         return cls.provider.playlist_info(identifier)
 
 

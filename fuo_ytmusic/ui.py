@@ -23,7 +23,9 @@ class YtmusicUiManager:
         self._pvd_item.clicked.connect(self.login_or_show)
         self._pvd_uimgr.add_item(self._pvd_item)
         from .page_fav import render as fav_render
+        from .page_explore import render as explore_render
         app.browser.route('/providers/ytmusic/fav')(fav_render)
+        app.browser.route('/providers/ytmusic/explore')(explore_render)
 
     def login_or_show(self):
         if self._provider.user is None:
@@ -40,9 +42,12 @@ class YtmusicUiManager:
         mymusic_mgr: MyMusicUiManager = self._app.mymusic_uimgr
         playlists_mgr: PlaylistUiManager = self._app.pl_uimgr
 
-        my_fav_item = mymusic_mgr.create_item('♥ 收藏与关注')
+        explore_item = mymusic_mgr.create_item('🔮 发现音乐')
+        my_fav_item = mymusic_mgr.create_item('⭐️ 收藏与关注')
+        explore_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/explore'), weak=False)
         my_fav_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/fav'), weak=False)
         mymusic_mgr.clear()
+        mymusic_mgr.add_item(explore_item)
         mymusic_mgr.add_item(my_fav_item)
 
         playlists_mgr.clear()
