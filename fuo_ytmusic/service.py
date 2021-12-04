@@ -60,95 +60,101 @@ class YtmusicService(metaclass=Singleton):
         logger.debug(f'[ytmusic] Requesting: [{r.request.method.upper()}] {r.url}; '
                      f'Response: [{r.status_code}] {len(r.content)} bytes.')
 
+    @property
+    def api(self):
+        if self._api is None:
+            logger.info('initializing ytmusic')
+            if HEADER_FILE.exists():
+                self._api = YTMusic(HEADER_FILE, requests_session=self._session)
+            else:
+                self._api = YTMusic(requests_session=self._session)
+            self._signature_timestamp = self._api.get_signatureTimestamp()
+        return self._api
+
     def setup(self):
-        del self._api, self._session
+        del self._session
         self._session = requests.Session()
         self._session.hooks['response'].append(self._do_logging)
-        if HEADER_FILE.exists():
-            self._api = YTMusic(HEADER_FILE, requests_session=self._session)
-        else:
-            self._api = YTMusic(requests_session=self._session)
-        self._signature_timestamp = self._api.get_signatureTimestamp()
 
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
                page_size: int = GLOBAL_LIMIT) \
             -> List[Union[YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo,
                           YtmusicSearchPlaylist, YtmusicSearchBase]]:
-        response = self._api.search(keywords, None if t is None else t.value, None if scope is None else scope.value,
-                                    page_size)
+        response = self.api.search(keywords, None if t is None else t.value, None if scope is None else scope.value,
+                                   page_size)
         return [YtmusicDispatcher.search_result_dispatcher(**data) for data in response]
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'artist_info'))
     def artist_info(self, channel_id: str) -> ArtistInfo:
-        return ArtistInfo(**self._api.get_artist(channel_id))
+        return ArtistInfo(**self.api.get_artist(channel_id))
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'artist_albums'))
     def artist_albums(self, channel_id: str, params: str) -> List[YtmusicSearchAlbum]:
-        response = self._api.get_artist_albums(channel_id, params)
+        response = self.api.get_artist_albums(channel_id, params)
         return [YtmusicSearchAlbum(**data) for data in response]
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'user_info'))
     def user_info(self, channel_id: str) -> UserInfo:
-        return UserInfo(**self._api.get_user(channel_id))
+        return UserInfo(**self.api.get_user(channel_id))
 
     def user_playlists(self, channel_id: str, params: str):
-        return self._api.get_user_playlists(channel_id, params)
+        return self.api.get_user_playlists(channel_id, params)
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'album_info'))
     def album_info(self, browse_id: str) -> AlbumInfo:
-        return AlbumInfo(**self._api.get_album(browse_id))
+        return AlbumInfo(**self.api.get_album(browse_id))
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'song_info'))
     def song_info(self, video_id: str) -> SongInfo:
-        return SongInfo(**self._api.get_song(video_id, self._signature_timestamp))
+        return SongInfo(**self.api.get_song(video_id, self._signature_timestamp))
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'categories'))
     def categories(self) -> Categories:
-        return Categories(**self._api.get_mood_categories())
+        return Categories(**self.api.get_mood_categories())
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'category_playlist'))
     def category_playlists(self, params: str) -> List[PlaylistNestedResult]:
-        response = self._api.get_mood_playlists(params)
+        response = self.api.get_mood_playlists(params)
         return [PlaylistNestedResult(**data) for data in response]
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'top_charts'))
     def get_charts(self, country: str = 'ZZ') -> TopCharts:
         # temp workaround for ytmusicapi#236
         # sees: https://github.com/sigma67/ytmusicapi/issues/236
-        auth = self._api.auth
-        self._api.auth = None
-        response = self._api.get_charts(country)
-        self._api.auth = auth
+        auth = self.api.auth
+        self.api.auth = None
+        response = self.api.get_charts(country)
+        self.api.auth = auth
         return TopCharts(**response)
 
     def library_playlists(self, limit: int = GLOBAL_LIMIT) -> List[PlaylistNestedResult]:
-        response = self._api.get_library_playlists(limit)
+        response = self.api.get_library_playlists(limit)
         return [PlaylistNestedResult(**data) for data in response]
 
     def library_songs(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibrarySong]:
-        response = self._api.get_library_songs(limit)
+        response = self.api.get_library_songs(limit)
         return [YtmusicLibrarySong(**data) for data in response]
 
     def library_albums(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicSearchAlbum]:
-        response = self._api.get_library_albums(limit)
+        response = self.api.get_library_albums(limit)
         return [YtmusicSearchAlbum(**data) for data in response]
 
     def library_artists(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibraryArtist]:
-        response = self._api.get_library_artists(limit)
+        response = self.api.get_library_artists(limit)
         return [YtmusicLibraryArtist(**data) for data in response]
 
     def library_subscription_artists(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibraryArtist]:
-        response = self._api.get_library_subscriptions(limit)
+        response = self.api.get_library_subscriptions(limit)
         return [YtmusicLibraryArtist(**data) for data in response]
 
     def playlist_info(self, playlist_id: str, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
-        return PlaylistInfo(**self._api.get_playlist(playlist_id, limit))
+        return PlaylistInfo(**self.api.get_playlist(playlist_id, limit))
 
     def liked_songs(self, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
-        return PlaylistInfo(**self._api.get_liked_songs(limit))
+        return PlaylistInfo(**self.api.get_liked_songs(limit))
 
     def history(self) -> List[YtmusicHistorySong]:
-        response = self._api.get_history()
+        response = self.api.get_history()
         return [YtmusicHistorySong(**data) for data in response]
 
     @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'stream_url'))

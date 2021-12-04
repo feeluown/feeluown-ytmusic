@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 
@@ -30,11 +31,11 @@ class YtmusicUiManager:
     def login_or_show(self):
         if self._provider.user is None:
             dialog = LoginDialog(self._provider)
-            dialog.login_succeed.connect(self.load_user)
+            dialog.login_succeed.connect(lambda: asyncio.ensure_future(self.load_user()))
             dialog.show()
             dialog.autologin()
 
-    def load_user(self):
+    async def load_user(self):
         user = self._provider.user
         self._app.ui.left_panel.playlists_con.show()
         self._app.ui.left_panel.my_music_con.show()
@@ -51,9 +52,11 @@ class YtmusicUiManager:
         mymusic_mgr.add_item(my_fav_item)
 
         playlists_mgr.clear()
-        playlists_mgr.add(self._provider.library_playlists())
-
         self._pvd_item.text = f'{user.name} - 已登录'
+
+        loop = asyncio.get_event_loop()
+        pls = await loop.run_in_executor(None, self._provider.library_playlists)
+        playlists_mgr.add(pls)
 
 
 class LoginDialog(CookiesLoginDialog):
