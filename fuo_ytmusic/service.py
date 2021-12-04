@@ -20,9 +20,10 @@ from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSea
     SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
     YtmusicHistorySong
 from ytmusicapi import YTMusic
-from cachetools import TTLCache
+from cachetools.func import ttl_cache
 
-CACHE = TTLCache(maxsize=100, ttl=timedelta(minutes=10).seconds)
+CACHE_TTL = timedelta(minutes=10).seconds
+CACHE_SIZE = 1
 GLOBAL_LIMIT = 20
 
 logger = logging.getLogger(__name__)
@@ -84,40 +85,40 @@ class YtmusicService(metaclass=Singleton):
                                    page_size)
         return [YtmusicDispatcher.search_result_dispatcher(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'artist_info'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def artist_info(self, channel_id: str) -> ArtistInfo:
         return ArtistInfo(**self.api.get_artist(channel_id))
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'artist_albums'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def artist_albums(self, channel_id: str, params: str) -> List[YtmusicSearchAlbum]:
         response = self.api.get_artist_albums(channel_id, params)
         return [YtmusicSearchAlbum(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'user_info'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def user_info(self, channel_id: str) -> UserInfo:
         return UserInfo(**self.api.get_user(channel_id))
 
     def user_playlists(self, channel_id: str, params: str):
         return self.api.get_user_playlists(channel_id, params)
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'album_info'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def album_info(self, browse_id: str) -> AlbumInfo:
         return AlbumInfo(**self.api.get_album(browse_id))
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'song_info'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def song_info(self, video_id: str) -> SongInfo:
         return SongInfo(**self.api.get_song(video_id, self._signature_timestamp))
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'categories'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def categories(self) -> Categories:
         return Categories(**self.api.get_mood_categories())
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'category_playlist'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def category_playlists(self, params: str) -> List[PlaylistNestedResult]:
         response = self.api.get_mood_playlists(params)
         return [PlaylistNestedResult(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'top_charts'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def get_charts(self, country: str = 'ZZ') -> TopCharts:
         # temp workaround for ytmusicapi#236
         # sees: https://github.com/sigma67/ytmusicapi/issues/236
@@ -157,7 +158,7 @@ class YtmusicService(metaclass=Singleton):
         response = self.api.get_history()
         return [YtmusicHistorySong(**data) for data in response]
 
-    @cachetools.cached(cache=CACHE, key=partial(cachetools.keys.hashkey, 'stream_url'))
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def stream_url(self, video_id: str, format_code: int) -> Optional[str]:
         song_info = self.song_info(video_id)
         formats = song_info.streamingData.adaptiveFormats
