@@ -25,7 +25,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         identifier = 'ytmusic'
         name = 'YouTube Music'
         flags = {
-            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric | Pf.get),
+            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric),
             ModelType.video: Pf.multi_quality,
         }
 
