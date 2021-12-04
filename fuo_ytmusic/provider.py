@@ -129,6 +129,3 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def song_get_mv(self, song: BriefSongProtocol) -> BriefVideoModel:
         return BriefVideoModel(identifier=song.identifier, source=song.source, title=song.title,
                                artists_name=song.artists_name, duration_ms=song.duration_ms)
-
-    def song_get(self, identifier) -> SongModel:
-        pass
