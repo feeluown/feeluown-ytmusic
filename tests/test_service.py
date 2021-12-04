@@ -31,3 +31,8 @@ class TestService:
         result = self.service.search('ALIN', service.YtmusicType.al)
         assert isinstance(result, list)
         assert all(isinstance(r, YtmusicSearchAlbum) for r in result)
+
+    def test_stream_url(self):
+        result = self.service.stream_url('U0XcqF7rqHk', 251)
+        assert isinstance(result, str)
+        assert result != ''

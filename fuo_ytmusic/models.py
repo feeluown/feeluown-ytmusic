@@ -266,6 +266,7 @@ class SongInfo(BaseModel):
             audioQuality: str  # AUDIO_QUALITY_LOW AUDIO_QUALITY_MEDIUM
             audioSampleRate: int  # 48000
             quality: str
+            signatureCipher: str
 
         expiresInSeconds: int
         formats: List[Format]

@@ -25,7 +25,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         identifier = 'ytmusic'
         name = 'YouTube Music'
         flags = {
-            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric),
+            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric | Pf.get),
             ModelType.video: Pf.multi_quality,
         }
 
@@ -129,3 +129,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def song_get_mv(self, song: BriefSongProtocol) -> BriefVideoModel:
         return BriefVideoModel(identifier=song.identifier, source=song.source, title=song.title,
                                artists_name=song.artists_name, duration_ms=song.duration_ms)
+
+    def song_get(self, identifier) -> SongModel:
+        pass
