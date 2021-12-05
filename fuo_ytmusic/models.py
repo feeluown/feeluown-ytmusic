@@ -99,13 +99,20 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
     isAvailable: bool
     isExplicit: bool
 
-    def model(self) -> SongModel:
+    def model(self, album: 'AlbumInfo' = None, artists=None) -> SongModel:
+        artists_ = self.artists_model
+        if artists_ is None and artists is not None:
+            artists_ = artists
         song = SongModel(identifier=self.videoId or '', source=self.source, title=self.title,
-                         artists=self.artists_model or [], duration=self.duration_ms)
+                         artists=artists_, duration=self.duration_ms)
         if self.album is not None:
             song.album = self.album.model()
         else:
-            song.album = YtmusicAlbumModel(identifier='', name='', state=ModelState.not_exists)
+            if album is not None:
+                # noinspection PyProtectedMember
+                song.album = album._model()
+            else:
+                song.album = YtmusicAlbumModel(identifier='', name='', state=ModelState.not_exists)
         if self.videoId is None:
             song.state = ModelState.not_exists
         return song
@@ -231,9 +238,15 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     audioPlaylistId: str
     tracks: List[YtmusicSearchSong]  # 专辑歌曲
 
+    def _model(self, id_: str = None):
+        return YtmusicAlbumModel(identifier=id_, name=self.title, type=self.type, cover=self.cover)
+
     def model(self, id_: str = None) -> 'YtmusicAlbumModel':
-        return YtmusicAlbumModel(identifier=id_, name=self.title, type=self.type, cover=self.cover,
-                                 artists=self.artists_model, songs=[track.model() for track in self.tracks])
+        result = self._model(id_)
+        artists = self.artists_model
+        result.songs = [track.model(album=self, artists=artists) for track in self.tracks]
+        result.artists = self.artists_model
+        return result
 
 
 class SongInfo(BaseModel):
