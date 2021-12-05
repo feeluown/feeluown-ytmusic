@@ -4,11 +4,11 @@ from feeluown.excs import NoUserLoggedIn
 from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongModel, BriefVideoModel, \
     BriefUserModel
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
-from feeluown.models import SearchType, SearchModel, PlaylistModel, ArtistModel
+from feeluown.models import SearchType, SearchModel, ArtistModel
 from feeluown.library.model_protocol import BriefSongProtocol
 
 from fuo_ytmusic.consts import HEADER_FILE
-from fuo_ytmusic.models import YtmusicPlaylistModel, Categories
+from fuo_ytmusic.models import YtmusicPlaylistModel, Categories, YtmusicAlbumModel
 from fuo_ytmusic.service import YtmusicService, YtmusicType
 
 
@@ -19,6 +19,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
         self._user = None
+        YtmusicPlaylistModel.provider = self
+        YtmusicAlbumModel.provider = self
 
     # noinspection PyPep8Naming
     class meta:
@@ -27,6 +29,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         flags = {
             ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric),
             ModelType.video: Pf.multi_quality,
+            ModelType.album: Pf.get,
         }
 
     @property
@@ -60,10 +63,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def library_playlists(self) -> List[YtmusicPlaylistModel]:
         playlists = self.service.library_playlists(100)
-        return [playlist.model(self) for playlist in playlists]
+        return [playlist.model() for playlist in playlists]
 
     def playlist_info(self, identifier) -> YtmusicPlaylistModel:
         return self.service.playlist_info(identifier, limit=20).model()
+
+    def album_info(self, identifier) -> YtmusicAlbumModel:
+        return self.service.album_info(identifier).model(id_=identifier)
 
     def categories(self) -> Categories:
         return self.service.categories()
