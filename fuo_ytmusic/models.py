@@ -1,4 +1,6 @@
 from typing import Optional, Union, List, Tuple
+
+from feeluown.utils.reader import SequentialReader
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic.fields import Field
 # noinspection PyProtectedMember
@@ -418,8 +420,7 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     tracks: List[YtmusicLibrarySong]
 
     def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.id, name=self.title, cover=self.cover,
-                                    songs=[song.model() for song in self.tracks])
+        return YtmusicPlaylistModel(identifier=self.id, name=self.title, cover=self.cover)
 
 
 # FeelUOwn models
@@ -429,9 +430,37 @@ class YtmusicPlaylistModel(PlaylistModel):
     provider = None
     source = 'ytmusic'
 
+    class Meta:
+        allow_create_songs_g = True
+
     @classmethod
     def get(cls, identifier: str) -> 'YtmusicPlaylistModel':
         return cls.provider.playlist_info(identifier)
+
+    def create_songs_g(self):
+        # noinspection PyAttributeOutsideInit
+        self._fetched_tracks = set()
+        playlist: PlaylistInfo = self.provider.service.playlist_info(self.identifier)
+        total_count = playlist.trackCount
+
+        def g():
+            offset = 0
+            per = 50
+            while offset < total_count:
+                end = min(offset + per, total_count)
+                if end + 50 <= offset:
+                    break
+                data: PlaylistInfo = self.provider.service.playlist_info(self.identifier, limit=end)
+                tracks_data = data.tracks
+                for track_data in tracks_data:
+                    if track_data.videoId is not None and track_data.videoId in self._fetched_tracks:
+                        continue
+                    self._fetched_tracks.add(track_data.videoId)
+                    yield track_data.model()
+                offset += per
+            self._fetched_tracks.clear()
+
+        return SequentialReader(g(), total_count)
 
 
 class YtmusicAlbumModel(AlbumModel):

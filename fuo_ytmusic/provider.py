@@ -66,7 +66,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return [playlist.model() for playlist in playlists]
 
     def playlist_info(self, identifier) -> YtmusicPlaylistModel:
-        return self.service.playlist_info(identifier, limit=20).model()
+        return self.service.playlist_info(identifier, limit=0).model()
 
     def album_info(self, identifier) -> YtmusicAlbumModel:
         return self.service.album_info(identifier).model(id_=identifier)

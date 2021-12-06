@@ -148,6 +148,7 @@ class YtmusicService(metaclass=Singleton):
         response = self.api.get_library_subscriptions(limit)
         return [YtmusicLibraryArtist(**data) for data in response]
 
+    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def playlist_info(self, playlist_id: str, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
         return PlaylistInfo(**self.api.get_playlist(playlist_id, limit))
 
