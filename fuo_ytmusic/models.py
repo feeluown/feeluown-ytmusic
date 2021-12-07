@@ -428,7 +428,6 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
 
 class YtmusicPlaylistModel(PlaylistModel):
     provider = None
-    source = 'ytmusic'
 
     class Meta:
         allow_create_songs_g = True
@@ -444,19 +443,21 @@ class YtmusicPlaylistModel(PlaylistModel):
         total_count = playlist.trackCount
 
         def g():
+            counter = 0
             offset = 0
             per = 50
             while offset < total_count:
                 end = min(offset + per, total_count)
-                if end + 50 <= offset:
-                    break
                 data: PlaylistInfo = self.provider.service.playlist_info(self.identifier, limit=end)
                 tracks_data = data.tracks
                 for track_data in tracks_data:
                     if track_data.videoId is not None and track_data.videoId in self._fetched_tracks:
                         continue
                     self._fetched_tracks.add(track_data.videoId)
+                    counter += 1
                     yield track_data.model()
+                if counter >= total_count:
+                    break
                 offset += per
             self._fetched_tracks.clear()
 
@@ -465,8 +466,23 @@ class YtmusicPlaylistModel(PlaylistModel):
 
 class YtmusicAlbumModel(AlbumModel):
     provider = None
-    source = 'ytmusic'
 
     @classmethod
     def get(cls, identifier: str) -> 'YtmusicAlbumModel':
         return cls.provider.album_info(identifier)
+
+#
+# class YtmusicArtistModel(ArtistModel):
+#     class Meta:
+#         allow_create_songs_g = True
+#         allow_create_albums_g = True
+#
+#     @classmethod
+#     def get(cls, identifier) -> 'YtmusicArtistModel':
+#         pass
+#
+#     def create_songs_g(self):
+#         pass
+#
+#     def create_albums_g(self):
+#         pass
