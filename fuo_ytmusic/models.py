@@ -89,7 +89,7 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
         name: str
 
         def model(self) -> 'YtmusicAlbumModel':
-            album = YtmusicAlbumModel(identifier=self.id or '', name=self.name)
+            album = YtmusicAlbumModel(identifier=self.id or '', source=self.source, name=self.name)
             if self.id is None:
                 album.state = ModelState.not_exists
             return album
@@ -114,7 +114,7 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
                 # noinspection PyProtectedMember
                 song.album = album._model()
             else:
-                song.album = YtmusicAlbumModel(identifier='', name='', state=ModelState.not_exists)
+                song.album = YtmusicAlbumModel(identifier='', source=self.source, name='', state=ModelState.not_exists)
         if self.videoId is None:
             song.state = ModelState.not_exists
         return song
@@ -142,7 +142,7 @@ class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMix
         return AlbumType.standard
 
     def model(self) -> 'YtmusicAlbumModel':
-        return YtmusicAlbumModel(identifier=self.browseId, name=self.title, type=self.album_type,
+        return YtmusicAlbumModel(identifier=self.browseId, source=self.source, name=self.title, type=self.album_type,
                                  cover=self.cover, artists=self.artists_model)
 
 
@@ -167,7 +167,7 @@ class YtmusicSearchPlaylist(YtmusicSearchBase, YtmusicCoverMixin):
     browseId: str  # 查询ID
 
     def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.browseId, name=self.title, cover=self.cover)
+        return YtmusicPlaylistModel(identifier=self.browseId, source=self.source, name=self.title, cover=self.cover)
 
 
 class YtmusicSearchVideo(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin, YtmusicDurationMixin):
@@ -241,7 +241,7 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     tracks: List[YtmusicSearchSong]  # 专辑歌曲
 
     def _model(self, id_: str = None):
-        return YtmusicAlbumModel(identifier=id_, name=self.title, type=self.type, cover=self.cover)
+        return YtmusicAlbumModel(identifier=id_, source=self.source, name=self.title, type=self.type, cover=self.cover)
 
     def model(self, id_: str = None) -> 'YtmusicAlbumModel':
         result = self._model(id_)
@@ -356,7 +356,7 @@ class PlaylistNestedResult(BaseModel, YtmusicCoverMixin):
     playlistId: str
 
     def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.playlistId, name=self.title, cover=self.cover)
+        return YtmusicPlaylistModel(identifier=self.playlistId, source=self.source, name=self.title, cover=self.cover)
 
 
 class UserInfo(BaseModel):
@@ -420,7 +420,7 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     tracks: List[YtmusicLibrarySong]
 
     def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.id, name=self.title, cover=self.cover)
+        return YtmusicPlaylistModel(identifier=self.id, source=self.source, name=self.title, cover=self.cover)
 
 
 # FeelUOwn models
@@ -430,6 +430,7 @@ class YtmusicPlaylistModel(PlaylistModel):
     provider = None
 
     class Meta:
+        fields = ['source']
         allow_create_songs_g = True
 
     @classmethod
@@ -466,6 +467,9 @@ class YtmusicPlaylistModel(PlaylistModel):
 
 class YtmusicAlbumModel(AlbumModel):
     provider = None
+
+    class Meta:
+        fields = ['source']
 
     @classmethod
     def get(cls, identifier: str) -> 'YtmusicAlbumModel':

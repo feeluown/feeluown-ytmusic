@@ -23,6 +23,7 @@ types-cachetools = '*'
 PyQt5 = "^5.15.6"
 ipython = "*"
 PyQtWebEngine = "^5.15.5"
+fuo-netease = "^0.8"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
