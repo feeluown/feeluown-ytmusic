@@ -7,7 +7,7 @@ from pydantic.fields import Field
 from pydantic.main import ModelMetaclass
 
 from feeluown.media import Quality
-from feeluown.library import SongModel, BriefArtistModel, VideoModel, ModelState
+from feeluown.library import SongModel, VideoModel, ModelState, BriefArtistModel
 from feeluown.models import AlbumModel, AlbumType, ArtistModel, PlaylistModel
 
 from fuo_ytmusic.timeparse import timeparse
@@ -38,17 +38,25 @@ class SearchNestedArtist(BaseModel):
     id: str
     name: str
 
-    def model(self) -> BriefArtistModel:
-        return BriefArtistModel(identifier=self.id or '', source=self.source, name=self.name)
+    def model(self) -> 'YtmusicArtistModel':
+        return YtmusicArtistModel(identifier=self.id or '', source=self.source, name=self.name or '')
+
+    def brief_model(self) -> BriefArtistModel:
+        return BriefArtistModel(identifier=self.id or '', source=self.source, name=self.name or '')
 
 
 class YtmusicArtistsMixin:
     artists: List[SearchNestedArtist]  # 歌手信息
 
     @property
-    def artists_model(self) -> Optional[List[BriefArtistModel]]:
+    def artists_model(self) -> Optional[List['YtmusicArtistModel']]:
         if self.artists is not None:
             return [artist.model() for artist in self.artists]
+        return None
+
+    def brief_artists_model(self) -> Optional[List[BriefArtistModel]]:
+        if self.artists is not None:
+            return [artist.brief_model() for artist in self.artists]
         return None
 
 
@@ -102,7 +110,7 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
     isExplicit: bool
 
     def model(self, album: 'AlbumInfo' = None, artists=None) -> SongModel:
-        artists_ = self.artists_model
+        artists_ = self.brief_artists_model()
         if artists_ is None and artists is not None:
             artists_ = artists
         song = SongModel(identifier=self.videoId or '', source=self.source, title=self.title,
@@ -418,9 +426,35 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     duration: str
     trackCount: int
     tracks: List[YtmusicLibrarySong]
+    fetched_tracks: set = Field(default_factory=set)
 
     def model(self) -> 'YtmusicPlaylistModel':
         return YtmusicPlaylistModel(identifier=self.id, source=self.source, name=self.title, cover=self.cover)
+
+    def reader(self, provider) -> SequentialReader:
+        total_count = self.trackCount
+        self.fetched_tracks = set()
+
+        def g():
+            counter = 0
+            offset = 0
+            per = 50
+            while offset < total_count:
+                end = min(offset + per, total_count)
+                data: PlaylistInfo = provider.service.playlist_info(self.id, limit=end)
+                tracks_data = data.tracks
+                for track_data in tracks_data:
+                    if track_data.videoId is not None and track_data.videoId in self.fetched_tracks:
+                        continue
+                    self.fetched_tracks.add(track_data.videoId)
+                    counter += 1
+                    yield track_data.model()
+                if counter >= total_count:
+                    break
+                offset += per
+            self.fetched_tracks.clear()
+
+        return SequentialReader(g(), total_count)
 
 
 # FeelUOwn models
@@ -438,31 +472,8 @@ class YtmusicPlaylistModel(PlaylistModel):
         return cls.provider.playlist_info(identifier)
 
     def create_songs_g(self):
-        # noinspection PyAttributeOutsideInit
-        self._fetched_tracks = set()
         playlist: PlaylistInfo = self.provider.service.playlist_info(self.identifier)
-        total_count = playlist.trackCount
-
-        def g():
-            counter = 0
-            offset = 0
-            per = 50
-            while offset < total_count:
-                end = min(offset + per, total_count)
-                data: PlaylistInfo = self.provider.service.playlist_info(self.identifier, limit=end)
-                tracks_data = data.tracks
-                for track_data in tracks_data:
-                    if track_data.videoId is not None and track_data.videoId in self._fetched_tracks:
-                        continue
-                    self._fetched_tracks.add(track_data.videoId)
-                    counter += 1
-                    yield track_data.model()
-                if counter >= total_count:
-                    break
-                offset += per
-            self._fetched_tracks.clear()
-
-        return SequentialReader(g(), total_count)
+        return playlist.reader(self.provider)
 
 
 class YtmusicAlbumModel(AlbumModel):
@@ -475,18 +486,30 @@ class YtmusicAlbumModel(AlbumModel):
     def get(cls, identifier: str) -> 'YtmusicAlbumModel':
         return cls.provider.album_info(identifier)
 
-#
-# class YtmusicArtistModel(ArtistModel):
-#     class Meta:
-#         allow_create_songs_g = True
-#         allow_create_albums_g = True
-#
-#     @classmethod
-#     def get(cls, identifier) -> 'YtmusicArtistModel':
-#         pass
-#
-#     def create_songs_g(self):
-#         pass
-#
-#     def create_albums_g(self):
-#         pass
+
+class YtmusicArtistModel(ArtistModel):
+    provider = None
+
+    class Meta:
+        fields = ['source']
+        allow_create_songs_g = True
+
+    @classmethod
+    def get(cls, identifier: str) -> 'YtmusicArtistModel':
+        return cls.provider.artist_info(identifier)
+
+    def create_songs_g(self):
+        artist: ArtistInfo = self.provider.service.artist_info(self.identifier)
+        playlist: PlaylistInfo = self.provider.service.playlist_info(artist.songs.browseId)
+        return playlist.reader(self.provider)
+
+    @property
+    def albums(self):
+        artist: ArtistInfo = self.provider.service.artist_info(self.identifier)
+        albums: List[YtmusicSearchAlbum] = self.provider.service.artist_albums(artist.albums.browseId,
+                                                                               artist.albums.params)
+        return [album.model() for album in albums]
+
+    @albums.setter
+    def albums(self, _):
+        pass

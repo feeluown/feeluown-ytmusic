@@ -8,7 +8,7 @@ from feeluown.models import SearchType, SearchModel, ArtistModel
 from feeluown.library.model_protocol import BriefSongProtocol
 
 from fuo_ytmusic.consts import HEADER_FILE
-from fuo_ytmusic.models import YtmusicPlaylistModel, Categories, YtmusicAlbumModel
+from fuo_ytmusic.models import YtmusicPlaylistModel, Categories, YtmusicAlbumModel, YtmusicArtistModel
 from fuo_ytmusic.service import YtmusicService, YtmusicType
 
 
@@ -21,6 +21,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         self._user = None
         YtmusicPlaylistModel.provider = self
         YtmusicAlbumModel.provider = self
+        YtmusicArtistModel.provider = self
 
     # noinspection PyPep8Naming
     class meta:
@@ -30,6 +31,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric),
             ModelType.video: Pf.multi_quality,
             ModelType.album: Pf.get,
+            ModelType.artist: Pf.get,
         }
 
     @property
