@@ -161,7 +161,7 @@ class YtmusicSearchArtist(YtmusicSearchBase, YtmusicCoverMixin):
     browseId: str  # 查询ID
 
     def model(self) -> ArtistModel:
-        return ArtistModel(identifier=self.browseId, source=self.source, name=self.artist, cover=self.cover or '')
+        return YtmusicArtistModel(identifier=self.browseId, source=self.source, name=self.artist, cover=self.cover or '')
 
 
 class YtmusicLibraryArtist(YtmusicSearchArtist):
