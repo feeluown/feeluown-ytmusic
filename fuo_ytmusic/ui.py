@@ -8,6 +8,8 @@ from feeluown.uimodels.playlist import PlaylistUiManager
 from feeluown.uimodels.provider import ProviderUiManager
 
 from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
+from .page_explore import render as explore_render
+from .page_fav import render as fav_render
 
 
 class YtmusicUiManager:
@@ -23,10 +25,8 @@ class YtmusicUiManager:
         )
         self._pvd_item.clicked.connect(self.login_or_show)
         self._pvd_uimgr.add_item(self._pvd_item)
-        from .page_fav import render as fav_render
-        from .page_explore import render as explore_render
-        app.browser.route('/providers/ytmusic/fav')(fav_render)
-        app.browser.route('/providers/ytmusic/explore')(explore_render)
+        self._app.browser.route('/providers/ytmusic/fav')(fav_render)
+        self._app.browser.route('/providers/ytmusic/explore')(explore_render)
 
     def login_or_show(self):
         if self._provider.user is None:
@@ -34,6 +34,8 @@ class YtmusicUiManager:
             dialog.login_succeed.connect(lambda: asyncio.ensure_future(self.load_user()))
             dialog.show()
             dialog.autologin()
+        else:
+            asyncio.ensure_future(self.load_user())
 
     async def load_user(self):
         user = self._provider.user
