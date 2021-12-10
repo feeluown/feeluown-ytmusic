@@ -70,6 +70,10 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def playlist_info(self, identifier) -> YtmusicPlaylistModel:
         return self.service.playlist_info(identifier, limit=0).model()
 
+    def category_playlists(self, params):
+        playlists = self.service.category_playlists(params)
+        return [p.model() for p in playlists]
+
     def album_info(self, identifier) -> YtmusicAlbumModel:
         return self.service.album_info(identifier).model(id_=identifier)
 
