@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from pathlib import Path
 
 from feeluown.gui.widgets.login import CookiesLoginDialog
@@ -8,7 +9,11 @@ from feeluown.uimodels.playlist import PlaylistUiManager
 from feeluown.uimodels.provider import ProviderUiManager
 
 from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
-from .page_explore import render as explore_render
+
+if os.environ.get('FUO_YTMUSIC_USE_QML'):
+    from .page_explore_qml import render as explore_render
+else:
+    from .page_explore import render as explore_render
 from .page_fav import render as fav_render
 
 
