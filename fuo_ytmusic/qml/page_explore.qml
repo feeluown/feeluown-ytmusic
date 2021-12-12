@@ -49,7 +49,10 @@ ScrollView {
                         text: modelData.title
                         checkable: true
                         ButtonGroup.group: categoryGroup
-                        onClicked: playlists.model = explore_backend.load_playlists(params)
+                        onClicked: {
+                            categoryBusy.running = true
+                            playlists.model = explore_backend.load_playlists(params)
+                        }
                     }
                 }
             }
@@ -67,7 +70,10 @@ ScrollView {
                         text: modelData.title
                         checkable: true
                         ButtonGroup.group: categoryGroup
-                        onClicked: playlists.model = explore_backend.load_playlists(params)
+                        onClicked: {
+                            categoryBusy.running = true
+                            playlists.model = explore_backend.load_playlists(params)
+                        }
                     }
                 }
             }
@@ -85,13 +91,17 @@ ScrollView {
                         text: modelData.title
                         checkable: true
                         ButtonGroup.group: categoryGroup
-                        onClicked: playlists.model = explore_backend.load_playlists(params)
+                        onClicked: {
+                            categoryBusy.running = true
+                            playlists.model = explore_backend.load_playlists(params)
+                        }
                     }
                 }
             }
 
             Component.onCompleted: {
                 explore_backend.categoriesLoaded.connect(categoriesLoaded)
+                categoryBusy.running = true
                 explore_backend.load_categories()
             }
 
@@ -99,6 +109,7 @@ ScrollView {
                 forYou.model = categories.forYou
                 moods.model = categories.moods
                 genres.model = categories.genres
+                categoryBusy.running = false
             }
         }
 
@@ -141,8 +152,15 @@ ScrollView {
             }
         }
 
+        BusyIndicator {
+            id: categoryBusy
+            running: false
+            Layout.alignment: Qt.AlignHCenter
+        }
+
         function playlistsLoaded(ps) {
             playlists.model = ps
+            categoryBusy.running = false
         }
 
         Component.onCompleted: {
