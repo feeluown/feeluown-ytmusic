@@ -114,10 +114,13 @@ ScrollView {
         }
 
          Flow {
+            property int rowPadding: (width + spacing) % (120 + spacing)
+
             id: playlistsFlow
             spacing: 10
             Layout.fillWidth: true
             Layout.topMargin: 1
+            leftPadding: rowPadding / 2
 
             Repeater {
                 id: playlists
