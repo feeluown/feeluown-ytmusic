@@ -49,7 +49,7 @@ ScrollView {
                         text: modelData.title
                         checkable: true
                         ButtonGroup.group: categoryGroup
-                        onClicked: playlists.model = explore_backend.category_playlists(params)
+                        onClicked: playlists.model = explore_backend.load_playlists(params)
                     }
                 }
             }
@@ -67,7 +67,7 @@ ScrollView {
                         text: modelData.title
                         checkable: true
                         ButtonGroup.group: categoryGroup
-                        onClicked: playlists.model = explore_backend.category_playlists(params)
+                        onClicked: playlists.model = explore_backend.load_playlists(params)
                     }
                 }
             }
@@ -85,13 +85,17 @@ ScrollView {
                         text: modelData.title
                         checkable: true
                         ButtonGroup.group: categoryGroup
-                        onClicked: playlists.model = explore_backend.category_playlists(params)
+                        onClicked: playlists.model = explore_backend.load_playlists(params)
                     }
                 }
             }
 
             Component.onCompleted: {
-                let categories = explore_backend.categories()
+                explore_backend.categoriesLoaded.connect(categoriesLoaded)
+                explore_backend.load_categories()
+            }
+
+            function categoriesLoaded(categories) {
                 forYou.model = categories.forYou
                 moods.model = categories.moods
                 genres.model = categories.genres
@@ -99,6 +103,7 @@ ScrollView {
         }
 
          Flow {
+            id: playlistsFlow
             spacing: 10
             Layout.fillWidth: true
             Layout.topMargin: 1
@@ -119,10 +124,7 @@ ScrollView {
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: {
-                                console.log(modelData.id)
-                                explore_backend.goto_playlist(modelData.id, modelData.name, modelData.cover)
-                            }
+                            onClicked: explore_backend.goto_playlist(modelData.id, modelData.name, modelData.cover)
                         }
                     }
 
@@ -137,6 +139,14 @@ ScrollView {
                     }
                 }
             }
+        }
+
+        function playlistsLoaded(ps) {
+            playlists.model = ps
+        }
+
+        Component.onCompleted: {
+            explore_backend.playlistsLoaded.connect(playlistsLoaded)
         }
     }
 }
