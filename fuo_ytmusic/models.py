@@ -130,6 +130,7 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
 
 class YtmusicLibrarySong(YtmusicSearchSong):
     likeStatus: str  # LIKE
+    setVideoId: str
 
 
 class YtmusicHistorySong(YtmusicLibrarySong):
@@ -457,6 +458,15 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
         return SequentialReader(g(), total_count)
 
 
+class PlaylistAddItemResponse(BaseModel):
+    class PlaylistEditResult(BaseModel):
+        videoId: str
+        setVideoId: str
+
+    status: str  # STATUS_SUCCEEDED STATUS_FAILED
+    playlistEditResults: List[PlaylistEditResult]
+
+
 # FeelUOwn models
 
 
@@ -474,6 +484,9 @@ class YtmusicPlaylistModel(PlaylistModel):
     def create_songs_g(self):
         playlist: PlaylistInfo = self.provider.service.playlist_info(self.identifier)
         return playlist.reader(self.provider)
+
+    def add(self, song_id):
+        return self.provider.add_playlist_item(self.identifier, song_id)
 
 
 class YtmusicAlbumModel(AlbumModel):

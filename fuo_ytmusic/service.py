@@ -18,7 +18,7 @@ from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
     SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
-    YtmusicHistorySong
+    YtmusicHistorySong, PlaylistAddItemResponse
 from ytmusicapi import YTMusic
 from cachetools.func import ttl_cache
 
@@ -168,6 +168,14 @@ class YtmusicService(metaclass=Singleton):
                 return self._get_stream_url(f, video_id)
         return None
 
+    def add_playlist_items(self, playlist_id: str, video_ids: List[str] = None, source_playlist_id: str = None)\
+            -> PlaylistAddItemResponse:
+        return PlaylistAddItemResponse(**self.api.add_playlist_items(playlist_id, video_ids, source_playlist_id))
+
+    def remove_playlist_items(self, playlist_id: str, video_ids: List[dict]) -> Optional[str]:
+        # STATUS_SUCCEEDED STATUS_FAILED
+        return self.api.remove_playlist_items(playlist_id, video_ids)
+
     def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str, retry=True) -> Optional[str]:
         if f.url is not None and f.url != '':
             return f.url
@@ -203,4 +211,4 @@ if __name__ == '__main__':
     import json
 
     service = YtmusicService()
-    print(service.song_info('U0XcqF7rqHk'))
+    print(service.playlist_info('PL4MgtK839siX85Fw8mDhuA0rdeEBXC4X_'))

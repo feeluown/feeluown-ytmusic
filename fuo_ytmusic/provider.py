@@ -70,6 +70,16 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def playlist_info(self, identifier) -> YtmusicPlaylistModel:
         return self.service.playlist_info(identifier, limit=0).model()
 
+    def add_playlist_item(self, identifier, song_id) -> bool:
+        result = self.service.add_playlist_items(identifier, [song_id])
+        return result.status == 'STATUS_SUCCEEDED'
+
+    def remove_playlist_item(self, identifier, song_id, set_song_id) -> bool:
+        return self.service.remove_playlist_items(identifier, [{
+            'videoId': song_id,
+            'setVideoId': set_song_id,
+        }]) == 'STATUS_SUCCEEDED'
+
     def category_playlists(self, params):
         playlists = self.service.category_playlists(params)
         return [p.model() for p in playlists]
