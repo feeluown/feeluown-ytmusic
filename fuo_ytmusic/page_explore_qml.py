@@ -1,18 +1,21 @@
+import os
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QUrl, QObject, pyqtProperty
+from PyQt5.QtCore import Qt, QUrl, QObject, pyqtProperty, pyqtSlot
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWidgets import QWidget
 
 from fuo_ytmusic import YtmusicProvider
+from fuo_ytmusic.models import YtmusicPlaylistModel
 
 
 class ExploreBackend(QObject):
-    def __init__(self, provider: YtmusicProvider):
+    def __init__(self, provider: YtmusicProvider, app):
         super().__init__()
         self._provider = provider
+        self._app = app
 
-    @pyqtProperty('QVariantMap', constant=True)
+    @pyqtSlot(result='QVariantMap')
     def categories(self) -> dict:
         result = dict()
         categories = self._provider.categories()
@@ -21,12 +24,22 @@ class ExploreBackend(QObject):
         result['genres'] = [{'title': c.title, 'params': c.params} for c in categories.genres]
         return result
 
+    @pyqtSlot(str, result='QVariantList')
+    def category_playlists(self, params: str):
+        playlists = self._provider.service.category_playlists(params)
+        return [{'id': p.playlistId, 'name': p.title, 'cover': p.cover} for p in playlists]
+
+    @pyqtSlot(str, str, str)
+    def goto_playlist(self, playlist_id: str, name: str, cover: str):
+        model = YtmusicPlaylistModel(identifier=playlist_id, source='ytmusic', name=name, cover=cover)
+        self._app.browser.goto(model=model)
+
 
 async def render(req, **_):
     app = req.ctx['app']
     provider = app.library.get('ytmusic')
     view = QQuickView()
-    app._ytmusic_explore_backend = ExploreBackend(provider)
+    app._ytmusic_explore_backend = ExploreBackend(provider, app)
     # noinspection PyProtectedMember
     view.rootContext().setContextProperty('explore_backend', app._ytmusic_explore_backend)
     container = QWidget.createWindowContainer(view, app.ui.right_panel)
