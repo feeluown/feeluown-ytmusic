@@ -5,7 +5,7 @@ packages = \
 ['fuo_ytmusic']
 
 package_data = \
-{'': ['*'], 'fuo_ytmusic': ['assets/*']}
+{'': ['*'], 'fuo_ytmusic': ['assets/*', 'qml/*', 'qml/dummydata/*']}
 
 install_requires = \
 ['cachetools', 'feeluown>=3.7.13', 'pydantic', 'pytube', 'ytmusicapi']
