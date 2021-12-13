@@ -74,23 +74,28 @@ class ExploreRenderer(TabBarRendererMixin):
         app._xx_renderer = self
         self._ytmusic_explore_backend = backend
 
+        # TODO: maybe add a seperate function to do tab initialization.
         # Initialize tabs.
         self.tabs = []
         flows = ['forYou', 'moods', 'genres']
         for key, data in categories.items():
             flow_index = flows.index(key)
             self.tabs.append((key, flow_index))
+        # Calculate the right tab(flow) index because tab_index can be invalid.
+        # For example, tab_index is 0 by default. When forYou has no data, the tab_index
+        # should be changed into another.
         for key, flow_index in self.tabs:
             if flow_index == tab_index:
-                real_tab_index = flow_index
+                valid_tab_index = flow_index
                 tab_data = categories[key]
                 break
         else:
             key, flow_index = self.tabs[0]
-            real_tab_index = flow_index
+            valid_tab_index = flow_index
             tab_data = categories[key]
 
-        self.tab_index = real_tab_index
+        # Now, tab_index and tab_data are ready.
+        self.tab_index = valid_tab_index
         self.tab_data = tab_data
 
     async def render(self):
