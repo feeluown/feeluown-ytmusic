@@ -47,10 +47,15 @@ class ExploreBackend(QObject):
         model = YtmusicPlaylistModel(identifier=playlist_id, source='ytmusic', name=name, cover=cover)
         self._app.browser.goto(model=model)
 
+    @pyqtProperty(bool)
+    def is_dark(self) -> bool:
+        return self._app.config.THEME == 'dark'
+
 
 async def render(req, **_):
     app = req.ctx['app']
     provider = app.library.get('ytmusic')
+    os.environ['QT_QUICK_CONTROLS_STYLE'] = 'Material'
     view = QQuickView()
     app._ytmusic_explore_backend = ExploreBackend(provider, app)
     # noinspection PyProtectedMember

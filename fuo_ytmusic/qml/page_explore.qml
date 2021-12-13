@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtQuick.Controls.Material 2.15
 import QtQuick.Layouts 1.15
 
 ScrollView {
@@ -8,6 +9,12 @@ ScrollView {
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
     ScrollBar.vertical.policy: ScrollBar.AsNeeded
     contentWidth: availableWidth
+
+    Material.theme: Material.Dark
+
+    background: Rectangle {
+        color: Material.background
+    }
 
     ColumnLayout {
         spacing: 10
@@ -150,6 +157,7 @@ ScrollView {
                         clip: true
                         Layout.preferredWidth: 120
                         horizontalAlignment: Text.AlignHCenter
+                        color: Material.foreground
                     }
                 }
             }
