@@ -23,7 +23,7 @@ class ExploreBackend(QObject):
         loop = asyncio.get_event_loop()
         categories = await loop.run_in_executor(None, self._provider.categories)
         result = dict()
-        result['forYou'] = [{'title': c.title, 'params': c.params} for c in categories.forYou]
+        result['forYou'] = [{'title': c.title, 'params': c.params} for c in categories.forYou or []]
         result['moods'] = [{'title': c.title, 'params': c.params} for c in categories.moods]
         result['genres'] = [{'title': c.title, 'params': c.params} for c in categories.genres]
         self.categoriesLoaded.emit(result)
@@ -49,7 +49,7 @@ class ExploreBackend(QObject):
 
     @pyqtProperty(bool, constant=True)
     def is_dark(self) -> bool:
-        return self._app.config.THEME == 'dark'
+        return self._app.theme_mgr.theme == 'dark'
 
 
 async def render(req, **_):
