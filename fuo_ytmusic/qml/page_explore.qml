@@ -10,7 +10,7 @@ ScrollView {
     ScrollBar.vertical.policy: ScrollBar.AsNeeded
     contentWidth: availableWidth
 
-    Material.theme: explore_backend.is_dark ? Material.Dark : Material.Light
+    Material.theme: (explore_backend && explore_backend.is_dark) ? Material.Dark : Material.Light
 
     background: Rectangle {
         color: Material.background
@@ -24,15 +24,14 @@ ScrollView {
             id: categoryBar
             Layout.fillWidth: true
 
-            TabButton {
-                text: qsTr("For You")
+            Repeater {
+                id: categoriesTab
+                model: []
+                delegate: TabButton {
+                    text: modelData
+                }
             }
-            TabButton {
-                text: qsTr("Moods")
-            }
-            TabButton {
-                text: qsTr("Genres")
-            }
+
         }
 
         StackLayout {
@@ -43,64 +42,25 @@ ScrollView {
                 id: categoryGroup
             }
 
-            Flow {
-                spacing: 6
-                Layout.fillWidth: true
+            Repeater {
+                id: categoriesData
+                model: []
+                Flow {
+                    spacing: 6
+                    Layout.fillWidth: true
 
-                Repeater {
-                    id: forYou
-                    model: []
-                    delegate: Button {
-                        property string params: modelData.params
-                        flat: true
-                        text: modelData.title
-                        checkable: true
-                        ButtonGroup.group: categoryGroup
-                        onClicked: {
-                            categoryBusy.running = true
-                            playlists.model = explore_backend.load_playlists(params)
-                        }
-                    }
-                }
-            }
-
-            Flow {
-                spacing: 6
-                Layout.fillWidth: true
-
-                Repeater {
-                    id: moods
-                    model: []
-                    delegate: Button {
-                        property string params: modelData.params
-                        flat: true
-                        text: modelData.title
-                        checkable: true
-                        ButtonGroup.group: categoryGroup
-                        onClicked: {
-                            categoryBusy.running = true
-                            playlists.model = explore_backend.load_playlists(params)
-                        }
-                    }
-                }
-            }
-
-            Flow {
-                spacing: 6
-                Layout.fillWidth: true
-
-                Repeater {
-                    id: genres
-                    model: []
-                    delegate: Button {
-                        property string params: modelData.params
-                        flat: true
-                        text: modelData.title
-                        checkable: true
-                        ButtonGroup.group: categoryGroup
-                        onClicked: {
-                            categoryBusy.running = true
-                            playlists.model = explore_backend.load_playlists(params)
+                    Repeater {
+                        model: modelData
+                        delegate: Button {
+                            property string params: modelData.params
+                            flat: true
+                            text: modelData.title
+                            checkable: true
+                            ButtonGroup.group: categoryGroup
+                            onClicked: {
+                                categoryBusy.running = true
+                                playlists.model = explore_backend.load_playlists(params)
+                            }
                         }
                     }
                 }
@@ -113,9 +73,15 @@ ScrollView {
             }
 
             function categoriesLoaded(categories) {
-                forYou.model = categories.forYou
-                moods.model = categories.moods
-                genres.model = categories.genres
+                console.log(categories)
+                var tabs = []
+                var datas = []
+                for (var i = 0; i < categories.length; i++) {
+                    tabs.push(categories[i].key)
+                    datas.push(categories[i].value)
+                }
+                categoriesTab.model = tabs
+                categoriesData.model = datas
                 categoryBusy.running = false
             }
         }

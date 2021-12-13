@@ -11,7 +11,7 @@ from fuo_ytmusic.models import YtmusicPlaylistModel
 
 
 class ExploreBackend(QObject):
-    categoriesLoaded = pyqtSignal('QVariantMap')
+    categoriesLoaded = pyqtSignal('QVariantList')
     playlistsLoaded = pyqtSignal('QVariantList')
 
     def __init__(self, provider: YtmusicProvider, app):
@@ -22,10 +22,9 @@ class ExploreBackend(QObject):
     async def categories(self):
         loop = asyncio.get_event_loop()
         categories = await loop.run_in_executor(None, self._provider.categories)
-        result = dict()
-        result['forYou'] = [{'title': c.title, 'params': c.params} for c in categories.forYou]
-        result['moods'] = [{'title': c.title, 'params': c.params} for c in categories.moods]
-        result['genres'] = [{'title': c.title, 'params': c.params} for c in categories.genres]
+        result = [{'key': category.key,
+                   'value': [{'title': playlist.title, 'params': playlist.params} for playlist in category.value]} for
+                  category in categories]
         self.categoriesLoaded.emit(result)
 
     async def playlists(self, params: str):

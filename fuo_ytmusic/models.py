@@ -388,9 +388,8 @@ class Categories(BaseModel):
         title: str
         params: str
 
-    forYou: List[Category] = Field(alias="For you")
-    moods: List[Category] = Field(alias="Moods & moments")
-    genres: List[Category] = Field(alias="Genres")
+    key: str
+    value: List[Category]
 
 
 class TopCharts(BaseModel):

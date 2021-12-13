@@ -87,7 +87,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def album_info(self, identifier) -> YtmusicAlbumModel:
         return self.service.album_info(identifier).model(id_=identifier)
 
-    def categories(self) -> Categories:
+    def categories(self) -> List[Categories]:
         return self.service.categories()
 
     def user_from_cookie(self, _):

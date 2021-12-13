@@ -110,8 +110,8 @@ class YtmusicService(metaclass=Singleton):
         return SongInfo(**self.api.get_song(video_id, self._signature_timestamp))
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
-    def categories(self) -> Categories:
-        return Categories(**self.api.get_mood_categories())
+    def categories(self) -> List[Categories]:
+        return [Categories(key=k, value=v) for k, v in self.api.get_mood_categories().items()]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def category_playlists(self, params: str) -> List[PlaylistNestedResult]:
