@@ -20,24 +20,9 @@ ScrollView {
         spacing: 10
         anchors.fill: parent
 
-        TabBar {
-            id: categoryBar
-            Layout.fillWidth: true
-
-            TabButton {
-                text: qsTr("For You")
-            }
-            TabButton {
-                text: qsTr("Moods")
-            }
-            TabButton {
-                text: qsTr("Genres")
-            }
-        }
-
         StackLayout {
             Layout.fillWidth: true
-            currentIndex: categoryBar.currentIndex
+            currentIndex: 2
 
             ButtonGroup {
                 id: categoryGroup
@@ -105,19 +90,14 @@ ScrollView {
                     }
                 }
             }
-
             Component.onCompleted: {
-                explore_backend.categoriesLoaded.connect(categoriesLoaded)
-                categoryBusy.running = true
-                explore_backend.load_categories()
-            }
-
-            function categoriesLoaded(categories) {
-                forYou.model = categories.forYou
-                moods.model = categories.moods
-                genres.model = categories.genres
-                categoryBusy.running = false
-            }
+                // HELP: how to get model data?
+                forYou.model = explore_backend.tab_data
+                moods.model = explore_backend.tab_data
+                genres.model = explore_backend.tab_data
+                console.log(explore_backend.tab_data)
+                console.log(explore_backend.tab_data[0].title)
+            }            
         }
 
          Flow {

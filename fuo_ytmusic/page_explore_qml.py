@@ -10,6 +10,9 @@ from fuo_ytmusic import YtmusicProvider
 from fuo_ytmusic.models import YtmusicPlaylistModel
 
 
+from feeluown.gui.base_renderer import TabBarRendererMixin
+
+
 class ExploreBackend(QObject):
     categoriesLoaded = pyqtSignal('QVariantMap')
     playlistsLoaded = pyqtSignal('QVariantList')
@@ -23,10 +26,11 @@ class ExploreBackend(QObject):
         loop = asyncio.get_event_loop()
         categories = await loop.run_in_executor(None, self._provider.categories)
         result = dict()
-        result['forYou'] = [{'title': c.title, 'params': c.params} for c in categories.forYou]
+        if categories.forYou:
+            result['forYou'] = [{'title': c.title, 'params': c.params} for c in categories.forYou]
         result['moods'] = [{'title': c.title, 'params': c.params} for c in categories.moods]
         result['genres'] = [{'title': c.title, 'params': c.params} for c in categories.genres]
-        self.categoriesLoaded.emit(result)
+        return result
 
     async def playlists(self, params: str):
         loop = asyncio.get_event_loop()
@@ -49,19 +53,63 @@ class ExploreBackend(QObject):
 
     @pyqtProperty(bool, constant=True)
     def is_dark(self) -> bool:
-        return self._app.config.THEME == 'dark'
+        return self._app.theme_mgr.theme == 'dark'
 
 
 async def render(req, **_):
     app = req.ctx['app']
     provider = app.library.get('ytmusic')
-    os.environ['QT_QUICK_CONTROLS_STYLE'] = 'Material'
-    view = QQuickView()
-    app._ytmusic_explore_backend = ExploreBackend(provider, app)
-    # noinspection PyProtectedMember
-    view.rootContext().setContextProperty('explore_backend', app._ytmusic_explore_backend)
-    container = QWidget.createWindowContainer(view, app.ui.right_panel)
-    container.setFocusPolicy(Qt.TabFocus)
-    view.setResizeMode(QQuickView.SizeRootObjectToView)
-    view.setSource(QUrl.fromLocalFile((Path(__file__).parent / 'qml' / 'page_explore.qml').as_posix()))
-    app.ui.right_panel.set_body(container)
+        
+    tab_index = int(req.query.get('tab_index', 0))
+    backend = ExploreBackend(provider, app)
+    categories = await backend.categories()
+    renderer = ExploreRenderer(app, tab_index, categories, backend)
+    await renderer.render()
+
+
+class ExploreRenderer(TabBarRendererMixin):
+
+    def __init__(self, app, tab_index, categories, backend):
+        self._app = app
+        app._xx_renderer = self
+        self._ytmusic_explore_backend = backend
+
+        # Initialize tabs.
+        self.tabs = []
+        flows = ['forYou', 'moods', 'genres']
+        for key, data in categories.items():
+            flow_index = flows.index(key)
+            self.tabs.append((key, flow_index))
+        for key, flow_index in self.tabs:
+            if flow_index == tab_index:
+                real_tab_index = flow_index
+                tab_data = categories[key]
+                break
+        else:
+            key, flow_index = self.tabs[0]
+            real_tab_index = flow_index
+            tab_data = categories[key]
+
+        self.tab_index = real_tab_index
+        self.tab_data = tab_data
+
+    async def render(self):
+        self.render_tab_bar()
+
+        os.environ['QT_QUICK_CONTROLS_STYLE'] = 'Material'
+        view = QQuickView()
+        view.rootContext().setContextProperty('explore_backend', self._ytmusic_explore_backend)
+        view.rootContext().setContextProperty('flow_index', self.tab_index)
+        # HELP: I don't know how to pass tab_data to qml. 
+        self._ytmusic_explore_backend._tab_data = self.tab_data
+        # view.rootContext().setContextProperty('flow_data', Model([self.tab_data]))
+        container = QWidget.createWindowContainer(view, self._app.ui.right_panel)
+        container.setFocusPolicy(Qt.TabFocus)
+        view.setResizeMode(QQuickView.SizeRootObjectToView)
+        view.setSource(QUrl.fromLocalFile((Path(__file__).parent / 'qml' / 'page_explore.qml').as_posix()))
+        
+        self._app.ui.right_panel.set_body(container)
+
+    def render_by_tab_index(self, tab_index):
+        self._app.browser.goto(page='/providers/ytmusic/explore',
+                               query={'tab_index': tab_index})
