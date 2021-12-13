@@ -10,7 +10,7 @@ ScrollView {
     ScrollBar.vertical.policy: ScrollBar.AsNeeded
     contentWidth: availableWidth
 
-    Material.theme: Material.Dark
+    Material.theme: explore_backend.is_dark ? Material.Dark : Material.Light
 
     background: Rectangle {
         color: Material.background

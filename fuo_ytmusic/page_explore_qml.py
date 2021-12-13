@@ -47,7 +47,7 @@ class ExploreBackend(QObject):
         model = YtmusicPlaylistModel(identifier=playlist_id, source='ytmusic', name=name, cover=cover)
         self._app.browser.goto(model=model)
 
-    @pyqtProperty(bool)
+    @pyqtProperty(bool, constant=True)
     def is_dark(self) -> bool:
         return self._app.config.THEME == 'dark'
 
