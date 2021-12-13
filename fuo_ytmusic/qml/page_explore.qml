@@ -22,7 +22,7 @@ ScrollView {
 
         StackLayout {
             Layout.fillWidth: true
-            currentIndex: 2
+            currentIndex: flow_index
 
             ButtonGroup {
                 id: categoryGroup
@@ -91,13 +91,18 @@ ScrollView {
                 }
             }
             Component.onCompleted: {
-                // HELP: how to get model data?
-                forYou.model = explore_backend.tab_data
-                moods.model = explore_backend.tab_data
-                genres.model = explore_backend.tab_data
-                console.log(explore_backend.tab_data)
-                console.log(explore_backend.tab_data[0].title)
+                explore_backend.hacked.connect(categoriesLoaded)                
+                categoryBusy.running = true
+                explore_backend.hack()
             }            
+
+            function categoriesLoaded(categories) {
+                forYou.model = categories.forYou
+                moods.model = categories.moods
+                genres.model = categories.genres
+                categoryBusy.running = false
+            }
+
         }
 
          Flow {
