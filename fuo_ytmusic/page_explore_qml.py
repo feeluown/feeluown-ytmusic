@@ -23,7 +23,7 @@ class ExploreBackend(QObject):
         loop = asyncio.get_event_loop()
         categories = await loop.run_in_executor(None, self._provider.categories)
         result = dict()
-        result['forYou'] = [{'title': c.title, 'params': c.params} for c in categories.forYou or []]
+        result['forYou'] = [{'title': c.title, 'params': c.params} for c in categories.forYou]
         result['moods'] = [{'title': c.title, 'params': c.params} for c in categories.moods]
         result['genres'] = [{'title': c.title, 'params': c.params} for c in categories.genres]
         self.categoriesLoaded.emit(result)
