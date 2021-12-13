@@ -48,7 +48,7 @@ class ExploreBackend(QObject):
 
     @pyqtProperty(bool, constant=True)
     def is_dark(self) -> bool:
-        return self._app.config.THEME == 'dark'
+        return self._app.theme_mgr.theme == 'dark'
 
 
 async def render(req, **_):
