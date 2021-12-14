@@ -20,23 +20,9 @@ ScrollView {
         spacing: 10
         anchors.fill: parent
 
-        TabBar {
-            id: categoryBar
-            Layout.fillWidth: true
-
-            Repeater {
-                id: categoriesTab
-                model: []
-                delegate: TabButton {
-                    text: modelData
-                }
-            }
-
-        }
-
         StackLayout {
             Layout.fillWidth: true
-            currentIndex: categoryBar.currentIndex
+            currentIndex: flow_index
 
             ButtonGroup {
                 id: categoryGroup
@@ -73,17 +59,14 @@ ScrollView {
             }
 
             function categoriesLoaded(categories) {
-                console.log(categories)
-                var tabs = []
                 var datas = []
                 for (var i = 0; i < categories.length; i++) {
-                    tabs.push(categories[i].key)
                     datas.push(categories[i].value)
                 }
-                categoriesTab.model = tabs
                 categoriesData.model = datas
                 categoryBusy.running = false
             }
+
         }
 
          Flow {

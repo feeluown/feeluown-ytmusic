@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt, QUrl, QObject, pyqtProperty, pyqtSlot, pyqtSignal
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWidgets import QWidget
 
+from feeluown.gui.base_renderer import TabBarRendererMixin
 from fuo_ytmusic import YtmusicProvider
 from fuo_ytmusic.models import YtmusicPlaylistModel
 
@@ -26,6 +27,7 @@ class ExploreBackend(QObject):
                    'value': [{'title': playlist.title, 'params': playlist.params} for playlist in category.value]} for
                   category in categories]
         self.categoriesLoaded.emit(result)
+        return categories
 
     async def playlists(self, params: str):
         loop = asyncio.get_event_loop()
@@ -54,13 +56,39 @@ class ExploreBackend(QObject):
 async def render(req, **_):
     app = req.ctx['app']
     provider = app.library.get('ytmusic')
-    os.environ['QT_QUICK_CONTROLS_STYLE'] = 'Material'
-    view = QQuickView()
-    app._ytmusic_explore_backend = ExploreBackend(provider, app)
-    # noinspection PyProtectedMember
-    view.rootContext().setContextProperty('explore_backend', app._ytmusic_explore_backend)
-    container = QWidget.createWindowContainer(view, app.ui.right_panel)
-    container.setFocusPolicy(Qt.TabFocus)
-    view.setResizeMode(QQuickView.SizeRootObjectToView)
-    view.setSource(QUrl.fromLocalFile((Path(__file__).parent / 'qml' / 'page_explore.qml').as_posix()))
-    app.ui.right_panel.set_body(container)
+    backend = ExploreBackend(provider, app)
+    categories = await backend.categories()
+    tab_index: int = int(req.query.get('flow_index', 0))
+    tabs = [(c.key, i) for i, c in enumerate(categories)]
+    renderer = ExploreRenderer(app, tab_index, tabs, backend)
+    await renderer.render()
+    backend._x_renderer = renderer  # HACK: prevent renderer objec to be freed.
+
+
+class ExploreRenderer(TabBarRendererMixin):
+
+    def __init__(self, app, tab_index, tabs, backend):
+        self._app = app
+        self._backend = backend
+        self.tab_index = tab_index
+        self.tabs = tabs
+
+    async def render(self):
+        self.render_tab_bar()
+
+        os.environ['QT_QUICK_CONTROLS_STYLE'] = 'Material'
+        view = QQuickView()
+        view.rootContext().setContextProperty('explore_backend', self._backend)
+        view.rootContext().setContextProperty('flow_index', self.get_flow_index(self.tab_index))
+        container = QWidget.createWindowContainer(view, self._app.ui.right_panel)
+        container.setFocusPolicy(Qt.TabFocus)
+        view.setResizeMode(QQuickView.SizeRootObjectToView)
+        view.setSource(QUrl.fromLocalFile((Path(__file__).parent / 'qml' / 'page_explore.qml').as_posix()))
+        self._app.ui.right_panel.set_body(container)
+
+    def render_by_tab_index(self, tab_index):
+        self._app.browser.goto(page='/providers/ytmusic/explore',
+                               query={'flow_index': self.get_flow_index(tab_index)})
+
+    def get_flow_index(self, tab_index):
+        return self.tabs[tab_index][1]
