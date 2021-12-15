@@ -75,6 +75,12 @@ class YtmusicCoverMixin:
             return self.thumbnails[-1].url
         return None
 
+    @property
+    def thumbnail(self) -> Optional[str]:
+        if self.thumbnails is not None and len(self.thumbnails) > 0:
+            return self.thumbnails[0].url
+        return None
+
 
 class YtmusicDurationMixin:
     duration: str  # 歌曲时长 eg.3:50

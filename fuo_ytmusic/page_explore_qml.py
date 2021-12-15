@@ -32,7 +32,7 @@ class ExploreBackend(QObject):
     async def playlists(self, params: str):
         loop = asyncio.get_event_loop()
         playlists = await loop.run_in_executor(None, self._provider.service.category_playlists, params)
-        result = [{'id': p.playlistId, 'name': p.title, 'cover': p.cover} for p in playlists]
+        result = [{'id': p.playlistId, 'name': p.title, 'cover': p.thumbnail} for p in playlists]
         self.playlistsLoaded.emit(result)
 
     @pyqtSlot()
