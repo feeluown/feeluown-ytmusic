@@ -115,11 +115,11 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
     isAvailable: bool
     isExplicit: bool
 
-    def model(self, album: 'AlbumInfo' = None, artists=None) -> SongModel:
+    def model(self, album: 'AlbumInfo' = None, artists=None) -> 'YtmusicSongModel':
         artists_ = self.brief_artists_model()
         if artists_ is None and artists is not None:
             artists_ = artists
-        song = SongModel(identifier=self.videoId or '', source=self.source, title=self.title,
+        song = YtmusicSongModel(identifier=self.videoId or '', source=self.source, title=self.title,
                          artists=artists_, duration=self.duration_ms)
         if self.album is not None:
             song.album = self.album.model()
@@ -137,6 +137,11 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
 class YtmusicLibrarySong(YtmusicSearchSong):
     likeStatus: str  # LIKE
     setVideoId: str
+
+    def model(self, album: 'AlbumInfo' = None, artists=None) -> 'YtmusicSongModel':
+        song = super().model(album, artists)
+        song.setVideoId = self.setVideoId
+        return song
 
 
 class YtmusicHistorySong(YtmusicLibrarySong):
@@ -437,7 +442,7 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     def model(self) -> 'YtmusicPlaylistModel':
         return YtmusicPlaylistModel(identifier=self.id, source=self.source, name=self.title, cover=self.cover)
 
-    def reader(self, provider) -> SequentialReader:
+    def reader(self, provider, playlist = None) -> SequentialReader:
         total_count = self.trackCount
         self.fetched_tracks = set()
 
@@ -453,6 +458,10 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
                     if track_data.videoId is not None and track_data.videoId in self.fetched_tracks:
                         continue
                     self.fetched_tracks.add(track_data.videoId)
+                    if playlist is not None and track_data.setVideoId is not None:
+                        if playlist.set_id_map is None:
+                            playlist.set_id_map = dict()
+                        playlist.set_id_map[track_data.videoId] = track_data.setVideoId
                     counter += 1
                     yield track_data.model()
                 if counter >= total_count:
@@ -474,12 +483,15 @@ class PlaylistAddItemResponse(BaseModel):
 
 # FeelUOwn models
 
+class YtmusicSongModel(SongModel):
+    setVideoId: Optional[str]
+
 
 class YtmusicPlaylistModel(PlaylistModel):
     provider = None
 
     class Meta:
-        fields = ['source']
+        fields = ['source', 'set_id_map']
         allow_create_songs_g = True
 
     @classmethod
@@ -488,10 +500,22 @@ class YtmusicPlaylistModel(PlaylistModel):
 
     def create_songs_g(self):
         playlist: PlaylistInfo = self.provider.service.playlist_info(self.identifier)
-        return playlist.reader(self.provider)
+        return playlist.reader(self.provider, self)
 
     def add(self, song_id):
+        if self.identifier == 'LM':
+            return False
         return self.provider.add_playlist_item(self.identifier, song_id)
+
+    def remove(self, song_id):
+        if self.identifier == 'LM':
+            return False
+        if self.set_id_map is None:
+            return False
+        set_id = self.set_id_map.get(song_id)
+        if set_id is None:
+            return False
+        return self.provider.remove_playlist_item(self.identifier, song_id, set_id)
 
 
 class YtmusicAlbumModel(AlbumModel):
