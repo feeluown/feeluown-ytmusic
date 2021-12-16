@@ -1,4 +1,7 @@
 import logging
+import ntpath
+import os
+import sys
 from datetime import timedelta
 from enum import Enum
 from functools import partial
@@ -19,7 +22,7 @@ from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSea
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
     SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
     YtmusicHistorySong, PlaylistAddItemResponse
-from ytmusicapi import YTMusic
+from ytmusicapi import YTMusic as YTMusicBase
 from cachetools.func import ttl_cache
 
 CACHE_TTL = timedelta(minutes=10).seconds
@@ -45,6 +48,64 @@ class YtmusicType(Enum):
 class YtmusicScope(Enum):
     li = 'library'
     up = 'uploads'
+
+
+class YTMusic(YTMusicBase):
+    class ChunckedUpload(object):
+        def __init__(self, filename, chunksize=1 << 6):
+            self.filename = filename
+            self.chunksize = chunksize
+            self.totalsize = os.path.getsize(filename)
+            self.readsofar = 0
+
+        def __iter__(self):
+            with open(self.filename, 'rb') as file:
+                while True:
+                    data = file.read(self.chunksize)
+                    if not data:
+                        sys.stdout.write("\n")
+                        break
+                    self.readsofar += len(data)
+                    percent = self.readsofar * 1e2 / self.totalsize
+                    sys.stdout.write("\rUploading: {percent:3.0f}%".format(percent=percent))
+                    yield data
+
+    def upload_song_progress(self, filepath: str) -> Union[str, requests.Response]:
+        """
+        Uploads a song to YouTube Music
+
+        :param filepath: Path to the music file (mp3, m4a, wma, flac or ogg)
+        :return: Status String or full response
+        """
+        self._check_auth()
+        if not os.path.isfile(filepath):
+            raise Exception("The provided file does not exist.")
+
+        supported_filetypes = ["mp3", "m4a", "wma", "flac", "ogg"]
+        if os.path.splitext(filepath)[1][1:] not in supported_filetypes:
+            raise Exception(
+                "The provided file type is not supported by YouTube Music. Supported file types are "
+                + ', '.join(supported_filetypes))
+
+        headers = self.headers.copy()
+        upload_url = "https://upload.youtube.com/upload/usermusic/http?authuser=0"
+        filesize = os.path.getsize(filepath)
+        body = ("filename=" + ntpath.basename(filepath)).encode('utf-8')
+        headers.pop('content-encoding', None)
+        headers['content-type'] = 'application/x-www-form-urlencoded;charset=utf-8'
+        headers['X-Goog-Upload-Command'] = 'start'
+        headers['X-Goog-Upload-Header-Content-Length'] = str(filesize)
+        headers['X-Goog-Upload-Protocol'] = 'resumable'
+        response = requests.post(upload_url, data=body, headers=headers, proxies=self.proxies)
+        headers['X-Goog-Upload-Command'] = 'upload, finalize'
+        headers['X-Goog-Upload-Offset'] = '0'
+        upload_url = response.headers['X-Goog-Upload-URL']
+        response = requests.post(upload_url, data=YTMusic.ChunckedUpload(filepath), headers=headers,
+                                 proxies=self.proxies)
+        if response.status_code == 200:
+            return 'STATUS_SUCCEEDED'
+        else:
+            return response
 
 
 class YtmusicService(metaclass=Singleton):
@@ -182,7 +243,7 @@ class YtmusicService(metaclass=Singleton):
 
     def upload_song(self, file: str) -> str:
         # STATUS_SUCCEEDED
-        return self.api.upload_song(file)
+        return self.api.upload_song_progress(file)
 
     def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str, retry=True) -> Optional[str]:
         if f.url is not None and f.url != '':
