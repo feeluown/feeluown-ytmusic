@@ -120,7 +120,7 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
         if artists_ is None and artists is not None:
             artists_ = artists
         song = YtmusicSongModel(identifier=self.videoId or '', source=self.source, title=self.title,
-                         artists=artists_, duration=self.duration_ms)
+                                artists=artists_ or [], duration=self.duration_ms)
         if self.album is not None:
             song.album = self.album.model()
         else:
