@@ -155,3 +155,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def song_get_mv(self, song: BriefSongProtocol) -> BriefVideoModel:
         return BriefVideoModel(identifier=song.identifier, source=song.source, title=song.title,
                                artists_name=song.artists_name, duration_ms=song.duration_ms)
+
+    def upload_song(self, path: str) -> bool:
+        return self.service.upload_song(path) == 'STATUS_SUCCEEDED'

@@ -1,5 +1,8 @@
 import logging
+from pathlib import Path
 
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from feeluown.gui.widgets import TextButton
 from feeluown.utils import aio
 from feeluown.gui.base_renderer import LibraryTabRendererMixin
 from feeluown.gui.page_containers.table import Renderer
@@ -32,6 +35,22 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
 
         if self.tab_id == Tab.songs:
             self.show_songs(await aio.run_fn(lambda: self._provider.library_upload_songs()))
+            self.toolbar.show()
+            # self.toolbar.manual_mode()
+            btn = TextButton('上传音乐', self.toolbar)
+            btn.clicked.connect(self._upload_song)
+            self.toolbar.add_tmp_button(btn)
+
+    def _upload_song(self):
+        path, _ = QFileDialog.getOpenFileName(self.toolbar, '选择文件', Path.home().as_posix(),
+                                              'Audio Files (*.mp3 *.m4a);; All Files (*.*)')
+        if path == '':
+            return
+        ok = self._provider.upload_song(path)
+        if not ok:
+            QMessageBox.warning(self.toolbar, '上传音乐', '上传失败！')
+        else:
+            QMessageBox.information(self.toolbar, '上传音乐', '上传成功！')
 
     def show_by_tab_id(self, tab_id):
         query = {'tab_id': tab_id.value}
