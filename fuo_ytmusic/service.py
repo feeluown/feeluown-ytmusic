@@ -176,6 +176,14 @@ class YtmusicService(metaclass=Singleton):
         # STATUS_SUCCEEDED STATUS_FAILED
         return self.api.remove_playlist_items(playlist_id, video_ids)
 
+    def library_upload_songs(self, limit: int = GLOBAL_LIMIT):
+        response = self.api.get_library_upload_songs(limit)
+        return [YtmusicLibrarySong(**data) for data in response]
+
+    def upload_song(self, file: str) -> str:
+        # STATUS_SUCCEEDED
+        return self.api.upload_song(file).text
+
     def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str, retry=True) -> Optional[str]:
         if f.url is not None and f.url != '':
             return f.url
@@ -211,4 +219,5 @@ if __name__ == '__main__':
     import json
 
     service = YtmusicService()
-    print(service.playlist_info('PL4MgtK839siX85Fw8mDhuA0rdeEBXC4X_'))
+    # print(json.dumps(service.upload_song('/home/bruce/Music/【战双帕弥什】 丽芙·极昼主题曲丨《盘旋》【阿梓】-1AR4y1H7Cr.m4a')))
+    print(json.dumps(service.library_upload_songs(20)))
