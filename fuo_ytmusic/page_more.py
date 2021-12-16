@@ -43,7 +43,7 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
 
     def _upload_song(self):
         path, _ = QFileDialog.getOpenFileName(self.toolbar, '选择文件', Path.home().as_posix(),
-                                              'Audio Files (*.mp3 *.m4a);; All Files (*.*)')
+                                              'Supported Files (*.mp3 *.m4a, *.wma, *.flac, *.ogg);; All Files (*.*)')
         if path == '':
             return
         ok = self._provider.upload_song(path)

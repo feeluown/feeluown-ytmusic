@@ -51,6 +51,17 @@ class YtmusicScope(Enum):
 
 
 class YTMusic(YTMusicBase):
+    class IterableToFileAdapter(object):
+        def __init__(self, iterable):
+            self.iterator = iter(iterable)
+            self.length = len(iterable)
+
+        def read(self, size=-1): # TBD: add buffer for `len(data) > size` case
+            return next(self.iterator, b'')
+
+        def __len__(self):
+            return self.length
+
     class ChunckedUpload(object):
         def __init__(self, filename, chunksize=1 << 6):
             self.filename = filename
@@ -69,6 +80,9 @@ class YTMusic(YTMusicBase):
                     percent = self.readsofar * 1e2 / self.totalsize
                     sys.stdout.write("\rUploading: {percent:3.0f}%".format(percent=percent))
                     yield data
+
+        def __len__(self):
+            return self.totalsize
 
     def upload_song_progress(self, filepath: str) -> Union[str, requests.Response]:
         """
@@ -100,8 +114,8 @@ class YTMusic(YTMusicBase):
         headers['X-Goog-Upload-Command'] = 'upload, finalize'
         headers['X-Goog-Upload-Offset'] = '0'
         upload_url = response.headers['X-Goog-Upload-URL']
-        response = requests.post(upload_url, data=YTMusic.ChunckedUpload(filepath), headers=headers,
-                                 proxies=self.proxies)
+        response = requests.post(upload_url, data=YTMusic.IterableToFileAdapter(YTMusic.ChunckedUpload(filepath)),
+                                 headers=headers, proxies=self.proxies)
         if response.status_code == 200:
             return 'STATUS_SUCCEEDED'
         else:
