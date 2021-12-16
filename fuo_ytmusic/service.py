@@ -182,7 +182,7 @@ class YtmusicService(metaclass=Singleton):
 
     def upload_song(self, file: str) -> str:
         # STATUS_SUCCEEDED
-        return self.api.upload_song(file).text
+        return self.api.upload_song(file)
 
     def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str, retry=True) -> Optional[str]:
         if f.url is not None and f.url != '':
@@ -219,5 +219,5 @@ if __name__ == '__main__':
     import json
 
     service = YtmusicService()
-    # print(json.dumps(service.upload_song('/home/bruce/Music/【战双帕弥什】 丽芙·极昼主题曲丨《盘旋》【阿梓】-1AR4y1H7Cr.m4a')))
-    print(json.dumps(service.library_upload_songs(20)))
+    print(service.upload_song('/home/bruce/Music/阿梓 - 呼吸决定.mp3'))
+    # print(service.api.delete_upload_entity('t_po_CJT896eTt_a5swEQwrmdzf7_____AQ'))
