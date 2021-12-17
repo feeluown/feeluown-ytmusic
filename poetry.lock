@@ -96,7 +96,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "feeluown"
-version = "3.7.13"
+version = "3.7.14"
 description = "*nix music player"
 category = "main"
 optional = false
@@ -645,7 +645,7 @@ decorator = [
     {file = "decorator-5.1.0.tar.gz", hash = "sha256:e59913af105b9860aa2c8d3272d9de5a56a4e608db9a2f167a8480b323d529a7"},
 ]
 feeluown = [
-    {file = "feeluown-3.7.13.tar.gz", hash = "sha256:4e8a7074cf3afb573db4fa17a4ec1d1d906965585b30db40fbce6fd76f8ae157"},
+    {file = "feeluown-3.7.14.tar.gz", hash = "sha256:7a6405cec10a31f30afe1ad09e714cd808abab3db1eb899a8abc9dd38ee5fd5f"},
 ]
 fuo-netease = [
     {file = "fuo_netease-0.8.tar.gz", hash = "sha256:0b57871b657ea9efae6f83947cb56bba63b7d6442e82bf316fc581326b20f4b5"},

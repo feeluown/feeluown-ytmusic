@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from setuptools import setup
 
 packages = \
@@ -22,7 +22,7 @@ setup_kwargs = {
     'author_email': 'zttt183525594@gmail.com',
     'maintainer': None,
     'maintainer_email': None,
-    'url': 'https://github.com/BruceZhang1993/feeluown-ytmusic',
+    'url': 'https://github.com/feeluown/feeluown-ytmusic',
     'packages': packages,
     'package_data': package_data,
     'install_requires': install_requires,
