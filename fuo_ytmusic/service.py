@@ -45,6 +45,17 @@ class YtmusicType(Enum):
         return cls._value2member_map_.get(type_.value + 's')
 
 
+class YtmusicPrivacyStatus(Enum):
+    PUBLIC = 'PUBLIC'
+    PRIVATE = 'PRIVATE'
+    UNLISTED = 'UNLISTED'
+
+    # noinspection PyTypeChecker
+    @classmethod
+    def parse(cls, type_: str) -> 'YtmusicPrivacyStatus':
+        return cls._value2member_map_.get(type_)
+
+
 class YtmusicScope(Enum):
     li = 'library'
     up = 'uploads'
@@ -56,7 +67,7 @@ class YTMusic(YTMusicBase):
             self.iterator = iter(iterable)
             self.length = len(iterable)
 
-        def read(self, size=-1): # TBD: add buffer for `len(data) > size` case
+        def read(self):  # TBD: add buffer for `len(data) > size` case
             return next(self.iterator, b'')
 
         def __len__(self):
@@ -243,7 +254,15 @@ class YtmusicService(metaclass=Singleton):
                 return self._get_stream_url(f, video_id)
         return None
 
-    def add_playlist_items(self, playlist_id: str, video_ids: List[str] = None, source_playlist_id: str = None)\
+    def create_playlist(self, title: str, description: str, privacy_status: YtmusicPrivacyStatus,
+                        video_ids: List[str] = None, source_playlist: str = None) -> bool:
+        response = self.api.create_playlist(title, description, privacy_status.value, video_ids, source_playlist)
+        print(response)
+        if not isinstance(response, str):
+            return False
+        return True
+
+    def add_playlist_items(self, playlist_id: str, video_ids: List[str] = None, source_playlist_id: str = None) \
             -> PlaylistAddItemResponse:
         return PlaylistAddItemResponse(**self.api.add_playlist_items(playlist_id, video_ids, source_playlist_id))
 

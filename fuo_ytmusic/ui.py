@@ -3,6 +3,8 @@ import json
 import os
 from pathlib import Path
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QLabel, QAction, QInputDialog, QMessageBox
 from feeluown.gui.widgets.login import CookiesLoginDialog
 from feeluown.uimodels.my_music import MyMusicUiManager
 from feeluown.uimodels.playlist import PlaylistUiManager
@@ -13,6 +15,7 @@ from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
 from .page_explore_qml import render as explore_render
 from .page_fav import render as fav_render
 from .page_more import render as more_render
+from .service import YtmusicPrivacyStatus
 
 
 class YtmusicUiManager:
@@ -41,10 +44,34 @@ class YtmusicUiManager:
         else:
             asyncio.ensure_future(self.load_user())
 
+    def new_playlist(self):
+        name, o1 = QInputDialog.getText(self._app.ui.left_panel.playlists_header, '新建歌单', '请输入歌单名称:')
+        if not o1:
+            return
+        desc, o2 = QInputDialog.getText(self._app.ui.left_panel.playlists_header, '新建歌单', '请输入歌单描述:')
+        if not o2:
+            return
+        privacy_status, o3 = QInputDialog.getItem(self._app.ui.left_panel.playlists_header, '新建歌单', '请选择歌单权限:',
+                                                  [i.value for i in YtmusicPrivacyStatus])
+        if not o3:
+            return
+        ok = self._provider.create_playlist(name, desc, YtmusicPrivacyStatus.parse(privacy_status))
+        if not ok:
+            QMessageBox.warning(self._app.ui.left_panel.playlists_header, '新建歌单', '创建失败！')
+        else:
+            QMessageBox.information(self._app.ui.left_panel.playlists_header, '新建歌单', '创建成功！')
+
     async def load_user(self):
         user = self._provider.user
         self._app.ui.left_panel.playlists_con.show()
         self._app.ui.left_panel.my_music_con.show()
+
+        # hack fuo to support add playlist
+        pl_header: QLabel = self._app.ui.left_panel.playlists_header
+        pl_header.setContextMenuPolicy(Qt.ActionsContextMenu)
+        new_pl_action = QAction('新建歌单', pl_header)
+        pl_header.addAction(new_pl_action)
+        new_pl_action.triggered.connect(self.new_playlist)
 
         mymusic_mgr: MyMusicUiManager = self._app.mymusic_uimgr
         playlists_mgr: PlaylistUiManager = self._app.pl_uimgr

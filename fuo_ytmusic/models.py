@@ -173,7 +173,8 @@ class YtmusicSearchArtist(YtmusicSearchBase, YtmusicCoverMixin):
     browseId: str  # 查询ID
 
     def model(self) -> 'YtmusicArtistModel':
-        return YtmusicArtistModel(identifier=self.browseId, source=self.source, name=self.artist, cover=self.cover or '')
+        return YtmusicArtistModel(identifier=self.browseId, source=self.source, name=self.artist,
+                                  cover=self.cover or '')
 
 
 class YtmusicLibraryArtist(YtmusicSearchArtist):
@@ -440,9 +441,10 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     fetched_tracks: set = Field(default_factory=set)
 
     def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.id, source=self.source, name=self.title, cover=self.cover)
+        return YtmusicPlaylistModel(identifier=self.id, source=self.source, name=self.title, cover=self.cover,
+                                    desc=self.description or '')
 
-    def reader(self, provider, playlist = None) -> SequentialReader:
+    def reader(self, provider, playlist=None) -> SequentialReader:
         total_count = self.trackCount
         self.fetched_tracks = set()
 

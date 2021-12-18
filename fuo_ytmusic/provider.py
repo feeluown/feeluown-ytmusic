@@ -9,7 +9,7 @@ from feeluown.library.model_protocol import BriefSongProtocol
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.models import YtmusicPlaylistModel, Categories, YtmusicAlbumModel, YtmusicArtistModel
-from fuo_ytmusic.service import YtmusicService, YtmusicType
+from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
@@ -78,6 +78,10 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def library_playlists(self) -> List[YtmusicPlaylistModel]:
         playlists = self.service.library_playlists(100)
         return [playlist.model() for playlist in playlists]
+
+    def create_playlist(self, title: str, description: str, privacy_status: YtmusicPrivacyStatus,
+                        video_ids: List[str] = None, source_playlist: str = None) -> bool:
+        return self.service.create_playlist(title, description, privacy_status, video_ids, source_playlist)
 
     def playlist_info(self, identifier) -> YtmusicPlaylistModel:
         return self.service.playlist_info(identifier, limit=0).model()
