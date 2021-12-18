@@ -251,9 +251,17 @@ class YtmusicService(metaclass=Singleton):
         # STATUS_SUCCEEDED STATUS_FAILED
         return self.api.remove_playlist_items(playlist_id, video_ids)
 
-    def library_upload_songs(self, limit: int = GLOBAL_LIMIT):
+    def library_upload_songs(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibrarySong]:
         response = self.api.get_library_upload_songs(limit)
         return [YtmusicLibrarySong(**data) for data in response]
+
+    def library_upload_artists(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibraryArtist]:
+        response = self.api.get_library_upload_artists(limit)
+        return [YtmusicLibraryArtist(**data) for data in response]
+
+    def library_upload_albums(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicSearchAlbum]:
+        response = self.api.get_library_upload_albums(limit)
+        return [YtmusicSearchAlbum(**data) for data in response]
 
     def upload_song(self, file: str) -> str:
         # STATUS_SUCCEEDED

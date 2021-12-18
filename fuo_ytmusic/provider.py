@@ -59,6 +59,14 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         songs = self.service.library_upload_songs(100)
         return [song.model() for song in songs]
 
+    def library_upload_artists(self):
+        artists = self.service.library_upload_artists(100)
+        return [artist.model() for artist in artists]
+
+    def library_upload_albums(self):
+        albums = self.service.library_upload_albums(100)
+        return [album.model() for album in albums]
+
     def library_albums(self):
         albums = self.service.library_albums(100)
         return [album.model() for album in albums]

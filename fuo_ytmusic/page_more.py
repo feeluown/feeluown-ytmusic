@@ -40,6 +40,10 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
             btn = TextButton('上传音乐', self.toolbar)
             btn.clicked.connect(self._upload_song)
             self.toolbar.add_tmp_button(btn)
+        elif self.tab_id == Tab.artists:
+            self.show_artists(await aio.run_fn(lambda: self._provider.library_upload_artists()))
+        elif self.tab_id == Tab.albums:
+            self.show_albums(await aio.run_fn(lambda: self._provider.library_upload_albums()))
 
     def _upload_song(self):
         path, _ = QFileDialog.getOpenFileName(self.toolbar, '选择文件', Path.home().as_posix(),
@@ -60,8 +64,8 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
         super().render_tabbar()
         try:
             self.tabbar.songs_btn.setText('上传的歌曲')
-            self.tabbar.albums_btn.hide()
-            self.tabbar.artists_btn.hide()
+            self.tabbar.albums_btn.setText('上传的专辑')
+            self.tabbar.artists_btn.setText('上传的艺术家')
             self.tabbar.videos_btn.hide()
             self.tabbar.playlists_btn.hide()
         except Exception as e:

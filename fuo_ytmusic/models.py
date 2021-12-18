@@ -151,7 +151,7 @@ class YtmusicHistorySong(YtmusicLibrarySong):
 class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin):
     title: str  # 专辑名
     type: str  # 专辑类型
-    year: int  # 年
+    year: Union[int, str]  # 年
     browseId: str  # 查询ID
     isExplicit: bool
 
@@ -172,7 +172,7 @@ class YtmusicSearchArtist(YtmusicSearchBase, YtmusicCoverMixin):
     radioId: str
     browseId: str  # 查询ID
 
-    def model(self) -> ArtistModel:
+    def model(self) -> 'YtmusicArtistModel':
         return YtmusicArtistModel(identifier=self.browseId, source=self.source, name=self.artist, cover=self.cover or '')
 
 
