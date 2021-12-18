@@ -67,7 +67,7 @@ class YTMusic(YTMusicBase):
             self.iterator = iter(iterable)
             self.length = len(iterable)
 
-        def read(self):  # TBD: add buffer for `len(data) > size` case
+        def read(self, size=-1):  # TBD: add buffer for `len(data) > size` case
             return next(self.iterator, b'')
 
         def __len__(self):
@@ -257,7 +257,6 @@ class YtmusicService(metaclass=Singleton):
     def create_playlist(self, title: str, description: str, privacy_status: YtmusicPrivacyStatus,
                         video_ids: List[str] = None, source_playlist: str = None) -> bool:
         response = self.api.create_playlist(title, description, privacy_status.value, video_ids, source_playlist)
-        print(response)
         if not isinstance(response, str):
             return False
         return True
