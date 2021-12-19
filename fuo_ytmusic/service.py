@@ -134,13 +134,13 @@ class YTMusic(YTMusicBase):
 
 
 class YtmusicService(metaclass=Singleton):
-    def __init__(self):
+    def __init__(self, config=None):
         self._session: Optional[requests.Session] = None
         self._api: Optional[YTMusic] = None
         self._js = ""
         self._cipher = None
         self._signature_timestamp = 0
-        self.setup()
+        self.setup(config)
 
     @staticmethod
     def _do_logging(r: Response, *_, **__):
@@ -158,9 +158,14 @@ class YtmusicService(metaclass=Singleton):
             self._signature_timestamp = self._api.get_signatureTimestamp()
         return self._api
 
-    def setup(self):
+    def setup(self, config=None):
         del self._session
         self._session = requests.Session()
+        if config is not None and config.YTM_HTTP_PROXY != '':
+            self._session.proxies = {
+                'http': 'http://' + config.YTM_HTTP_PROXY,
+                'https': 'http://' + config.YTM_HTTP_PROXY
+            }
         self._session.hooks['response'].append(self._do_logging)
 
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,

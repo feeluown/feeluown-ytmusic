@@ -15,9 +15,9 @@ from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatu
 class YtmusicProvider(AbstractProvider, ProviderV2):
     service: YtmusicService
 
-    def __init__(self):
+    def __init__(self, config=None):
         super(YtmusicProvider, self).__init__()
-        self.service: YtmusicService = YtmusicService()
+        self.service: YtmusicService = YtmusicService(config)
         self._user = None
         YtmusicPlaylistModel.provider = self
         YtmusicAlbumModel.provider = self

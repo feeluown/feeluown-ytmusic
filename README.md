@@ -13,6 +13,16 @@ pip install https://github.com/feeluown/feeluown-ytmusic.git  # master branch
 poetry install  # Local development
 ```
 
+## Configuration
+
+### Proxies
+
+```python
+# In ~/.fuorc
+config.deffield('YTM_HTTP_PROXY', type_=str, default='', desc='YouTube Music 代理设置')
+config.YTM_HTTP_PROXY='127.0.0.1:10809'
+```
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please create a new issue first to discuss what you'd like to change.

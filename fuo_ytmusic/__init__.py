@@ -8,11 +8,12 @@ __desc__ = 'YouTube Music plugin'
 from fuo_ytmusic.ui import YtmusicUiManager
 
 ui_mgr = None
-provider = YtmusicProvider()
+provider = None
 
 
 def enable(app: App):
     global ui_mgr, provider
+    provider = YtmusicProvider(app.config)
     app.library.register(provider)
     if app.mode & app.GuiMode:
         ui_mgr = ui_mgr or YtmusicUiManager(app)
