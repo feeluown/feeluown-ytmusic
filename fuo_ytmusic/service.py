@@ -161,7 +161,7 @@ class YtmusicService(metaclass=Singleton):
     def setup(self, config=None):
         del self._session
         self._session = requests.Session()
-        if config is not None and config.YTM_HTTP_PROXY != '':
+        if config is not None and hasattr(config, 'YTM_HTTP_PROXY') and config.YTM_HTTP_PROXY != '':
             self._session.proxies = {
                 'http': 'http://' + config.YTM_HTTP_PROXY,
                 'https': 'http://' + config.YTM_HTTP_PROXY
