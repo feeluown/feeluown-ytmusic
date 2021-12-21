@@ -13,7 +13,7 @@ provider = None
 
 def enable(app: App):
     global ui_mgr, provider
-    provider = YtmusicProvider(app.config)
+    provider = YtmusicProvider(app)
     app.library.register(provider)
     if app.mode & app.GuiMode:
         ui_mgr = ui_mgr or YtmusicUiManager(app)

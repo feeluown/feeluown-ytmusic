@@ -6,6 +6,8 @@ from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFl
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.models import SearchType, SearchModel, ArtistModel
 from feeluown.library.model_protocol import BriefSongProtocol
+from fuo_netease.models import NSearchModel
+from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.models import YtmusicPlaylistModel, Categories, YtmusicAlbumModel, YtmusicArtistModel
@@ -15,10 +17,11 @@ from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatu
 class YtmusicProvider(AbstractProvider, ProviderV2):
     service: YtmusicService
 
-    def __init__(self, config=None):
+    def __init__(self, app=None):
         super(YtmusicProvider, self).__init__()
-        self.service: YtmusicService = YtmusicService(config)
+        self.service: YtmusicService = YtmusicService(app.config if app is not None else None)
         self._user = None
+        self._app = app
         YtmusicPlaylistModel.provider = self
         YtmusicAlbumModel.provider = self
         YtmusicArtistModel.provider = self
@@ -146,7 +149,16 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def song_get_lyric(self, song):
         # 歌词获取报错的 workaround
-        return None
+        if self._app is None:
+            return None
+        provider: NeteaseProvider = self._app.library.get('netease')
+        if provider is None:
+            return None
+        result: NSearchModel = provider.search(f'{song.title} {song.artists_name}', type_=SearchType.so)
+        songs = result.songs
+        if len(songs) < 1:
+            return None
+        return provider.song_get_lyric(songs[0])
 
     def video_list_quality(self, video) -> List[Quality.Video]:
         id_ = video.identifier
