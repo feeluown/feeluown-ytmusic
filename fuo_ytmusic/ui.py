@@ -69,6 +69,8 @@ class YtmusicUiManager:
         # hack fuo to support add playlist
         pl_header: QLabel = self._app.ui.left_panel.playlists_header
         pl_header.setContextMenuPolicy(Qt.ActionsContextMenu)
+        for a in pl_header.actions():
+            pl_header.removeAction(a)
         new_pl_action = QAction('新建歌单', pl_header)
         pl_header.addAction(new_pl_action)
         new_pl_action.triggered.connect(self.new_playlist)
