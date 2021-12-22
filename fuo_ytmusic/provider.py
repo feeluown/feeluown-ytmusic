@@ -182,3 +182,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def upload_song(self, path: str) -> bool:
         return self.service.upload_song(path) == 'STATUS_SUCCEEDED'
+
+    def delete_uploaded_song(self, entity_id: str) -> bool:
+        return self.service.delete_upload_song(entity_id) == 'STATUS_SUCCEEDED'

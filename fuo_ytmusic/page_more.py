@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
 
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QMenu
 from feeluown.gui.widgets import TextButton
+from feeluown.gui.widgets.songs import SongsTableView
 from feeluown.utils import aio
 from feeluown.gui.base_renderer import LibraryTabRendererMixin
 from feeluown.gui.page_containers.table import Renderer
@@ -34,6 +35,8 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
         self.meta_widget.title = '上传的音乐'
 
         if self.tab_id == Tab.songs:
+            self.songs_table: SongsTableView
+            self.songs_table.remove_song_func = self._delete_song
             self.show_songs(await aio.run_fn(lambda: self._provider.library_upload_songs()))
             self.toolbar.show()
             # self.toolbar.manual_mode()
@@ -44,6 +47,15 @@ class FavRenderer(Renderer, LibraryTabRendererMixin):
             self.show_artists(await aio.run_fn(lambda: self._provider.library_upload_artists()))
         elif self.tab_id == Tab.albums:
             self.show_albums(await aio.run_fn(lambda: self._provider.library_upload_albums()))
+
+    def _delete_song(self, song):
+        entity_id = song.entityId
+        ok = self._provider.delete_uploaded_song(entity_id)
+        if not ok:
+            QMessageBox.warning(self.toolbar, '删除歌曲', '删除失败！')
+        else:
+            QMessageBox.information(self.toolbar, '删除歌曲', '删除成功！')
+        return ok
 
     def _upload_song(self):
         path, _ = QFileDialog.getOpenFileName(self.toolbar, '选择文件', Path.home().as_posix(),

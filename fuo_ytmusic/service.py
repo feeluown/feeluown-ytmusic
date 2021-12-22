@@ -290,6 +290,10 @@ class YtmusicService(metaclass=Singleton):
         # STATUS_SUCCEEDED
         return self.api.upload_song_progress(file)
 
+    def delete_upload_song(self, entity_id: str) -> str:
+        # STATUS_SUCCEEDED
+        return self.api.delete_upload_entity(entity_id)
+
     def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str, retry=True) -> Optional[str]:
         if f.url is not None and f.url != '':
             return f.url
@@ -325,5 +329,5 @@ if __name__ == '__main__':
     import json
 
     service = YtmusicService()
-    print(service.upload_song('/home/bruce/Music/阿梓 - 呼吸决定.mp3'))
-    # print(service.api.delete_upload_entity('t_po_CJT896eTt_a5swEQwrmdzf7_____AQ'))
+    # print(service.upload_song('/home/bruce/Music/阿梓 - 呼吸决定.mp3'))
+    print(service.api.delete_upload_entity('t_po_CJT896eTt_a5swEQwrmdzf7_____AQ'))

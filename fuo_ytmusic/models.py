@@ -137,10 +137,12 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
 class YtmusicLibrarySong(YtmusicSearchSong):
     likeStatus: str  # LIKE
     setVideoId: str
+    entityId: str
 
     def model(self, album: 'AlbumInfo' = None, artists=None) -> 'YtmusicSongModel':
         song = super().model(album, artists)
         song.setVideoId = self.setVideoId
+        song.entityId = self.entityId
         return song
 
 
@@ -487,6 +489,7 @@ class PlaylistAddItemResponse(BaseModel):
 
 class YtmusicSongModel(SongModel):
     setVideoId: Optional[str]
+    entityId: Optional[str]
 
 
 class YtmusicPlaylistModel(PlaylistModel):
