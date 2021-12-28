@@ -16,17 +16,17 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
-version = "21.2.0"
+version = "21.3.0"
 description = "Classes Without Boilerplate"
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.extras]
-dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
+dev = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
 docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
-tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface"]
-tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
+tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface"]
+tests_no_zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
 
 [[package]]
 name = "backcall"
@@ -53,11 +53,11 @@ lxml = ["lxml"]
 
 [[package]]
 name = "cachetools"
-version = "4.2.4"
+version = "5.0.0"
 description = "Extensible memoizing collections and decorators"
 category = "main"
 optional = false
-python-versions = "~=3.5"
+python-versions = "~=3.7"
 
 [[package]]
 name = "certifi"
@@ -119,6 +119,19 @@ webengine = ["pyqtwebengine"]
 win32 = ["pyshortcuts"]
 
 [[package]]
+name = "fuo-kuwo"
+version = "0.1.5"
+description = "Kuwo music provider for FeelUOwn music player"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+feeluown = ">=3.7.7"
+marshmallow = "*"
+requests = "*"
+
+[[package]]
 name = "fuo-netease"
 version = "0.8"
 description = "feeluown netease plugin"
@@ -131,6 +144,19 @@ beautifulsoup4 = "*"
 feeluown = ">=3.7.9.dev"
 marshmallow = ">=3.0"
 pycryptodome = "*"
+requests = "*"
+
+[[package]]
+name = "fuo-qqmusic"
+version = "0.3.3"
+description = "feeluown qqmusic plugin"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+feeluown = ">=3.5.2"
+marshmallow = ">=3.0"
 requests = "*"
 
 [[package]]
@@ -601,7 +627,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0"
-content-hash = "2aba131ec18d821c3614a94174ec1f1a4e56b814d4481fbdfe3a6b4935f61582"
+content-hash = "4adeec4cdac2244dc3350cb7c8c66c8ae0ee34b196f798f2efc0e4041f83b323"
 
 [metadata.files]
 appnope = [
@@ -613,8 +639,8 @@ atomicwrites = [
     {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
 ]
 attrs = [
-    {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
-    {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
+    {file = "attrs-21.3.0-py2.py3-none-any.whl", hash = "sha256:8f7335278dedd26b58c38e006338242cc0977f06d51579b2b8b87b9b33bff66c"},
+    {file = "attrs-21.3.0.tar.gz", hash = "sha256:50f3c9b216dc9021042f71b392859a773b904ce1a029077f58f6598272432045"},
 ]
 backcall = [
     {file = "backcall-0.2.0-py2.py3-none-any.whl", hash = "sha256:fbbce6a29f263178a1f7915c1940bde0ec2b2a967566fe1c65c1dfb7422bd255"},
@@ -625,8 +651,8 @@ beautifulsoup4 = [
     {file = "beautifulsoup4-4.10.0.tar.gz", hash = "sha256:c23ad23c521d818955a4151a67d81580319d4bf548d3d49f4223ae041ff98891"},
 ]
 cachetools = [
-    {file = "cachetools-4.2.4-py3-none-any.whl", hash = "sha256:92971d3cb7d2a97efff7c7bb1657f21a8f5fb309a37530537c71b1774189f2d1"},
-    {file = "cachetools-4.2.4.tar.gz", hash = "sha256:89ea6f1b638d5a73a4f9226be57ac5e4f399d22770b92355f92dcb0f7f001693"},
+    {file = "cachetools-5.0.0-py3-none-any.whl", hash = "sha256:8fecd4203a38af17928be7b90689d8083603073622229ca7077b72d8e5a976e4"},
+    {file = "cachetools-5.0.0.tar.gz", hash = "sha256:486471dfa8799eb7ec503a8059e263db000cdda20075ce5e48903087f79d5fd6"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -647,8 +673,14 @@ decorator = [
 feeluown = [
     {file = "feeluown-3.7.14.tar.gz", hash = "sha256:7a6405cec10a31f30afe1ad09e714cd808abab3db1eb899a8abc9dd38ee5fd5f"},
 ]
+fuo-kuwo = [
+    {file = "fuo_kuwo-0.1.5.tar.gz", hash = "sha256:d5499a77b8259f23bb97e3eed1d7cf42422433c953e10e59e0942a3d4c607b53"},
+]
 fuo-netease = [
     {file = "fuo_netease-0.8.tar.gz", hash = "sha256:0b57871b657ea9efae6f83947cb56bba63b7d6442e82bf316fc581326b20f4b5"},
+]
+fuo-qqmusic = [
+    {file = "fuo_qqmusic-0.3.3.tar.gz", hash = "sha256:74c4022b1c6fc61b4a982e899d1b06273b107f15740a67682bb35bc03a7a8c3f"},
 ]
 idna = [
     {file = "idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
