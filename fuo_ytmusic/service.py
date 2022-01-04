@@ -313,7 +313,7 @@ class YtmusicService(metaclass=Singleton):
             if r.status_code == 403:
                 logger.info('[ytmusic] update signature timestamp and try again')
                 self._signature_timestamp = self._api.get_signatureTimestamp()
-            return self._get_stream_url(f, video_id, retry=False)
+                return self._get_stream_url(f, video_id, retry=False)
         return _url
 
     def _get_cipher(self, video_id: str):
