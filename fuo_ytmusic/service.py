@@ -152,9 +152,9 @@ class YtmusicService(metaclass=Singleton):
         if self._api is None:
             logger.info('initializing ytmusic')
             if HEADER_FILE.exists():
-                self._api = YTMusic(HEADER_FILE, requests_session=self._session)
+                self._api = YTMusic(HEADER_FILE, requests_session=self._session, language='zh_CN')
             else:
-                self._api = YTMusic(requests_session=self._session)
+                self._api = YTMusic(requests_session=self._session, language='zh_CN')
             self._signature_timestamp = self._api.get_signatureTimestamp()
         return self._api
 
