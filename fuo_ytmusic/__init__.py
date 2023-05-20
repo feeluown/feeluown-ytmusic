@@ -1,5 +1,4 @@
 from feeluown.app import App
-from fuo_ytmusic.provider import YtmusicProvider
 
 __alias__ = 'ytmusic'
 __version__ = '0.1.1'

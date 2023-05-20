@@ -12,9 +12,12 @@ from feeluown.uimodels.provider import ProviderUiManager
 
 from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
 
-from .page_explore_qml import render as explore_render
+# QML page has two problems
+# 1. they may block the whole UI.
+# 2. they consumes much memory.
+# from .page_explore_qml import render as explore_render
+# from .page_more import render as more_render
 from .page_fav import render as fav_render
-from .page_more import render as more_render
 from .service import YtmusicPrivacyStatus
 
 
@@ -32,8 +35,8 @@ class YtmusicUiManager:
         self._pvd_item.clicked.connect(self.login_or_show)
         self._pvd_uimgr.add_item(self._pvd_item)
         self._app.browser.route('/providers/ytmusic/fav')(fav_render)
-        self._app.browser.route('/providers/ytmusic/explore')(explore_render)
-        self._app.browser.route('/providers/ytmusic/more')(more_render)
+        # self._app.browser.route('/providers/ytmusic/explore')(explore_render)
+        # self._app.browser.route('/providers/ytmusic/more')(more_render)
 
     def login_or_show(self):
         if self._provider.user is None:
@@ -78,16 +81,16 @@ class YtmusicUiManager:
         mymusic_mgr: MyMusicUiManager = self._app.mymusic_uimgr
         playlists_mgr: PlaylistUiManager = self._app.pl_uimgr
 
-        explore_item = mymusic_mgr.create_item('🔮 发现音乐')
+        # explore_item = mymusic_mgr.create_item('🔮 发现音乐')
         my_fav_item = mymusic_mgr.create_item('⭐️ 收藏与关注')
-        more_item = mymusic_mgr.create_item('☁️ 上传的音乐')
-        explore_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/explore'), weak=False)
+        # more_item = mymusic_mgr.create_item('☁️ 上传的音乐')
+        # explore_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/explore'), weak=False)
         my_fav_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/fav'), weak=False)
-        more_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/more'), weak=False)
+        # more_item.clicked.connect(lambda: self._app.browser.goto(page='/providers/ytmusic/more'), weak=False)
         mymusic_mgr.clear()
-        mymusic_mgr.add_item(explore_item)
+        # mymusic_mgr.add_item(explore_item)
         mymusic_mgr.add_item(my_fav_item)
-        mymusic_mgr.add_item(more_item)
+        # mymusic_mgr.add_item(more_item)
 
         playlists_mgr.clear()
         self._pvd_item.text = f'{user.name} - 已登录'

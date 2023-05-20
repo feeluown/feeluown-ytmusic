@@ -1,8 +1,11 @@
 from typing import List, Optional
 
 from feeluown.excs import NoUserLoggedIn
-from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongModel, BriefVideoModel, \
-    BriefUserModel, ModelType
+from feeluown.library import (
+    AbstractProvider, ProviderV2, ProviderFlags as Pf,
+    SongModel, BriefVideoModel, BriefUserModel, ModelType,
+    BriefPlaylistModel, BriefArtistModel, PlaylistModel,
+)
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.models import SearchType, SearchModel
 from feeluown.library.model_protocol import BriefSongProtocol
@@ -10,9 +13,7 @@ from fuo_netease.models import NSearchModel
 from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
-from fuo_ytmusic.models import (
-    YtmusicPlaylistModel, Categories, YtBriefUserModel,
-)
+from fuo_ytmusic.models import Categories, YtBriefUserModel
 from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
 
 
@@ -23,7 +24,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
         self._user = None
-        YtmusicPlaylistModel.provider = self
 
     def initialize(self, app):
         self._app = app
@@ -56,11 +56,12 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         self._user = user
 
     def use_model_v2(self, mtype):
-        return mtype in (ModelType.album, ModelType.artist)
-
-    def library_songs(self):
-        songs = self.service.library_songs(100)
-        return [song.model() for song in songs]
+        return mtype in (
+            ModelType.song,
+            ModelType.album,
+            ModelType.artist,
+            ModelType.playlist,
+        )
 
     def library_upload_songs(self):
         songs = self.service.library_upload_songs(100)
@@ -74,25 +75,28 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         albums = self.service.library_upload_albums(100)
         return [album.model() for album in albums]
 
+    def library_songs(self):
+        songs = self.service.library_songs(100)
+        return [song.v2_model() for song in songs]
+
     def library_albums(self):
         albums = self.service.library_albums(100)
-        return [album.model() for album in albums]
+        return [album.v2_brief_model() for album in albums]
 
-    def library_artists(self):
-        raise
+    def library_artists(self) -> List[BriefArtistModel]:
         artists = self.service.library_subscription_artists(100)
-        return [artist.model() for artist in artists]
+        return [artist.v2_brief_model() for artist in artists]
 
-    def library_playlists(self) -> List[YtmusicPlaylistModel]:
+    def library_playlists(self) -> List[BriefPlaylistModel]:
         playlists = self.service.library_playlists(100)
-        return [playlist.model() for playlist in playlists]
+        return [playlist.v2_brief_model() for playlist in playlists]
 
     def create_playlist(self, title: str, description: str, privacy_status: YtmusicPrivacyStatus,
                         video_ids: List[str] = None, source_playlist: str = None) -> bool:
         return self.service.create_playlist(title, description, privacy_status, video_ids, source_playlist)
 
-    def playlist_info(self, identifier) -> YtmusicPlaylistModel:
-        return self.service.playlist_info(identifier, limit=0).model()
+    def playlist_info(self, identifier) -> PlaylistModel:
+        return self.service.playlist_info(identifier, limit=0).v2_model()
 
     def add_playlist_item(self, identifier, song_id) -> bool:
         result = self.service.add_playlist_items(identifier, [song_id])
@@ -137,7 +141,18 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         ytmusic_type = YtmusicType.parse(type_)
         results = self.service.search(keyword, ytmusic_type)
         model = SearchModel(q=keyword)
-        setattr(model, ytmusic_type.value, [r.model() for r in results])
+        if results:
+            try:
+                results[0].v2_model
+            except AttributeError:
+                models = [r.v2_brief_model() for r in results]
+            else:
+                # Try to use SongModel instead of BriefSongModel,
+                # because there is no way to implement song_get.
+                models = [r.v2_model() for r in results]
+        else:
+            models = []
+        setattr(model, ytmusic_type.value, models)
         return model
 
     def song_list_quality(self, song) -> List[Quality.Audio]:
@@ -152,7 +167,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         if url is not None:
             return Media(url, type_=MediaType.audio, bitrate=bitrate,
                          format=format_str, http_proxy='http://127.0.0.1:7890')
-        return
+        return None
 
     def album_get(self, identifier):
         album_info = self.service.album_info(identifier)
@@ -161,8 +176,33 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def artist_get(self, identifier):
         return self.service.artist_info(identifier).v2_model()
 
+    def playlist_get(self, identifier):
+        return self.service.playlist_info(identifier).v2_model()
+
+    def playlist_create_songs_rd(self, playlist):
+        playlist_info = self.service.playlist_info(playlist.identifier)
+        return playlist_info.reader(self)
+
+    def playlist_add_song(self, playlist, song):
+        if playlist.identifier == 'LM':
+            return False
+        return self.add_playlist_item(playlist.identifier, song.identifier)
+
+    # playlist.set_id_map is not currently maintained.
+    #
+    # def playlist_remove_song(self, playlist, song):
+    #     song_id = song.identifier
+    #     if playlist.identifier == 'LM':
+    #         return False
+    #     set_id = playlist.set_id_map.get(song_id)
+    #     if set_id is None:
+    #         return False
+    #     return self.remove_playlist_item(self.identifier, song_id, set_id)
+
     def artist_create_songs_rd(self, artist):
         artist_info = self.service.artist_info(artist.identifier)
+        if artist_info.songs.browseId is None:
+            return [song.v2_model() for song in artist_info.songs.results]
         playlist_info = self.service.playlist_info(artist_info.songs.browseId)
         return playlist_info.reader(self)
 
