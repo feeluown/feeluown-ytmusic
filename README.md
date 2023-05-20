@@ -29,6 +29,16 @@ Pull requests are welcome. For major changes, please create a new issue first to
 
 Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelUOwn) lastest stable release.
 
+## Roadmap
+
+- [x] Show album/artist/playlist
+- [x] Play song/playlist/album/artist
+- [ ] Refine login process (by using `ytmusicapi oauth`)
+- [ ] Re move song from a playlist
+- [ ] Implement provider.song_get so that use can save a song to a collection (.fuo)
+- [ ] Upload songs to cloud
+- [ ] Discover songs
+
 ## License
 
 This project is licensed under the [GPLv3](LICENSE.txt).
