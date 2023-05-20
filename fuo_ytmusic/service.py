@@ -148,7 +148,7 @@ class YtmusicService(metaclass=Singleton):
                      f'Response: [{r.status_code}] {len(r.content)} bytes.')
 
     @property
-    def api(self):
+    def api(self) -> YTMusic:
         if self._api is None:
             logger.info('initializing ytmusic')
             if HEADER_FILE.exists():
@@ -183,7 +183,8 @@ class YtmusicService(metaclass=Singleton):
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def artist_info(self, channel_id: str) -> ArtistInfo:
-        return ArtistInfo(**self.api.get_artist(channel_id))
+        data = self.api.get_artist(channel_id)
+        return ArtistInfo(**data)
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def artist_albums(self, channel_id: str, params: str) -> List[YtmusicSearchAlbum]:

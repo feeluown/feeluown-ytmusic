@@ -4,15 +4,14 @@ from feeluown.excs import NoUserLoggedIn
 from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongModel, BriefVideoModel, \
     BriefUserModel, ModelType
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
-from feeluown.models import SearchType, SearchModel, ArtistModel
+from feeluown.models import SearchType, SearchModel
 from feeluown.library.model_protocol import BriefSongProtocol
 from fuo_netease.models import NSearchModel
 from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.models import (
-    YtmusicPlaylistModel, Categories, YtmusicArtistModel,
-    YtBriefUserModel,
+    YtmusicPlaylistModel, Categories, YtBriefUserModel,
 )
 from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
 
@@ -25,7 +24,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         self.service: YtmusicService = YtmusicService()
         self._user = None
         YtmusicPlaylistModel.provider = self
-        YtmusicArtistModel.provider = self
 
     def initialize(self, app):
         self._app = app
@@ -58,7 +56,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         self._user = user
 
     def use_model_v2(self, mtype):
-        return mtype in (ModelType.album, )
+        return mtype in (ModelType.album, ModelType.artist)
 
     def library_songs(self):
         songs = self.service.library_songs(100)
@@ -80,7 +78,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         albums = self.service.library_albums(100)
         return [album.model() for album in albums]
 
-    def library_artists(self) -> List[ArtistModel]:
+    def library_artists(self):
+        raise
         artists = self.service.library_subscription_artists(100)
         return [artist.model() for artist in artists]
 
@@ -157,7 +156,25 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def album_get(self, identifier):
         album_info = self.service.album_info(identifier)
-        return album_info.v2_model(identifier)
+        return album_info.v2_model_with_identifier(identifier)
+
+    def artist_get(self, identifier):
+        return self.service.artist_info(identifier).v2_model()
+
+    def artist_create_songs_rd(self, artist):
+        artist_info = self.service.artist_info(artist.identifier)
+        playlist_info = self.service.playlist_info(artist_info.songs.browseId)
+        return playlist_info.reader(self)
+
+    def artist_create_albums_rd(self, artist):
+        artist_info = self.service.artist_info(artist.identifier)
+        # Sometimes, the artist only has few albums, read them from results.
+        if artist_info.albums.browseId is None:
+            albums = artist_info.albums.results
+        else:
+            albums = self.service.artist_albums(artist_info.albums.browseId,
+                                                artist_info.albums.params)
+        return [album.v2_brief_model() for album in albums]
 
     def deprecated_song_get_lyric(self, song):
         # 歌词获取报错的 workaround

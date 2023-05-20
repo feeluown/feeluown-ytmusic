@@ -10,9 +10,9 @@ from feeluown.media import Quality
 from feeluown.library import (
     SongModel, VideoModel, ModelState, BriefArtistModel, BriefUserModel,
     AlbumModel as AlbumModelV2, BriefSongModel, SongModel as SongModelV2,
-    BriefAlbumModel,
+    BriefAlbumModel, ArtistModel as ArtistModelV2
 )
-from feeluown.models import AlbumType, ArtistModel, PlaylistModel
+from feeluown.models import AlbumType, PlaylistModel
 
 from fuo_ytmusic.timeparse import timeparse
 
@@ -66,6 +66,8 @@ class YtmusicArtistsMixin:
 
     @property
     def artists_name(self):
+        if self.artists is None:
+            return ''
         return ' / '.join([a.name for a in self.artists])
 
 
@@ -306,6 +308,17 @@ class ArtistInfo(BaseModel):
     videos: Videos
     related: RelatedArtists
 
+    def v2_model(self) -> ArtistModelV2:
+        return ArtistModelV2(
+            identifier=self.channelId,
+            source=self.source,
+            name=self.name,
+            pic_url=(self.thumbnails[0].url if self.thumbnails else ''),
+            aliases=[],
+            hot_songs=[],
+            description=self.description,
+        )
+
 
 class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     title: str  # 专辑名
@@ -318,7 +331,7 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     # ytmusicapi.get_album has this field. Not sure if other api has this field.
     description: str = ''
 
-    def v2_model(self, identifier) -> AlbumModelV2:
+    def v2_model_with_identifier(self, identifier) -> AlbumModelV2:
         brief_album = BriefAlbumModel(
             identifier=identifier,
             source=self.source,
@@ -584,34 +597,6 @@ class YtmusicPlaylistModel(PlaylistModel):
         if set_id is None:
             return False
         return self.provider.remove_playlist_item(self.identifier, song_id, set_id)
-
-
-class YtmusicArtistModel(ArtistModel):
-    provider = None
-
-    class Meta:
-        fields = ['source']
-        allow_create_songs_g = True
-
-    @classmethod
-    def get(cls, identifier: str) -> 'YtmusicArtistModel':
-        return cls.provider.artist_info(identifier)
-
-    def create_songs_g(self):
-        artist: ArtistInfo = self.provider.service.artist_info(self.identifier)
-        playlist: PlaylistInfo = self.provider.service.playlist_info(artist.songs.browseId)
-        return playlist.reader(self.provider)
-
-    @property
-    def albums(self):
-        artist: ArtistInfo = self.provider.service.artist_info(self.identifier)
-        albums: List[YtmusicSearchAlbum] = self.provider.service.artist_albums(artist.albums.browseId,
-                                                                               artist.albums.params)
-        return [album.model() for album in albums]
-
-    @albums.setter
-    def albums(self, _):
-        pass
 
 
 class YtBriefUserModel(BriefUserModel):
