@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from feeluown.excs import NoUserLoggedIn
 from feeluown.library import AbstractProvider, ProviderV2, ModelType, ProviderFlags as Pf, SongModel, BriefVideoModel, \
-    BriefUserModel
+    BriefUserModel, ModelType
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.models import SearchType, SearchModel, ArtistModel
 from feeluown.library.model_protocol import BriefSongProtocol
@@ -10,21 +10,25 @@ from fuo_netease.models import NSearchModel
 from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
-from fuo_ytmusic.models import YtmusicPlaylistModel, Categories, YtmusicAlbumModel, YtmusicArtistModel
+from fuo_ytmusic.models import (
+    YtmusicPlaylistModel, Categories, YtmusicArtistModel,
+    YtBriefUserModel,
+)
 from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
     service: YtmusicService
 
-    def __init__(self, app=None):
+    def __init__(self):
         super(YtmusicProvider, self).__init__()
-        self.service: YtmusicService = YtmusicService(app.config if app is not None else None)
+        self.service: YtmusicService = YtmusicService()
         self._user = None
-        self._app = app
         YtmusicPlaylistModel.provider = self
-        YtmusicAlbumModel.provider = self
         YtmusicArtistModel.provider = self
+
+    def initialize(self, app):
+        self._app = app
 
     # noinspection PyPep8Naming
     class meta:
@@ -51,8 +55,10 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     @user.setter
     def user(self, user):
-        self.service.setup()
         self._user = user
+
+    def use_model_v2(self, mtype):
+        return mtype in (ModelType.album, )
 
     def library_songs(self):
         songs = self.service.library_songs(100)
@@ -103,14 +109,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         playlists = self.service.category_playlists(params)
         return [p.model() for p in playlists]
 
-    def album_info(self, identifier) -> YtmusicAlbumModel:
-        return self.service.album_info(identifier).model(id_=identifier)
-
     def categories(self) -> List[Categories]:
         return self.service.categories()
 
-    def user_from_cookie(self, _):
-        return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
+    def user_from_cookie(self, cookies: dict):
+        return YtBriefUserModel(
+            identifier='', source=self.meta.identifier, name='Me',
+            cookies=cookies)
 
     def has_current_user(self) -> bool:
         return HEADER_FILE.exists()
@@ -145,9 +150,16 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         song_info = self.service.song_info(song.identifier)
         format_code, bitrate, format_str = song_info.get_media(quality)
         url = self.service.stream_url(song.identifier, format_code)
-        return Media(url, type_=MediaType.audio, bitrate=bitrate, format=format_str) if url is not None else None
+        if url is not None:
+            return Media(url, type_=MediaType.audio, bitrate=bitrate,
+                         format=format_str, http_proxy='http://127.0.0.1:7890')
+        return
 
-    def song_get_lyric(self, song):
+    def album_get(self, identifier):
+        album_info = self.service.album_info(identifier)
+        return album_info.v2_model(identifier)
+
+    def deprecated_song_get_lyric(self, song):
         # 歌词获取报错的 workaround
         if self._app is None:
             return None
@@ -174,6 +186,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         audio_url = self.service.stream_url(video.identifier, audio_code)
         if url is None or audio_url is None:
             return None
+        url = url.replace('https://', 'http://')
+        audio_url = audio_url.replace('https://', 'http://')
         return Media(VideoAudioManifest(url, audio_url))
 
     def song_get_mv(self, song: BriefSongProtocol) -> BriefVideoModel:
@@ -185,3 +199,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def delete_uploaded_song(self, entity_id: str) -> bool:
         return self.service.delete_upload_song(entity_id) == 'STATUS_SUCCEEDED'
+
+
+provider = YtmusicProvider()

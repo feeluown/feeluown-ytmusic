@@ -16,7 +16,7 @@ from pytube.cipher import Cipher
 from requests import Response
 from pytube import extract
 
-from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.consts import HEADER_FILE, COOKIE_FILE
 from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
@@ -161,11 +161,16 @@ class YtmusicService(metaclass=Singleton):
     def setup(self, config=None):
         del self._session
         self._session = requests.Session()
-        if config is not None and hasattr(config, 'YTM_HTTP_PROXY') and config.YTM_HTTP_PROXY != '':
-            self._session.proxies = {
-                'http': 'http://' + config.YTM_HTTP_PROXY,
-                'https': 'http://' + config.YTM_HTTP_PROXY
-            }
+        # if config is not None and hasattr(config, 'YTM_HTTP_PROXY') and config.YTM_HTTP_PROXY != '':
+        #     self._session.proxies = {
+        #         'http': 'http://' + config.YTM_HTTP_PROXY,
+        #         'https': 'http://' + config.YTM_HTTP_PROXY
+        #     }
+        proxy = '127.0.0.1:7890'
+        self._session.proxies = {
+            'http': 'http://' + proxy,
+            'https': 'http://' + proxy,
+        }
         self._session.hooks['response'].append(self._do_logging)
 
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
@@ -194,7 +199,8 @@ class YtmusicService(metaclass=Singleton):
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def album_info(self, browse_id: str) -> AlbumInfo:
-        return AlbumInfo(**self.api.get_album(browse_id))
+        data = self.api.get_album(browse_id)
+        return AlbumInfo(**data)
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def song_info(self, video_id: str) -> SongInfo:
@@ -310,6 +316,7 @@ class YtmusicService(metaclass=Singleton):
         _url = res['url'] + "&sig=" + signature
         if retry:
             r = self._session.head(_url)
+            print('stream url', _url, r.status_code)
             if r.status_code == 403:
                 logger.info('[ytmusic] update signature timestamp and try again')
                 self._signature_timestamp = self._api.get_signatureTimestamp()
