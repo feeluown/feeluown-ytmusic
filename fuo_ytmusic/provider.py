@@ -240,9 +240,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         audio_url = self.service.stream_url(video.identifier, audio_code)
         if url is None or audio_url is None:
             return None
-        url = url.replace('https://', 'http://')
-        audio_url = audio_url.replace('https://', 'http://')
-        return Media(VideoAudioManifest(url, audio_url))
+        return Media(VideoAudioManifest(url, audio_url), http_proxy=self._http_proxy)
 
     def song_get_mv(self, song: BriefSongProtocol) -> BriefVideoModel:
         return BriefVideoModel(identifier=song.identifier, source=song.source, title=song.title,
