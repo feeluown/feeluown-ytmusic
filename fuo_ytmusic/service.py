@@ -134,13 +134,13 @@ class YTMusic(YTMusicBase):
 
 
 class YtmusicService(metaclass=Singleton):
-    def __init__(self, config=None):
-        self._session: Optional[requests.Session] = None
+    def __init__(self):
+        self._session = requests.Session()
         self._api: Optional[YTMusic] = None
         self._js = ""
         self._cipher = None
         self._signature_timestamp = 0
-        self.setup(config)
+        self._session.hooks['response'].append(self._do_logging)
 
     @staticmethod
     def _do_logging(r: Response, *_, **__):
@@ -158,20 +158,11 @@ class YtmusicService(metaclass=Singleton):
             self._signature_timestamp = self._api.get_signatureTimestamp()
         return self._api
 
-    def setup(self, config=None):
-        del self._session
-        self._session = requests.Session()
-        # if config is not None and hasattr(config, 'YTM_HTTP_PROXY') and config.YTM_HTTP_PROXY != '':
-        #     self._session.proxies = {
-        #         'http': 'http://' + config.YTM_HTTP_PROXY,
-        #         'https': 'http://' + config.YTM_HTTP_PROXY
-        #     }
-        proxy = '127.0.0.1:7890'
+    def setup_http_proxy(self, http_proxy):
         self._session.proxies = {
-            'http': 'http://' + proxy,
-            'https': 'http://' + proxy,
+            'http': http_proxy,
+            'https': http_proxy,
         }
-        self._session.hooks['response'].append(self._do_logging)
 
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
                page_size: int = GLOBAL_LIMIT) \

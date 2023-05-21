@@ -18,26 +18,21 @@ from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatu
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
-    service: YtmusicService
 
     def __init__(self):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
         self._user = None
+        self._http_proxy = ''
 
-    def initialize(self, app):
-        self._app = app
+    def setup_http_proxy(self, http_proxy):
+        self._http_proxy = http_proxy
+        self.service.setup_http_proxy(http_proxy)
 
     # noinspection PyPep8Naming
     class meta:
         identifier = 'ytmusic'
         name = 'YouTube Music'
-        flags = {
-            ModelType.song: (Pf.model_v2 | Pf.multi_quality | Pf.mv | Pf.lyric),
-            ModelType.video: Pf.multi_quality,
-            ModelType.album: Pf.get,
-            ModelType.artist: Pf.get,
-        }
 
     @property
     def identifier(self):
@@ -166,7 +161,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         url = self.service.stream_url(song.identifier, format_code)
         if url is not None:
             return Media(url, type_=MediaType.audio, bitrate=bitrate,
-                         format=format_str, http_proxy='http://127.0.0.1:7890')
+                         format=format_str, http_proxy=self._http_proxy)
         return None
 
     def album_get(self, identifier):
