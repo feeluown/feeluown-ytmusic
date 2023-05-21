@@ -31,12 +31,12 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 ## Roadmap
 
 - [x] Show album/artist/playlist
-- [x] Play song/playlist/album/artist
-- [ ] Refine login process (by using `ytmusicapi oauth`)
-- [ ] Re move song from a playlist
-- [ ] Implement provider.song_get so that use can save a song to a collection (.fuo)
+- [x] Play song/mv/video
+- [x] Login with web cookies or `ytmusicapi oauth`
+- [ ] Add/remove song from a playlist
+- [ ] Get song detail by id
 - [ ] Upload songs to cloud
-- [ ] Discover songs
+- [ ] Discovering page
 
 ## License
 

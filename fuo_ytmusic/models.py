@@ -239,9 +239,15 @@ class YtmusicSearchVideo(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMix
     videoId: str  # 视频ID
     playlistId: str
 
-    def model(self) -> VideoModel:
-        return VideoModel(identifier=self.videoId, source=self.source, title=self.title, cover=self.cover,
-                          artists=self.v2_brief_artist_models(), duration=self.duration_ms)
+    def v2_model(self) -> VideoModel:
+        return VideoModel(
+            identifier=self.videoId,
+            source=self.source,
+            title=self.title,
+            cover=self.cover,
+            artists=self.v2_brief_artist_models(),
+            duration=self.duration_ms
+        )
 
 
 class YtmusicDispatcher:
