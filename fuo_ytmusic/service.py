@@ -1,5 +1,6 @@
 import logging
 import ntpath
+import json
 import os
 import sys
 from datetime import timedelta
@@ -16,7 +17,7 @@ from pytube.cipher import Cipher
 from requests import Response
 from pytube import extract
 
-from fuo_ytmusic.consts import HEADER_FILE, COOKIE_FILE
+from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
@@ -151,10 +152,12 @@ class YtmusicService(metaclass=Singleton):
     def api(self) -> YTMusic:
         if self._api is None:
             logger.info('initializing ytmusic')
+            options = dict(requests_session=self._session, language='zh_CN')
             if HEADER_FILE.exists():
-                self._api = YTMusic(str(HEADER_FILE), requests_session=self._session, language='zh_CN')
+                self._api = YTMusic(HEADER_FILE, **options)
             else:
-                self._api = YTMusic(requests_session=self._session, language='zh_CN')
+                # Actually, YTMusic does not work if no auth file is provided.
+                self._api = YTMusic(**options)
             self._signature_timestamp = self._api.get_signatureTimestamp()
         return self._api
 
@@ -324,7 +327,6 @@ class YtmusicService(metaclass=Singleton):
 
 if __name__ == '__main__':
     # noinspection PyUnresolvedReferences
-    import json
 
     service = YtmusicService()
     # print(service.upload_song('/home/bruce/Music/阿梓 - 呼吸决定.mp3'))
