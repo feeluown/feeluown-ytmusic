@@ -4,14 +4,15 @@ __alias__ = 'ytmusic'
 __version__ = '0.1.1'
 __desc__ = 'YouTube Music plugin'
 
-from fuo_ytmusic.ui import YtmusicUiManager
-from fuo_ytmusic.provider import provider
 
 ui_mgr = None
 
 
 def enable(app: App):
-    global provider, ui_mgr
+    global ui_mgr
+
+    from fuo_ytmusic.ui import YtmusicUiManager
+    from fuo_ytmusic.provider import provider
 
     app.library.register(provider)
     if app.mode & app.GuiMode:
@@ -19,7 +20,9 @@ def enable(app: App):
 
 
 def disable(app: App):
-    global provider
-    app.library.deregister(provider)
-    if app.mode & app.GuiMode:
-        pass
+    global ui_mgr
+
+    provider = app.library.get('ytmusic')
+    if provider is not None:
+        app.library.deregister(provider)
+    ui_mgr = None

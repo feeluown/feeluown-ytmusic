@@ -202,7 +202,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def artist_create_songs_rd(self, artist):
         artist_info = self.service.artist_info(artist.identifier)
         if artist_info.songs.browseId is None:
-            return [song.v2_model() for song in artist_info.songs.results]
+            # results may also be none.
+            # for example: channelId=UCGSXa1Ve1FswQxtwarGi-Vg
+            return [song.v2_model() for song in artist_info.songs.results or []]
         playlist_info = self.service.playlist_info(artist_info.songs.browseId)
         return playlist_info.reader(self)
 

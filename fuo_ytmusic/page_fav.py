@@ -5,7 +5,7 @@ from feeluown.gui.base_renderer import LibraryTabRendererMixin
 from feeluown.gui.page_containers.table import Renderer
 from feeluown.gui.widgets.tabbar import Tab
 
-from fuo_ytmusic import YtmusicProvider
+from fuo_ytmusic.provider import YtmusicProvider
 
 logger = logging.getLogger(__name__)
 
