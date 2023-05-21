@@ -151,15 +151,22 @@ class YtmusicService(metaclass=Singleton):
     @property
     def api(self) -> YTMusic:
         if self._api is None:
-            logger.info('initializing ytmusic')
-            options = dict(requests_session=self._session, language='zh_CN')
-            if HEADER_FILE.exists():
-                self._api = YTMusic(HEADER_FILE, **options)
-            else:
-                # Actually, YTMusic does not work if no auth file is provided.
-                self._api = YTMusic(**options)
-            self._signature_timestamp = self._api.get_signatureTimestamp()
+            self._initialize_by_headerfile()
         return self._api
+
+    def _initialize_by_headerfile(self):
+        options = dict(requests_session=self._session, language='zh_CN')
+        if HEADER_FILE.exists():
+            logger.info('Initializing ytmusic api with headerfile.')
+            self._api = YTMusic(HEADER_FILE, **options)
+        else:
+            logger.info('Initializing ytmusic api with no headerfile.')
+            # Actually, YTMusic does not work if no auth file is provided.
+            self._api = YTMusic(**options)
+        self._signature_timestamp = self._api.get_signatureTimestamp()
+
+    def reload(self):
+        self._initialize_by_headerfile()
 
     def setup_http_proxy(self, http_proxy):
         self._session.proxies = {

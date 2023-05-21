@@ -1,9 +1,11 @@
 import asyncio
+import logging
 import json
 from pathlib import Path
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QAction, QInputDialog, QMessageBox, QTextEdit
+from feeluown.utils import aio
 from feeluown.gui.widgets.login import CookiesLoginDialog
 from feeluown.uimodels.my_music import MyMusicUiManager
 from feeluown.uimodels.playlist import PlaylistUiManager
@@ -18,6 +20,9 @@ from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
 # from .page_more import render as more_render
 from .page_fav import render as fav_render
 from .service import YtmusicPrivacyStatus
+
+
+logger = logging.getLogger(__name__)
 
 
 class YtmusicUiManager:
@@ -153,10 +158,27 @@ class LoginDialog(CookiesLoginDialog):
         return self._provider.user_from_cookie(cookies)
 
     def load_user_cookies(self):
+        self.load_header_file()
+
+    def load_header_file(self):
         if HEADER_FILE.exists():
             with HEADER_FILE.open('r') as f:
                 data = json.load(f)
                 return data
+
+    def autologin(self):
+        """Overload super.autologin."""
+        header_or_oauth = self.load_header_file()
+        if header_or_oauth is not None:
+            self.show_hint('正在尝试加载已有用户...', color='green')
+            if 'cookie' in header_or_oauth:  # It is a header.
+                cookie = header_or_oauth['cookie']
+                auth = header_or_oauth['authorization']
+                self.cookies_text_edit.setText(cookie)
+                self.auth_text_edit.setText(auth)
+            else:
+                logger.debug('The header file is a oauth.json, will not load it to UI')
+            aio.create_task(self.login_with_cookies(header_or_oauth))
 
     def dump_user_cookies(self, user, cookies):
         with HEADER_FILE.open('w') as f:

@@ -48,6 +48,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     @user.setter
     def user(self, user):
+        self.service.reload()
         self._user = user
 
     def use_model_v2(self, mtype):
@@ -116,12 +117,12 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             cookies=cookies)
 
     def has_current_user(self) -> bool:
-        return HEADER_FILE.exists()
+        return self._user is not None
 
     def get_current_user(self):
-        if not HEADER_FILE.exists():
+        if not self._user:
             raise NoUserLoggedIn
-        return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
+        return self._user
 
     def user_get(self, identifier):
         if identifier is None:
