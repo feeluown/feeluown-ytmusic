@@ -308,7 +308,6 @@ class YtmusicService(metaclass=Singleton):
         _url = res['url'] + "&sig=" + signature
         if retry:
             r = self._session.head(_url)
-            print('stream url', _url, r.status_code)
             if r.status_code == 403:
                 logger.info('[ytmusic] update signature timestamp and try again')
                 self._signature_timestamp = self._api.get_signatureTimestamp()

@@ -19,8 +19,7 @@ poetry install  # Local development
 
 ```python
 # In ~/.fuorc
-config.deffield('YTM_HTTP_PROXY', type_=str, default='', desc='YouTube Music 代理设置')
-config.YTM_HTTP_PROXY='127.0.0.1:10809'
+config.ytmusic.HTTP_PROXY='http://127.0.0.1:7890'
 ```
 
 ## Contributing
