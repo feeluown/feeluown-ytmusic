@@ -4,7 +4,7 @@ from feeluown.excs import NoUserLoggedIn
 from feeluown.library import (
     AbstractProvider, ProviderV2, ProviderFlags as Pf,
     SongModel, BriefVideoModel, BriefUserModel, ModelType,
-    BriefPlaylistModel, BriefArtistModel, PlaylistModel,
+    BriefPlaylistModel, BriefArtistModel, PlaylistModel, ModelNotFound,
 )
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.models import SearchType, SearchModel
@@ -13,7 +13,7 @@ from fuo_netease.models import NSearchModel
 from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
-from fuo_ytmusic.models import Categories, YtBriefUserModel
+from fuo_ytmusic.models import Categories, YtBriefUserModel, YtmusicSearchSong
 from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
 
 
@@ -164,6 +164,18 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             return Media(url, type_=MediaType.audio, bitrate=bitrate,
                          format=format_str, http_proxy=self._http_proxy)
         return None
+
+    def song_get(self, identifier):
+        # ytmusicapi has not api to get song detail.
+        # hack(cosven): we use get_watch_playlist to try to get song detail.
+        # It works for song like '如愿-王菲'.
+        result = self.service.api.get_watch_playlist(identifier)
+        songs = [YtmusicSearchSong(**track).v2_model() for track in result['tracks']]
+        for song in songs:
+            if song.identifier == identifier:
+                return song
+        # I think this branch should not be reached (in most cases).
+        return ModelNotFound(f'song:{identifier} not found')
 
     def album_get(self, identifier):
         album_info = self.service.album_info(identifier)

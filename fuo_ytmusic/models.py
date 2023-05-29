@@ -51,7 +51,8 @@ class YtmusicArtistsMixin:
     artists: List[SearchNestedArtist]  # 歌手信息
 
     def v2_brief_artist_models(self) -> List[BriefArtistModel]:
-        return [artist.v2_brief_model() for artist in (self.artists or [])]
+        return [artist.v2_brief_model() for artist in (self.artists or [])
+                if artist.id is not None]
 
     @property
     def artists_name(self):
