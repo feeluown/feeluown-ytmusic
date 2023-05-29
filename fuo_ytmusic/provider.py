@@ -13,7 +13,7 @@ from fuo_netease.models import NSearchModel
 from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
-from fuo_ytmusic.models import Categories, YtBriefUserModel, YtmusicSearchSong
+from fuo_ytmusic.models import Categories, YtBriefUserModel, YtmusicWatchPlaylistSong
 from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
 
 
@@ -170,7 +170,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         # hack(cosven): we use get_watch_playlist to try to get song detail.
         # It works for song like '如愿-王菲'.
         result = self.service.api.get_watch_playlist(identifier)
-        songs = [YtmusicSearchSong(**track).v2_model() for track in result['tracks']]
+        songs = [YtmusicWatchPlaylistSong(**track).v2_model()
+                 for track in result['tracks']]
         for song in songs:
             if song.identifier == identifier:
                 return song

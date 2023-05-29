@@ -167,9 +167,19 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
             artists=self.v2_brief_artist_models(),
             album=album,
             duration=self.duration_ms,
+            pic_url=self.cover or '',
         )
         if not song.identifier:
             song.state = ModelState.not_exists
+        return song
+
+
+class YtmusicWatchPlaylistSong(YtmusicSearchSong):
+    year: str  # This field exists in get_watch_playlist API.
+
+    def v2_model(self) -> SongModelV2:
+        song = super().v2_model()
+        song.date = self.year or ''
         return song
 
 
