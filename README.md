@@ -33,8 +33,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [x] Show album/artist/playlist
 - [x] Play song/mv/video
 - [x] Login with web cookies or `ytmusicapi oauth`
+- [x] Get song detail by id
 - [ ] Add/remove song from a playlist
-- [ ] Get song detail by id
 - [ ] Upload songs to cloud
 - [ ] Discovering page
 
