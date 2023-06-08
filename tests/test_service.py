@@ -1,6 +1,6 @@
 import logging
 
-from feeluown.models import SearchType
+from feeluown.library import SearchType
 
 from fuo_ytmusic import service
 from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum

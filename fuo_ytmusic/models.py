@@ -13,7 +13,7 @@ from feeluown.library import (
     BriefAlbumModel, ArtistModel as ArtistModelV2, PlaylistModel,
     BriefPlaylistModel,
 )
-from feeluown.models import AlbumType
+from feeluown.library import AlbumType
 
 from fuo_ytmusic.timeparse import timeparse
 
@@ -310,9 +310,12 @@ class ArtistInfo(BaseModel):
     videos: Videos
     related: RelatedArtists
 
-    def v2_model(self) -> ArtistModelV2:
+    def v2_model(self, identifier) -> ArtistModelV2:
+        # Note that the channelId is different from the identifier.
+        # Though the channelId also refers to the artist,
+        # it's songs is a empty list.
         return ArtistModelV2(
-            identifier=self.channelId,
+            identifier=identifier,
             source=self.source,
             name=self.name,
             pic_url=(self.thumbnails[0].url if self.thumbnails else ''),
