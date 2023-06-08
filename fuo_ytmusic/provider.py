@@ -7,9 +7,8 @@ from feeluown.library import (
     BriefPlaylistModel, BriefArtistModel, PlaylistModel, ModelNotFound,
 )
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
-from feeluown.models import SearchType, SearchModel
+from feeluown.library import SearchType, SimpleSearchResult
 from feeluown.library.model_protocol import BriefSongProtocol
-from fuo_netease.models import NSearchModel
 from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
@@ -136,7 +135,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         type_ = SearchType.parse(type_)
         ytmusic_type = YtmusicType.parse(type_)
         results = self.service.search(keyword, ytmusic_type)
-        model = SearchModel(q=keyword)
+        model = SimpleSearchResult(q=keyword)
         if results:
             try:
                 results[0].v2_model
@@ -183,7 +182,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return album_info.v2_model_with_identifier(identifier)
 
     def artist_get(self, identifier):
-        return self.service.artist_info(identifier).v2_model()
+        return self.service.artist_info(identifier).v2_model(identifier)
 
     def playlist_get(self, identifier):
         return self.service.playlist_info(identifier).v2_model()
@@ -234,7 +233,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         provider: NeteaseProvider = self._app.library.get('netease')
         if provider is None:
             return None
-        result: NSearchModel = provider.search(f'{song.title} {song.artists_name}', type_=SearchType.so)
+        result = provider.search(f'{song.title} {song.artists_name}', type_=SearchType.so)
         songs = result.songs
         if len(songs) < 1:
             return None

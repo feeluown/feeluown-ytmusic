@@ -12,7 +12,7 @@ from urllib.parse import unquote
 import cachetools.keys
 import requests
 
-from feeluown.models import SearchType
+from feeluown.library import SearchType
 from pytube.cipher import Cipher
 from requests import Response
 from pytube import extract
