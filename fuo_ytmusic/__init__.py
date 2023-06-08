@@ -1,7 +1,7 @@
 from feeluown.app import App
 
 __alias__ = 'ytmusic'
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __desc__ = 'YouTube Music plugin'
 
 
