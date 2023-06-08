@@ -19,8 +19,7 @@ poetry install  # Local development
 
 ```python
 # In ~/.fuorc
-config.deffield('YTM_HTTP_PROXY', type_=str, default='', desc='YouTube Music 代理设置')
-config.YTM_HTTP_PROXY='127.0.0.1:10809'
+config.ytmusic.HTTP_PROXY='http://127.0.0.1:7890'
 ```
 
 ## Contributing
@@ -28,6 +27,16 @@ config.YTM_HTTP_PROXY='127.0.0.1:10809'
 Pull requests are welcome. For major changes, please create a new issue first to discuss what you'd like to change.
 
 Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelUOwn) lastest stable release.
+
+## Roadmap
+
+- [x] Show album/artist/playlist
+- [x] Play song/mv/video
+- [x] Login with web cookies or `ytmusicapi oauth`
+- [ ] Add/remove song from a playlist
+- [ ] Get song detail by id
+- [ ] Upload songs to cloud
+- [ ] Discovering page
 
 ## License
 

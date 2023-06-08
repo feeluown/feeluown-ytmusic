@@ -7,8 +7,13 @@ from pydantic.fields import Field
 from pydantic.main import ModelMetaclass
 
 from feeluown.media import Quality
-from feeluown.library import SongModel, VideoModel, ModelState, BriefArtistModel
-from feeluown.models import AlbumModel, AlbumType, ArtistModel, PlaylistModel
+from feeluown.library import (
+    VideoModel, ModelState, BriefArtistModel, BriefUserModel,
+    AlbumModel as AlbumModelV2, BriefSongModel, SongModel as SongModelV2,
+    BriefAlbumModel, ArtistModel as ArtistModelV2, PlaylistModel,
+    BriefPlaylistModel,
+)
+from feeluown.models import AlbumType
 
 from fuo_ytmusic.timeparse import timeparse
 
@@ -38,26 +43,22 @@ class SearchNestedArtist(BaseModel):
     id: str
     name: str
 
-    def model(self) -> 'YtmusicArtistModel':
-        return YtmusicArtistModel(identifier=self.id or '', source=self.source, name=self.name or '')
-
-    def brief_model(self) -> BriefArtistModel:
+    def v2_brief_model(self) -> BriefArtistModel:
         return BriefArtistModel(identifier=self.id or '', source=self.source, name=self.name or '')
 
 
 class YtmusicArtistsMixin:
     artists: List[SearchNestedArtist]  # 歌手信息
 
-    @property
-    def artists_model(self) -> Optional[List['YtmusicArtistModel']]:
-        if self.artists is not None:
-            return [artist.model() for artist in self.artists]
-        return None
+    def v2_brief_artist_models(self) -> List[BriefArtistModel]:
+        return [artist.v2_brief_model() for artist in (self.artists or [])
+                if artist.id is not None]
 
-    def brief_artists_model(self) -> Optional[List[BriefArtistModel]]:
-        if self.artists is not None:
-            return [artist.brief_model() for artist in self.artists]
-        return None
+    @property
+    def artists_name(self):
+        if self.artists is None:
+            return ''
+        return ' / '.join([a.name for a in self.artists])
 
 
 class SearchNestedThumbnail(BaseModel):
@@ -92,6 +93,32 @@ class YtmusicDurationMixin:
         return int(timeparse(self.duration) * 1000)
 
 
+class YtmusicAlbumSong(BaseModel, YtmusicArtistsMixin, YtmusicDurationMixin):
+    title: str
+    album: str
+    videoId: str
+
+    def v2_brief_model(self) -> BriefSongModel:
+        return BriefSongModel(
+            identifier=self.videoId,
+            source=self.source,
+            title=self.title,
+            artists_name=self.artists_name,
+            album_name=self.album,
+            duration_ms=self.duration
+        )
+
+    def v2_model_with_brief_album(self, album: BriefAlbumModel) -> SongModelV2:
+        return SongModelV2(
+            identifier=self.videoId,
+            source=self.source,
+            title=self.title,
+            album=album,
+            artists=self.v2_brief_artist_models(),
+            duration=self.duration_ms,
+        )
+
+
 class YtmusicSearchBase(BaseModel):
     category: str
     resultType: str
@@ -102,8 +129,8 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
         id: str
         name: str
 
-        def model(self) -> 'YtmusicAlbumModel':
-            album = YtmusicAlbumModel(identifier=self.id or '', source=self.source, name=self.name)
+        def model(self) -> BriefAlbumModel:
+            album = BriefAlbumModel(identifier=self.id or '', source=self.source, name=self.name)
             if self.id is None:
                 album.state = ModelState.not_exists
             return album
@@ -115,22 +142,44 @@ class YtmusicSearchSong(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixi
     isAvailable: bool
     isExplicit: bool
 
-    def model(self, album: 'AlbumInfo' = None, artists=None) -> 'YtmusicSongModel':
-        artists_ = self.brief_artists_model()
-        if artists_ is None and artists is not None:
-            artists_ = artists
-        song = YtmusicSongModel(identifier=self.videoId or '', source=self.source, title=self.title,
-                                artists=artists_ or [], duration=self.duration_ms)
-        if self.album is not None:
-            song.album = self.album.model()
-        else:
-            if album is not None:
-                # noinspection PyProtectedMember
-                song.album = album._model()
-            else:
-                song.album = YtmusicAlbumModel(identifier='', source=self.source, name='', state=ModelState.not_exists)
-        if self.videoId is None:
+    def v2_brief_model(self) -> BriefSongModel:
+        song = BriefSongModel(
+            identifier=self.videoId or '',
+            source=self.source,
+            title=self.title,
+            artists_name=self.artists_name,
+            album_name=self.album.name if self.album else '',
+            duration_ms=self.duration
+        )
+        if not song.identifier:
             song.state = ModelState.not_exists
+        return song
+
+    def v2_model(self) -> SongModelV2:
+        if self.album:
+            album = self.album.model()
+        else:
+            album = None
+        song = SongModelV2(
+            identifier=self.videoId or '',
+            source=self.source,
+            title=self.title,
+            artists=self.v2_brief_artist_models(),
+            album=album,
+            duration=self.duration_ms,
+            pic_url=self.cover or '',
+        )
+        if not song.identifier:
+            song.state = ModelState.not_exists
+        return song
+
+
+class YtmusicWatchPlaylistSong(YtmusicSearchSong):
+    year: str  # This field exists in get_watch_playlist API.
+
+    def v2_model(self) -> SongModelV2:
+        song = super().v2_model()
+        song.date = self.year or ''
         return song
 
 
@@ -138,12 +187,6 @@ class YtmusicLibrarySong(YtmusicSearchSong):
     likeStatus: str  # LIKE
     setVideoId: str
     entityId: str
-
-    def model(self, album: 'AlbumInfo' = None, artists=None) -> 'YtmusicSongModel':
-        song = super().model(album, artists)
-        song.setVideoId = self.setVideoId
-        song.entityId = self.entityId
-        return song
 
 
 class YtmusicHistorySong(YtmusicLibrarySong):
@@ -163,9 +206,13 @@ class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMix
             return AlbumType.single
         return AlbumType.standard
 
-    def model(self) -> 'YtmusicAlbumModel':
-        return YtmusicAlbumModel(identifier=self.browseId, source=self.source, name=self.title, type=self.album_type,
-                                 cover=self.cover, artists=self.artists_model)
+    def v2_brief_model(self) -> BriefAlbumModel:
+        return BriefAlbumModel(
+            identifier=self.browseId,
+            source=self.source,
+            name=self.title,
+            artists_name=self.artists_name,
+        )
 
 
 class YtmusicSearchArtist(YtmusicSearchBase, YtmusicCoverMixin):
@@ -174,9 +221,8 @@ class YtmusicSearchArtist(YtmusicSearchBase, YtmusicCoverMixin):
     radioId: str
     browseId: str  # 查询ID
 
-    def model(self) -> 'YtmusicArtistModel':
-        return YtmusicArtistModel(identifier=self.browseId, source=self.source, name=self.artist,
-                                  cover=self.cover or '')
+    def v2_brief_model(self) -> BriefArtistModel:
+        return BriefArtistModel(identifier=self.browseId, source=self.source, name=self.artist)
 
 
 class YtmusicLibraryArtist(YtmusicSearchArtist):
@@ -185,12 +231,17 @@ class YtmusicLibraryArtist(YtmusicSearchArtist):
 
 class YtmusicSearchPlaylist(YtmusicSearchBase, YtmusicCoverMixin):
     title: str  # 歌单名
-    itemCount: int  # 歌曲数量
+    itemCount: Optional[int]  # 歌曲数量
     author: str  # 歌单作者
     browseId: str  # 查询ID
 
-    def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.browseId, source=self.source, name=self.title, cover=self.cover)
+    def v2_brief_model(self) -> BriefPlaylistModel:
+        return BriefPlaylistModel(
+            identifier=self.browseId,
+            source=self.source,
+            name=self.title,
+            creator_name=self.author or '',
+        )
 
 
 class YtmusicSearchVideo(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin, YtmusicDurationMixin):
@@ -199,9 +250,15 @@ class YtmusicSearchVideo(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMix
     videoId: str  # 视频ID
     playlistId: str
 
-    def model(self) -> VideoModel:
-        return VideoModel(identifier=self.videoId, source=self.source, title=self.title, cover=self.cover,
-                          artists=self.artists_model, duration=self.duration_ms)
+    def v2_model(self) -> VideoModel:
+        return VideoModel(
+            identifier=self.videoId,
+            source=self.source,
+            title=self.title,
+            cover=self.cover,
+            artists=self.v2_brief_artist_models(),
+            duration=self.duration_ms
+        )
 
 
 class YtmusicDispatcher:
@@ -217,7 +274,7 @@ class YtmusicDispatcher:
     def search_result_dispatcher(cls, **data) \
             -> Union[YtmusicSearchBase, YtmusicSearchVideo, YtmusicSearchSong, YtmusicSearchArtist, YtmusicSearchAlbum,
                      YtmusicSearchPlaylist]:
-        clazz = cls.RESULT_TYPE_MAP.get(data.get('resultType'))
+        clazz = cls.RESULT_TYPE_MAP.get(data.get('resultType') or '')
         return clazz(**data) if clazz is not None else YtmusicSearchBase(**data)
 
 
@@ -253,6 +310,17 @@ class ArtistInfo(BaseModel):
     videos: Videos
     related: RelatedArtists
 
+    def v2_model(self) -> ArtistModelV2:
+        return ArtistModelV2(
+            identifier=self.channelId,
+            source=self.source,
+            name=self.name,
+            pic_url=(self.thumbnails[0].url if self.thumbnails else ''),
+            aliases=[],
+            hot_songs=[],
+            description=self.description or '',
+        )
+
 
 class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     title: str  # 专辑名
@@ -261,17 +329,27 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     trackCount: int
     duration: str  # eg.5 minutes, 14 seconds
     audioPlaylistId: str
-    tracks: List[YtmusicSearchSong]  # 专辑歌曲
+    tracks: List[YtmusicAlbumSong]  # 专辑歌曲
+    # ytmusicapi.get_album has this field. Not sure if other api has this field.
+    description: str = ''
 
-    def _model(self, id_: str = None):
-        return YtmusicAlbumModel(identifier=id_, source=self.source, name=self.title, type=self.type, cover=self.cover)
-
-    def model(self, id_: str = None) -> 'YtmusicAlbumModel':
-        result = self._model(id_)
-        artists = self.artists_model
-        result.songs = [track.model(album=self, artists=artists) for track in self.tracks]
-        result.artists = self.artists_model
-        return result
+    def v2_model_with_identifier(self, identifier) -> AlbumModelV2:
+        brief_album = BriefAlbumModel(
+            identifier=identifier,
+            source=self.source,
+            name=self.title,
+            artists_name=self.artists_name,
+        )
+        return AlbumModelV2(
+            identifier=identifier,
+            source=self.source,
+            name=self.title,
+            cover=self.cover,
+            songs=[t.v2_model_with_brief_album(brief_album) for t in self.tracks],
+            artists=self.v2_brief_artist_models(),
+            description=self.description,
+            released=self.year,
+        )
 
 
 class SongInfo(BaseModel):
@@ -281,7 +359,6 @@ class SongInfo(BaseModel):
 
         videoId: str
         title: str
-        lengthSeconds: int
         lengthSeconds: int
         channelId: str
         isOwnerViewing: bool
@@ -378,8 +455,13 @@ class PlaylistNestedResult(BaseModel, YtmusicCoverMixin):
     title: str
     playlistId: str
 
-    def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.playlistId, source=self.source, name=self.title, cover=self.cover)
+    def v2_brief_model(self) -> BriefPlaylistModel:
+        return BriefPlaylistModel(
+            identifier=self.playlistId,
+            source=self.source,
+            name=self.title,
+            creator_name='',
+        )
 
 
 class UserInfo(BaseModel):
@@ -434,7 +516,7 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     id: str
     privacy: str  # PUBLIC
     title: str  # 歌单名
-    description: str
+    description: Optional[str]
     author: Author
     year: int
     duration: str
@@ -442,11 +524,24 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
     tracks: List[YtmusicLibrarySong]
     fetched_tracks: set = Field(default_factory=set)
 
-    def model(self) -> 'YtmusicPlaylistModel':
-        return YtmusicPlaylistModel(identifier=self.id, source=self.source, name=self.title, cover=self.cover,
-                                    desc=self.description or '')
+    def v2_model(self):
+        creator = None
+        if self.author is not None and self.author.id is not None:
+            creator = BriefUserModel(
+                identifier=self.author.id,
+                source=self.source,
+                name=self.author.name or '',
+            )
+        return PlaylistModel(
+            identifier=self.id,
+            source=self.source,
+            name=self.title,
+            cover=self.cover,
+            description=self.description or '',
+            creator=creator
+        )
 
-    def reader(self, provider, playlist=None) -> SequentialReader:
+    def reader(self, provider) -> SequentialReader:
         total_count = self.trackCount
         self.fetched_tracks = set()
 
@@ -462,12 +557,8 @@ class PlaylistInfo(BaseModel, YtmusicCoverMixin):
                     if track_data.videoId is not None and track_data.videoId in self.fetched_tracks:
                         continue
                     self.fetched_tracks.add(track_data.videoId)
-                    if playlist is not None and track_data.setVideoId is not None:
-                        if playlist.set_id_map is None:
-                            playlist.set_id_map = dict()
-                        playlist.set_id_map[track_data.videoId] = track_data.setVideoId
                     counter += 1
-                    yield track_data.model()
+                    yield track_data.v2_brief_model()
                 if counter >= total_count:
                     break
                 offset += per
@@ -487,76 +578,10 @@ class PlaylistAddItemResponse(BaseModel):
 
 # FeelUOwn models
 
-class YtmusicSongModel(SongModel):
+class YtmusicSongModel(SongModelV2):
     setVideoId: Optional[str]
     entityId: Optional[str]
 
 
-class YtmusicPlaylistModel(PlaylistModel):
-    provider = None
-
-    class Meta:
-        fields = ['source', 'set_id_map']
-        allow_create_songs_g = True
-
-    @classmethod
-    def get(cls, identifier: str) -> 'YtmusicPlaylistModel':
-        return cls.provider.playlist_info(identifier)
-
-    def create_songs_g(self):
-        playlist: PlaylistInfo = self.provider.service.playlist_info(self.identifier)
-        return playlist.reader(self.provider, self)
-
-    def add(self, song_id):
-        if self.identifier == 'LM':
-            return False
-        return self.provider.add_playlist_item(self.identifier, song_id)
-
-    def remove(self, song_id):
-        if self.identifier == 'LM':
-            return False
-        if self.set_id_map is None:
-            return False
-        set_id = self.set_id_map.get(song_id)
-        if set_id is None:
-            return False
-        return self.provider.remove_playlist_item(self.identifier, song_id, set_id)
-
-
-class YtmusicAlbumModel(AlbumModel):
-    provider = None
-
-    class Meta:
-        fields = ['source']
-
-    @classmethod
-    def get(cls, identifier: str) -> 'YtmusicAlbumModel':
-        return cls.provider.album_info(identifier)
-
-
-class YtmusicArtistModel(ArtistModel):
-    provider = None
-
-    class Meta:
-        fields = ['source']
-        allow_create_songs_g = True
-
-    @classmethod
-    def get(cls, identifier: str) -> 'YtmusicArtistModel':
-        return cls.provider.artist_info(identifier)
-
-    def create_songs_g(self):
-        artist: ArtistInfo = self.provider.service.artist_info(self.identifier)
-        playlist: PlaylistInfo = self.provider.service.playlist_info(artist.songs.browseId)
-        return playlist.reader(self.provider)
-
-    @property
-    def albums(self):
-        artist: ArtistInfo = self.provider.service.artist_info(self.identifier)
-        albums: List[YtmusicSearchAlbum] = self.provider.service.artist_albums(artist.albums.browseId,
-                                                                               artist.albums.params)
-        return [album.model() for album in albums]
-
-    @albums.setter
-    def albums(self, _):
-        pass
+class YtBriefUserModel(BriefUserModel):
+    cookies: dict = {}

@@ -6,9 +6,9 @@ from PyQt5.QtCore import Qt, QUrl, QObject, pyqtProperty, pyqtSlot, pyqtSignal
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWidgets import QWidget
 
+from feeluown.library import BriefPlaylistModel
 from feeluown.gui.base_renderer import TabBarRendererMixin
 from fuo_ytmusic import YtmusicProvider
-from fuo_ytmusic.models import YtmusicPlaylistModel
 
 
 class ExploreBackend(QObject):
@@ -45,7 +45,7 @@ class ExploreBackend(QObject):
 
     @pyqtSlot(str, str, str)
     def goto_playlist(self, playlist_id: str, name: str, cover: str):
-        model = YtmusicPlaylistModel(identifier=playlist_id, source='ytmusic', name=name, cover=cover)
+        model = BriefPlaylistModel(identifier=playlist_id, source='ytmusic', name=name)
         self._app.browser.goto(model=model)
 
     @pyqtProperty(bool, constant=True)

@@ -1,5 +1,6 @@
 import logging
 import ntpath
+import json
 import os
 import sys
 from datetime import timedelta
@@ -134,13 +135,13 @@ class YTMusic(YTMusicBase):
 
 
 class YtmusicService(metaclass=Singleton):
-    def __init__(self, config=None):
-        self._session: Optional[requests.Session] = None
+    def __init__(self):
+        self._session = requests.Session()
         self._api: Optional[YTMusic] = None
         self._js = ""
         self._cipher = None
         self._signature_timestamp = 0
-        self.setup(config)
+        self._session.hooks['response'].append(self._do_logging)
 
     @staticmethod
     def _do_logging(r: Response, *_, **__):
@@ -148,25 +149,30 @@ class YtmusicService(metaclass=Singleton):
                      f'Response: [{r.status_code}] {len(r.content)} bytes.')
 
     @property
-    def api(self):
+    def api(self) -> YTMusic:
         if self._api is None:
-            logger.info('initializing ytmusic')
-            if HEADER_FILE.exists():
-                self._api = YTMusic(HEADER_FILE, requests_session=self._session, language='zh_CN')
-            else:
-                self._api = YTMusic(requests_session=self._session, language='zh_CN')
-            self._signature_timestamp = self._api.get_signatureTimestamp()
+            self._initialize_by_headerfile()
         return self._api
 
-    def setup(self, config=None):
-        del self._session
-        self._session = requests.Session()
-        if config is not None and hasattr(config, 'YTM_HTTP_PROXY') and config.YTM_HTTP_PROXY != '':
-            self._session.proxies = {
-                'http': 'http://' + config.YTM_HTTP_PROXY,
-                'https': 'http://' + config.YTM_HTTP_PROXY
-            }
-        self._session.hooks['response'].append(self._do_logging)
+    def _initialize_by_headerfile(self):
+        options = dict(requests_session=self._session, language='zh_CN')
+        if HEADER_FILE.exists():
+            logger.info('Initializing ytmusic api with headerfile.')
+            self._api = YTMusic(HEADER_FILE, **options)
+        else:
+            logger.info('Initializing ytmusic api with no headerfile.')
+            # Actually, YTMusic does not work if no auth file is provided.
+            self._api = YTMusic(**options)
+        self._signature_timestamp = self._api.get_signatureTimestamp()
+
+    def reload(self):
+        self._initialize_by_headerfile()
+
+    def setup_http_proxy(self, http_proxy):
+        self._session.proxies = {
+            'http': http_proxy,
+            'https': http_proxy,
+        }
 
     def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
                page_size: int = GLOBAL_LIMIT) \
@@ -178,7 +184,8 @@ class YtmusicService(metaclass=Singleton):
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def artist_info(self, channel_id: str) -> ArtistInfo:
-        return ArtistInfo(**self.api.get_artist(channel_id))
+        data = self.api.get_artist(channel_id)
+        return ArtistInfo(**data)
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def artist_albums(self, channel_id: str, params: str) -> List[YtmusicSearchAlbum]:
@@ -194,7 +201,8 @@ class YtmusicService(metaclass=Singleton):
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def album_info(self, browse_id: str) -> AlbumInfo:
-        return AlbumInfo(**self.api.get_album(browse_id))
+        data = self.api.get_album(browse_id)
+        return AlbumInfo(**data)
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def song_info(self, video_id: str) -> SongInfo:
@@ -326,7 +334,6 @@ class YtmusicService(metaclass=Singleton):
 
 if __name__ == '__main__':
     # noinspection PyUnresolvedReferences
-    import json
 
     service = YtmusicService()
     # print(service.upload_song('/home/bruce/Music/阿梓 - 呼吸决定.mp3'))
