@@ -9,7 +9,7 @@ readme = "README.md"
 include = ["fuo_ytmusic/assets/*.svg", "fuo_ytmusic/qml/*.qml"]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<4.0"
+python = ">=3.8,<4.0"
 feeluown = ">=3.8.12"
 ytmusicapi = "*"
 pydantic = "*"
