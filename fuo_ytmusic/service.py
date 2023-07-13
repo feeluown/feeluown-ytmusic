@@ -1,21 +1,17 @@
 import logging
 import ntpath
-import json
 import os
 import sys
 from datetime import timedelta
 from enum import Enum
-from functools import partial
 from typing import Optional, Union, List
 from urllib.parse import unquote
 
-import cachetools.keys
 import requests
-
-from feeluown.library import SearchType
-from pytube.cipher import Cipher
+from ytmusicapi import YTMusic as YTMusicBase
+from cachetools.func import ttl_cache
 from requests import Response
-from pytube import extract
+from feeluown.library import SearchType
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.helpers import Singleton
@@ -23,8 +19,13 @@ from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSea
     YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
     SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
     YtmusicHistorySong, PlaylistAddItemResponse
-from ytmusicapi import YTMusic as YTMusicBase
-from cachetools.func import ttl_cache
+
+from .patch import patch_pytube
+
+patch_pytube()
+
+from pytube.cipher import Cipher
+from pytube import extract
 
 CACHE_TTL = timedelta(minutes=10).seconds
 CACHE_SIZE = 1
