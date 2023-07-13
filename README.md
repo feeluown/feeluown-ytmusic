@@ -38,7 +38,7 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 
-- v0.2.1 (2023-07-13)
+- v0.2.2 (2023-07-13)
   - fix can't get song media properly
 
 ## License
