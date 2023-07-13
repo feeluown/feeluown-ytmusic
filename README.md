@@ -15,8 +15,6 @@ poetry install  # Local development
 
 ## Configuration
 
-### Proxies
-
 ```python
 # In ~/.fuorc
 config.ytmusic.HTTP_PROXY='http://127.0.0.1:7890'
@@ -37,6 +35,11 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Add/remove song from a playlist
 - [ ] Upload songs to cloud
 - [ ] Discovering page
+
+## Changelog
+
+- v0.2.1 (2023-07-13)
+  - fix can't get song media properly
 
 ## License
 
