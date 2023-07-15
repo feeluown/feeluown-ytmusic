@@ -38,6 +38,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 
+- v0.2.3 (2023-07-15)
+  - fix loading header_file failed
 - v0.2.2 (2023-07-13)
   - fix can't get song media properly
 
