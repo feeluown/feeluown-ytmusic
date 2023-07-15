@@ -159,7 +159,7 @@ class YtmusicService(metaclass=Singleton):
         options = dict(requests_session=self._session, language='zh_CN')
         if HEADER_FILE.exists():
             logger.info('Initializing ytmusic api with headerfile.')
-            self._api = YTMusic(HEADER_FILE, **options)
+            self._api = YTMusic(str(HEADER_FILE), **options)
         else:
             logger.info('Initializing ytmusic api with no headerfile.')
             # Actually, YTMusic does not work if no auth file is provided.
