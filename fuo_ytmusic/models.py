@@ -1,11 +1,11 @@
 from typing import Optional, Union, List, Tuple
 
-from feeluown.utils.reader import SequentialReader
-from pydantic import BaseModel as PydanticBaseModel
-from pydantic.fields import Field
 # noinspection PyProtectedMember
-from pydantic.main import ModelMetaclass
+from pydantic.v1.fields import Field
+from pydantic.v1 import BaseModel as PydanticBaseModel
+from pydantic.v1.main import ModelMetaclass
 
+from feeluown.utils.reader import SequentialReader
 from feeluown.media import Quality
 from feeluown.library import (
     VideoModel, ModelState, BriefArtistModel, BriefUserModel,
@@ -231,7 +231,7 @@ class YtmusicLibraryArtist(YtmusicSearchArtist):
 
 class YtmusicSearchPlaylist(YtmusicSearchBase, YtmusicCoverMixin):
     title: str  # 歌单名
-    itemCount: Optional[int]  # 歌曲数量
+    itemCount: Optional[int] = None  # 歌曲数量
     author: str  # 歌单作者
     browseId: str  # 查询ID
 
