@@ -38,6 +38,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 
+- v0.3.1 (2023-08-15)
+  - remove the 'pytube' dependency
 - v0.3.0 (2023-07-18)
   - use pydantic>=2.0
 - v0.2.3 (2023-07-15)
