@@ -14,7 +14,6 @@ feeluown = ">=3.8.12"
 ytmusicapi = "*"
 pydantic = "*"
 cachetools = "*"
-pytube = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"

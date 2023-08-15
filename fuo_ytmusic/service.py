@@ -13,6 +13,7 @@ from cachetools.func import ttl_cache
 from requests import Response
 from feeluown.library import SearchType
 
+from fuo_ytmusic.cipher import Cipher
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
@@ -20,12 +21,6 @@ from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSea
     SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
     YtmusicHistorySong, PlaylistAddItemResponse
 
-from .patch import patch_pytube
-
-patch_pytube()
-
-from pytube.cipher import Cipher
-from pytube import extract
 
 CACHE_TTL = timedelta(minutes=10).seconds
 CACHE_SIZE = 1
@@ -139,7 +134,6 @@ class YtmusicService(metaclass=Singleton):
     def __init__(self):
         self._session = requests.Session()
         self._api: Optional[YTMusic] = None
-        self._js = ""
         self._cipher = None
         self._signature_timestamp = 0
         self._session.hooks['response'].append(self._do_logging)
@@ -154,6 +148,15 @@ class YtmusicService(metaclass=Singleton):
         if self._api is None:
             self._initialize_by_headerfile()
         return self._api
+
+    @property
+    def cipher(self):
+        if self._cipher is None:
+            logger.info('try to get cipher...')
+            js_url = self.api.get_basejs_url()
+            js = self._session.get(js_url).text
+            self._cipher = Cipher(js)
+        return self._cipher
 
     def _initialize_by_headerfile(self):
         options = dict(requests_session=self._session, language='zh_CN')
@@ -313,9 +316,7 @@ class YtmusicService(metaclass=Singleton):
             for key in res:
                 if sig.find(key + "=") >= 0:
                     res[key] = unquote(sig[len(key + "="):])
-        if self._js == "":
-            self._get_cipher(video_id)
-        signature = self._cipher.get_signature(ciphered_signature=res['s'])
+        signature = self.cipher.get_signature(ciphered_signature=res['s'])
         _url = res['url'] + "&sig=" + signature
         if retry:
             r = self._session.head(_url)
@@ -325,12 +326,6 @@ class YtmusicService(metaclass=Singleton):
                 return self._get_stream_url(f, video_id, retry=False)
         return _url
 
-    def _get_cipher(self, video_id: str):
-        embed_url = f'https://www.youtube.com/embed/{video_id}'
-        embed_html = self._session.get(embed_url).text
-        js_url = extract.js_url(embed_html)
-        self._js = self._session.get(js_url).text
-        self._cipher = Cipher(js=self._js)
 
 
 if __name__ == '__main__':
