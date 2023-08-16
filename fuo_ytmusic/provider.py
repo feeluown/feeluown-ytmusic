@@ -177,6 +177,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         # I think this branch should not be reached (in most cases).
         return ModelNotFound(f'song:{identifier} not found')
 
+    def song_list_similar(self, song):
+        result = self.service.api.get_watch_playlist(song.identifier)
+        songs = [YtmusicWatchPlaylistSong(**track).v2_model()
+                 for track in result['tracks']
+                 if track['videoId'] != song.identifier]
+        return songs
+
     def album_get(self, identifier):
         album_info = self.service.album_info(identifier)
         return album_info.v2_model_with_identifier(identifier)
