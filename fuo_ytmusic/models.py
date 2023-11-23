@@ -196,7 +196,7 @@ class YtmusicHistorySong(YtmusicLibrarySong):
 class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin):
     title: str  # 专辑名
     type: str  # 专辑类型
-    year: Union[int, str]  # 年
+    year: Optional[Union[int, str]]  # 年
     browseId: str  # 查询ID
     isExplicit: bool
 

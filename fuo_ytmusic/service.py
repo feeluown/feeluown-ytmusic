@@ -2,6 +2,7 @@ import logging
 import ntpath
 import os
 import sys
+import threading
 from datetime import timedelta
 from enum import Enum
 from typing import Optional, Union, List
@@ -16,10 +17,27 @@ from feeluown.library import SearchType
 from fuo_ytmusic.cipher import Cipher
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.helpers import Singleton
-from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo, \
-    YtmusicSearchPlaylist, YtmusicSearchBase, YtmusicDispatcher, ArtistInfo, UserInfo, AlbumInfo, \
-    SongInfo, Categories, PlaylistNestedResult, TopCharts, YtmusicLibrarySong, YtmusicLibraryArtist, PlaylistInfo, \
-    YtmusicHistorySong, PlaylistAddItemResponse
+from fuo_ytmusic.models import (
+    YtmusicSearchSong,
+    YtmusicSearchAlbum,
+    YtmusicSearchArtist,
+    YtmusicSearchVideo,
+    YtmusicSearchPlaylist,
+    YtmusicSearchBase,
+    YtmusicDispatcher,
+    ArtistInfo,
+    UserInfo,
+    AlbumInfo,
+    SongInfo,
+    Categories,
+    PlaylistNestedResult,
+    TopCharts,
+    YtmusicLibrarySong,
+    YtmusicLibraryArtist,
+    PlaylistInfo,
+    YtmusicHistorySong,
+    PlaylistAddItemResponse,
+)
 
 
 CACHE_TTL = timedelta(minutes=10).seconds
@@ -30,32 +48,32 @@ logger = logging.getLogger(__name__)
 
 
 class YtmusicType(Enum):
-    so = 'songs'
-    vi = 'videos'
-    ar = 'artists'
-    al = 'albums'
-    pl = 'playlists'
+    so = "songs"
+    vi = "videos"
+    ar = "artists"
+    al = "albums"
+    pl = "playlists"
 
     # noinspection PyTypeChecker
     @classmethod
-    def parse(cls, type_: SearchType) -> 'YtmusicType':
-        return cls._value2member_map_.get(type_.value + 's')
+    def parse(cls, type_: SearchType) -> "YtmusicType":
+        return cls._value2member_map_.get(type_.value + "s")
 
 
 class YtmusicPrivacyStatus(Enum):
-    PUBLIC = 'PUBLIC'
-    PRIVATE = 'PRIVATE'
-    UNLISTED = 'UNLISTED'
+    PUBLIC = "PUBLIC"
+    PRIVATE = "PRIVATE"
+    UNLISTED = "UNLISTED"
 
     # noinspection PyTypeChecker
     @classmethod
-    def parse(cls, type_: str) -> 'YtmusicPrivacyStatus':
+    def parse(cls, type_: str) -> "YtmusicPrivacyStatus":
         return cls._value2member_map_.get(type_)
 
 
 class YtmusicScope(Enum):
-    li = 'library'
-    up = 'uploads'
+    li = "library"
+    up = "uploads"
 
 
 class YTMusic(YTMusicBase):
@@ -65,7 +83,7 @@ class YTMusic(YTMusicBase):
             self.length = len(iterable)
 
         def read(self, size=-1):  # TBD: add buffer for `len(data) > size` case
-            return next(self.iterator, b'')
+            return next(self.iterator, b"")
 
         def __len__(self):
             return self.length
@@ -78,7 +96,7 @@ class YTMusic(YTMusicBase):
             self.readsofar = 0
 
         def __iter__(self):
-            with open(self.filename, 'rb') as file:
+            with open(self.filename, "rb") as file:
                 while True:
                     data = file.read(self.chunksize)
                     if not data:
@@ -86,7 +104,9 @@ class YTMusic(YTMusicBase):
                         break
                     self.readsofar += len(data)
                     percent = self.readsofar * 1e2 / self.totalsize
-                    sys.stdout.write("\rUploading: {percent:3.0f}%".format(percent=percent))
+                    sys.stdout.write(
+                        "\rUploading: {percent:3.0f}%".format(percent=percent)
+                    )
                     yield data
 
         def __len__(self):
@@ -107,25 +127,32 @@ class YTMusic(YTMusicBase):
         if os.path.splitext(filepath)[1][1:] not in supported_filetypes:
             raise Exception(
                 "The provided file type is not supported by YouTube Music. Supported file types are "
-                + ', '.join(supported_filetypes))
+                + ", ".join(supported_filetypes)
+            )
 
         headers = self.headers.copy()
         upload_url = "https://upload.youtube.com/upload/usermusic/http?authuser=0"
         filesize = os.path.getsize(filepath)
-        body = ("filename=" + ntpath.basename(filepath)).encode('utf-8')
-        headers.pop('content-encoding', None)
-        headers['content-type'] = 'application/x-www-form-urlencoded;charset=utf-8'
-        headers['X-Goog-Upload-Command'] = 'start'
-        headers['X-Goog-Upload-Header-Content-Length'] = str(filesize)
-        headers['X-Goog-Upload-Protocol'] = 'resumable'
-        response = requests.post(upload_url, data=body, headers=headers, proxies=self.proxies)
-        headers['X-Goog-Upload-Command'] = 'upload, finalize'
-        headers['X-Goog-Upload-Offset'] = '0'
-        upload_url = response.headers['X-Goog-Upload-URL']
-        response = requests.post(upload_url, data=YTMusic.IterableToFileAdapter(YTMusic.ChunckedUpload(filepath)),
-                                 headers=headers, proxies=self.proxies)
+        body = ("filename=" + ntpath.basename(filepath)).encode("utf-8")
+        headers.pop("content-encoding", None)
+        headers["content-type"] = "application/x-www-form-urlencoded;charset=utf-8"
+        headers["X-Goog-Upload-Command"] = "start"
+        headers["X-Goog-Upload-Header-Content-Length"] = str(filesize)
+        headers["X-Goog-Upload-Protocol"] = "resumable"
+        response = requests.post(
+            upload_url, data=body, headers=headers, proxies=self.proxies
+        )
+        headers["X-Goog-Upload-Command"] = "upload, finalize"
+        headers["X-Goog-Upload-Offset"] = "0"
+        upload_url = response.headers["X-Goog-Upload-URL"]
+        response = requests.post(
+            upload_url,
+            data=YTMusic.IterableToFileAdapter(YTMusic.ChunckedUpload(filepath)),
+            headers=headers,
+            proxies=self.proxies,
+        )
         if response.status_code == 200:
-            return 'STATUS_SUCCEEDED'
+            return "STATUS_SUCCEEDED"
         else:
             return response
 
@@ -136,35 +163,46 @@ class YtmusicService(metaclass=Singleton):
         self._api: Optional[YTMusic] = None
         self._cipher = None
         self._signature_timestamp = 0
-        self._session.hooks['response'].append(self._do_logging)
+        self._session.hooks["response"].append(self._do_logging)
+        self._cipher_lock = threading.Lock()
+        self._api_lock = threading.Lock()
 
     @staticmethod
     def _do_logging(r: Response, *_, **__):
-        logger.debug(f'[ytmusic] Requesting: [{r.request.method.upper()}] {r.url}; '
-                     f'Response: [{r.status_code}] {len(r.content)} bytes.')
+        logger.debug(
+            f"[ytmusic] Requesting: [{r.request.method.upper()}] {r.url}; "
+            f"Response: [{r.status_code}] {len(r.content)} bytes."
+        )
 
     @property
     def api(self) -> YTMusic:
         if self._api is None:
-            self._initialize_by_headerfile()
+            with self._api_lock:
+                if self._api is None:
+                    self._initialize_by_headerfile()
         return self._api
 
     @property
     def cipher(self):
         if self._cipher is None:
-            logger.info('try to get cipher...')
-            js_url = self.api.get_basejs_url()
-            js = self._session.get(js_url).text
-            self._cipher = Cipher(js)
+            logger.info("try to get cipher...")
+            with self._cipher_lock:
+                if self._cipher is None:
+                    js_url = self.api.get_basejs_url()
+                    js = self._session.get(js_url).text
+                    self._cipher = Cipher(js)
+                    logger.info("got cipher")
+                else:
+                    logger.info("cipher already exists")
         return self._cipher
 
     def _initialize_by_headerfile(self):
-        options = dict(requests_session=self._session, language='zh_CN')
+        options = dict(requests_session=self._session, language="zh_CN")
         if HEADER_FILE.exists():
-            logger.info('Initializing ytmusic api with headerfile.')
+            logger.info("Initializing ytmusic api with headerfile.")
             self._api = YTMusic(str(HEADER_FILE), **options)
         else:
-            logger.info('Initializing ytmusic api with no headerfile.')
+            logger.info("Initializing ytmusic api with no headerfile.")
             # Actually, YTMusic does not work if no auth file is provided.
             self._api = YTMusic(**options)
         self._signature_timestamp = self._api.get_signatureTimestamp()
@@ -174,16 +212,32 @@ class YtmusicService(metaclass=Singleton):
 
     def setup_http_proxy(self, http_proxy):
         self._session.proxies = {
-            'http': http_proxy,
-            'https': http_proxy,
+            "http": http_proxy,
+            "https": http_proxy,
         }
 
-    def search(self, keywords: str, t: Optional[YtmusicType], scope: YtmusicScope = None,
-               page_size: int = GLOBAL_LIMIT) \
-            -> List[Union[YtmusicSearchSong, YtmusicSearchAlbum, YtmusicSearchArtist, YtmusicSearchVideo,
-                          YtmusicSearchPlaylist, YtmusicSearchBase]]:
-        response = self.api.search(keywords, None if t is None else t.value, None if scope is None else scope.value,
-                                   page_size)
+    def search(
+        self,
+        keywords: str,
+        t: Optional[YtmusicType],
+        scope: YtmusicScope = None,
+        page_size: int = GLOBAL_LIMIT,
+    ) -> List[
+        Union[
+            YtmusicSearchSong,
+            YtmusicSearchAlbum,
+            YtmusicSearchArtist,
+            YtmusicSearchVideo,
+            YtmusicSearchPlaylist,
+            YtmusicSearchBase,
+        ]
+    ]:
+        response = self.api.search(
+            keywords,
+            None if t is None else t.value,
+            None if scope is None else scope.value,
+            page_size,
+        )
         return [YtmusicDispatcher.search_result_dispatcher(**data) for data in response]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
@@ -214,7 +268,10 @@ class YtmusicService(metaclass=Singleton):
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def categories(self) -> List[Categories]:
-        return [Categories(key=k, value=v) for k, v in self.api.get_mood_categories().items()]
+        return [
+            Categories(key=k, value=v)
+            for k, v in self.api.get_mood_categories().items()
+        ]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def category_playlists(self, params: str) -> List[PlaylistNestedResult]:
@@ -222,7 +279,7 @@ class YtmusicService(metaclass=Singleton):
         return [PlaylistNestedResult(**data) for data in response]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
-    def get_charts(self, country: str = 'ZZ') -> TopCharts:
+    def get_charts(self, country: str = "ZZ") -> TopCharts:
         # temp workaround for ytmusicapi#236
         # sees: https://github.com/sigma67/ytmusicapi/issues/236
         auth = self.api.auth
@@ -231,7 +288,9 @@ class YtmusicService(metaclass=Singleton):
         self.api.auth = auth
         return TopCharts(**response)
 
-    def library_playlists(self, limit: int = GLOBAL_LIMIT) -> List[PlaylistNestedResult]:
+    def library_playlists(
+        self, limit: int = GLOBAL_LIMIT
+    ) -> List[PlaylistNestedResult]:
         response = self.api.get_library_playlists(limit)
         return [PlaylistNestedResult(**data) for data in response]
 
@@ -247,12 +306,16 @@ class YtmusicService(metaclass=Singleton):
         response = self.api.get_library_artists(limit)
         return [YtmusicLibraryArtist(**data) for data in response]
 
-    def library_subscription_artists(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibraryArtist]:
+    def library_subscription_artists(
+        self, limit: int = GLOBAL_LIMIT
+    ) -> List[YtmusicLibraryArtist]:
         response = self.api.get_library_subscriptions(limit)
         return [YtmusicLibraryArtist(**data) for data in response]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
-    def playlist_info(self, playlist_id: str, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
+    def playlist_info(
+        self, playlist_id: str, limit: int = GLOBAL_LIMIT
+    ) -> PlaylistInfo:
         return PlaylistInfo(**self.api.get_playlist(playlist_id, limit))
 
     def liked_songs(self, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
@@ -271,30 +334,52 @@ class YtmusicService(metaclass=Singleton):
                 return self._get_stream_url(f, video_id)
         return None
 
-    def create_playlist(self, title: str, description: str, privacy_status: YtmusicPrivacyStatus,
-                        video_ids: List[str] = None, source_playlist: str = None) -> bool:
-        response = self.api.create_playlist(title, description, privacy_status.value, video_ids, source_playlist)
+    def create_playlist(
+        self,
+        title: str,
+        description: str,
+        privacy_status: YtmusicPrivacyStatus,
+        video_ids: List[str] = None,
+        source_playlist: str = None,
+    ) -> bool:
+        response = self.api.create_playlist(
+            title, description, privacy_status.value, video_ids, source_playlist
+        )
         if not isinstance(response, str):
             return False
         return True
 
-    def add_playlist_items(self, playlist_id: str, video_ids: List[str] = None, source_playlist_id: str = None) \
-            -> PlaylistAddItemResponse:
-        return PlaylistAddItemResponse(**self.api.add_playlist_items(playlist_id, video_ids, source_playlist_id))
+    def add_playlist_items(
+        self,
+        playlist_id: str,
+        video_ids: List[str] = None,
+        source_playlist_id: str = None,
+    ) -> PlaylistAddItemResponse:
+        return PlaylistAddItemResponse(
+            **self.api.add_playlist_items(playlist_id, video_ids, source_playlist_id)
+        )
 
-    def remove_playlist_items(self, playlist_id: str, video_ids: List[dict]) -> Optional[str]:
+    def remove_playlist_items(
+        self, playlist_id: str, video_ids: List[dict]
+    ) -> Optional[str]:
         # STATUS_SUCCEEDED STATUS_FAILED
         return self.api.remove_playlist_items(playlist_id, video_ids)
 
-    def library_upload_songs(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibrarySong]:
+    def library_upload_songs(
+        self, limit: int = GLOBAL_LIMIT
+    ) -> List[YtmusicLibrarySong]:
         response = self.api.get_library_upload_songs(limit)
         return [YtmusicLibrarySong(**data) for data in response]
 
-    def library_upload_artists(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicLibraryArtist]:
+    def library_upload_artists(
+        self, limit: int = GLOBAL_LIMIT
+    ) -> List[YtmusicLibraryArtist]:
         response = self.api.get_library_upload_artists(limit)
         return [YtmusicLibraryArtist(**data) for data in response]
 
-    def library_upload_albums(self, limit: int = GLOBAL_LIMIT) -> List[YtmusicSearchAlbum]:
+    def library_upload_albums(
+        self, limit: int = GLOBAL_LIMIT
+    ) -> List[YtmusicSearchAlbum]:
         response = self.api.get_library_upload_albums(limit)
         return [YtmusicSearchAlbum(**data) for data in response]
 
@@ -306,32 +391,33 @@ class YtmusicService(metaclass=Singleton):
         # STATUS_SUCCEEDED
         return self.api.delete_upload_entity(entity_id)
 
-    def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str, retry=True) -> Optional[str]:
-        if f.url is not None and f.url != '':
+    def _get_stream_url(
+        self, f: SongInfo.StreamingData.Format, video_id: str, retry=True
+    ) -> Optional[str]:
+        if f.url is not None and f.url != "":
             return f.url
         sig_ch = f.signatureCipher
-        sig_ex = sig_ch.split('&')
-        res = dict({'s': '', 'url': ''})
+        sig_ex = sig_ch.split("&")
+        res = dict({"s": "", "url": ""})
         for sig in sig_ex:
             for key in res:
                 if sig.find(key + "=") >= 0:
-                    res[key] = unquote(sig[len(key + "="):])
-        signature = self.cipher.get_signature(ciphered_signature=res['s'])
-        _url = res['url'] + "&sig=" + signature
+                    res[key] = unquote(sig[len(key + "=") :])
+        signature = self.cipher.get_signature(ciphered_signature=res["s"])
+        _url = res["url"] + "&sig=" + signature
         if retry:
             r = self._session.head(_url)
             if r.status_code == 403:
-                logger.info('[ytmusic] update signature timestamp and try again')
+                logger.info("[ytmusic] update signature timestamp and try again")
                 self._cipher = None
                 self._signature_timestamp = self._api.get_signatureTimestamp()
                 return self._get_stream_url(f, video_id, retry=False)
         return _url
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     # noinspection PyUnresolvedReferences
 
     service = YtmusicService()
     # print(service.upload_song('/home/bruce/Music/阿梓 - 呼吸决定.mp3'))
-    print(service.api.delete_upload_entity('t_po_CJT896eTt_a5swEQwrmdzf7_____AQ'))
+    print(service.api.delete_upload_entity("t_po_CJT896eTt_a5swEQwrmdzf7_____AQ"))

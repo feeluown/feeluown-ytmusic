@@ -160,8 +160,14 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         format_code, bitrate, format_str = song_info.get_media(quality)
         url = self.service.stream_url(song.identifier, format_code)
         if url is not None:
+            if 'video/mp4' in format_str:
+                format_ = 'mp4'
+            elif 'audio/mp4' in format_str:
+                format_ = 'm4a'
+            else:
+                format_ = ''
             return Media(url, type_=MediaType.audio, bitrate=bitrate,
-                         format=format_str, http_proxy=self._http_proxy)
+                         format=format_, http_proxy=self._http_proxy)
         return None
 
     def song_get(self, identifier):
