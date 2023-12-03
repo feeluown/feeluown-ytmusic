@@ -38,6 +38,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 
+- v0.3.2 (2023-12-03)
+  - 修复密钥过期的问题
 - v0.3.1 (2023-08-15)
   - remove the 'pytube' dependency
 - v0.3.0 (2023-07-18)
