@@ -19,7 +19,8 @@ def enable(app: App):
     from fuo_ytmusic.ui import YtmusicUiManager
     from fuo_ytmusic.provider import provider
 
-    provider.setup_http_proxy(app.config.ytmusic.HTTP_PROXY)
+    system_proxy = __import__('urllib').request.getproxies().get('https', '')
+    provider.setup_http_proxy(app.config.ytmusic.HTTP_PROXY or system_proxy)
     app.library.register(provider)
     if app.mode & app.GuiMode:
         ui_mgr = ui_mgr or YtmusicUiManager(app)
