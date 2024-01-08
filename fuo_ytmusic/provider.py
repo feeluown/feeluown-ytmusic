@@ -9,7 +9,6 @@ from feeluown.library import (
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.library import SearchType, SimpleSearchResult
 from feeluown.library.model_protocol import BriefSongProtocol
-from fuo_netease.provider import NeteaseProvider
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.models import Categories, YtBriefUserModel, YtmusicWatchPlaylistSong
@@ -243,14 +242,20 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         # 歌词获取报错的 workaround
         if self._app is None:
             return None
-        provider: NeteaseProvider = self._app.library.get('netease')
-        if provider is None:
+        try:
+            from fuo_netease.provider import NeteaseProvider
+            provider: NeteaseProvider = self._app.library.get('netease')
+            if provider is None:
+                return None
+            result = provider.search(f'{song.title} {song.artists_name}', type_=SearchType.so)
+            songs = result.songs
+            if len(songs) < 1:
+                return None
+            return provider.song_get_lyric(songs[0])
+        except ModuleNotFoundError:
             return None
-        result = provider.search(f'{song.title} {song.artists_name}', type_=SearchType.so)
-        songs = result.songs
-        if len(songs) < 1:
-            return None
-        return provider.song_get_lyric(songs[0])
+        except:
+            raise
 
     def video_list_quality(self, video) -> List[Quality.Video]:
         id_ = video.identifier
