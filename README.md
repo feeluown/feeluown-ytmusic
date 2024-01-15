@@ -38,6 +38,9 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 
+- v0.3.3 (2024-01-15)
+  - 修复过度依赖 fuo-netease 的问题
+  - 修复有时获取歌曲链接一直失败的问题
 - v0.3.2 (2023-12-03)
   - 修复密钥过期的问题
 - v0.3.1 (2023-08-15)
