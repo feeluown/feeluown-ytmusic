@@ -1,6 +1,7 @@
 import logging
 import ntpath
 import os
+import re
 import sys
 import threading
 from datetime import timedelta
@@ -161,9 +162,10 @@ class YtmusicService(metaclass=Singleton):
     def __init__(self):
         self._session = requests.Session()
         self._api: Optional[YTMusic] = None
+        self._session.hooks["response"].append(self._do_logging)
+
         self._cipher = None
         self._signature_timestamp = 0
-        self._session.hooks["response"].append(self._do_logging)
         self._cipher_lock = threading.Lock()
         self._api_lock = threading.Lock()
 
@@ -182,19 +184,34 @@ class YtmusicService(metaclass=Singleton):
                     self._initialize_by_headerfile()
         return self._api
 
-    @property
-    def cipher(self):
+    def _log_thread(self):
+        return f"Thread({threading.get_ident()})"
+
+    def get_cipher(self):
         if self._cipher is None:
-            logger.info("try to get cipher...")
+            logger.info(f"{self._log_thread()} try to get cipher...")
             with self._cipher_lock:
                 if self._cipher is None:
                     js_url = self.api.get_basejs_url()
                     js = self._session.get(js_url).text
+                    match = re.search(r"signatureTimestamp[:=](\d+)", js)
+                    assert match is not None, "Unable to identify the signatureTimestamp."
+                    self._signature_timestamp = int(match.group(1))
                     self._cipher = Cipher(js)
-                    logger.info("got cipher")
+                    logger.info(f"{self._log_thread()} got cipher")
                 else:
-                    logger.info("cipher already exists")
+                    logger.info(f"{self._log_thread()} cipher already exists")
         return self._cipher
+
+    def reset_cipher(self):
+        with self._cipher_lock:
+            self._cipher = None
+
+    def get_signature_timestamp(self):
+        if self._signature_timestamp == 0:
+            self.get_cipher()
+        assert self._signature_timestamp != 0, "signature timestamp should not be 0 now."
+        return self._signature_timestamp
 
     def _initialize_by_headerfile(self):
         options = dict(requests_session=self._session, language="zh_CN")
@@ -205,7 +222,7 @@ class YtmusicService(metaclass=Singleton):
             logger.info("Initializing ytmusic api with no headerfile.")
             # Actually, YTMusic does not work if no auth file is provided.
             self._api = YTMusic(**options)
-        self._signature_timestamp = self._api.get_signatureTimestamp()
+        threading.Thread(target=self.get_signature_timestamp).start()
 
     def reload(self):
         self._initialize_by_headerfile()
@@ -264,7 +281,7 @@ class YtmusicService(metaclass=Singleton):
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def song_info(self, video_id: str) -> SongInfo:
-        return SongInfo(**self.api.get_song(video_id, self._signature_timestamp))
+        return SongInfo(**self.api.get_song(video_id, self.get_signature_timestamp()))
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def categories(self) -> List[Categories]:
@@ -403,14 +420,13 @@ class YtmusicService(metaclass=Singleton):
             for key in res:
                 if sig.find(key + "=") >= 0:
                     res[key] = unquote(sig[len(key + "=") :])
-        signature = self.cipher.get_signature(ciphered_signature=res["s"])
+        signature = self.get_cipher().get_signature(ciphered_signature=res["s"])
         _url = res["url"] + "&sig=" + signature
         if retry:
             r = self._session.head(_url)
             if r.status_code == 403:
                 logger.info("[ytmusic] update signature timestamp and try again")
-                self._cipher = None
-                self._signature_timestamp = self._api.get_signatureTimestamp()
+                self.reset_cipher()
                 return self._get_stream_url(f, video_id, retry=False)
         return _url
 
