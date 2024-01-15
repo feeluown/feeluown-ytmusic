@@ -205,7 +205,9 @@ class YtmusicService(metaclass=Singleton):
 
     def reset_cipher(self):
         with self._cipher_lock:
+            # I don't know if cipher has some relation with signature timestamp.
             self._cipher = None
+            self._signature_timestamp = 0
 
     def get_signature_timestamp(self):
         if self._signature_timestamp == 0:
@@ -279,7 +281,6 @@ class YtmusicService(metaclass=Singleton):
         data = self.api.get_album(browse_id)
         return AlbumInfo(**data)
 
-    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def song_info(self, video_id: str) -> SongInfo:
         return SongInfo(**self.api.get_song(video_id, self.get_signature_timestamp()))
 
@@ -342,9 +343,7 @@ class YtmusicService(metaclass=Singleton):
         response = self.api.get_history()
         return [YtmusicHistorySong(**data) for data in response]
 
-    @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
-    def stream_url(self, video_id: str, format_code: int) -> Optional[str]:
-        song_info = self.song_info(video_id)
+    def stream_url(self, song_info: SongInfo, video_id: str, format_code: int) -> Optional[str]:
         formats = song_info.streamingData.adaptiveFormats
         for f in formats:
             if int(f.itag) == format_code:

@@ -157,7 +157,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
         song_info = self.service.song_info(song.identifier)
         format_code, bitrate, format_str = song_info.get_media(quality)
-        url = self.service.stream_url(song.identifier, format_code)
+        url = self.service.stream_url(song_info, song.identifier, format_code)
         if url is not None:
             if 'video/mp4' in format_str:
                 format_ = 'mp4'
@@ -267,8 +267,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         format_code = song_info.get_mv(quality)
         audio_formats = song_info.list_formats()
         audio_code, _, __ = song_info.get_media(audio_formats[0])
-        url = self.service.stream_url(video.identifier, format_code)
-        audio_url = self.service.stream_url(video.identifier, audio_code)
+        url = self.service.stream_url(song_info, video.identifier, format_code)
+        audio_url = self.service.stream_url(song_info, video.identifier, audio_code)
         if url is None or audio_url is None:
             return None
         return Media(VideoAudioManifest(url, audio_url), http_proxy=self._http_proxy)
