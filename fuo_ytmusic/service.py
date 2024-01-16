@@ -211,6 +211,7 @@ class YtmusicService(metaclass=Singleton):
 
     def get_signature_timestamp(self):
         if self._signature_timestamp == 0:
+            logger.info(f"{self._log_thread()} signature timestamp is 0, try to refresh.")
             self.get_cipher()
         assert self._signature_timestamp != 0, "signature timestamp should not be 0 now."
         return self._signature_timestamp
@@ -424,7 +425,7 @@ class YtmusicService(metaclass=Singleton):
         if retry:
             r = self._session.head(_url)
             if r.status_code == 403:
-                logger.info("[ytmusic] update signature timestamp and try again")
+                logger.info(f"{self._log_thread()} url for video({video_id}) is invalid, reset cipher and retry.")
                 self.reset_cipher()
                 return self._get_stream_url(f, video_id, retry=False)
         return _url
