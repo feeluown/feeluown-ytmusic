@@ -38,6 +38,9 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 
+- v0.3.4 (2024-01-21)
+  - 修复由于 IP 变更导致歌曲链接一直失效的问题
+  - 移除不太合理的缓存逻辑
 - v0.3.3 (2024-01-15)
   - 修复过度依赖 fuo-netease 的问题
   - 修复有时获取歌曲链接一直失败的问题
