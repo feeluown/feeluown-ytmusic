@@ -1,3 +1,5 @@
+import logging
+from urllib.parse import urlparse, parse_qs
 from typing import List, Optional
 
 from feeluown.excs import NoUserLoggedIn
@@ -13,6 +15,8 @@ from feeluown.library.model_protocol import BriefSongProtocol
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.models import Categories, YtBriefUserModel, YtmusicWatchPlaylistSong
 from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
+
+logger = logging.getLogger(__name__)
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
@@ -155,6 +159,29 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return song_.list_formats() if song_ is not None else []
 
     def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
+        media = self._get_media(song, quality)
+        if media is None:
+            return media
+        url = media.url
+        # 推断(cosven): service.song_info 接口返回的 url 里面会记录请求时的 IP，
+        # 如果后面真正访问 url 时，如果自己的 IP 已经变了（比如自己的代理 IP 变了），
+        # 那么会碰到 403 错误。
+        #
+        # 注：你或许会想，把 url 中的 IP 改变当前的 public IP，是不是就行了？
+        #    这其实也是不行的，因为整个 url 是已经有摘要信息的，它要和摘要匹配。
+        if self.service.check_stream_url(url):
+            return media
+        parse_result = urlparse(url)
+        kvs = parse_qs(parse_result.query)
+        ips = kvs.get('ip', [])
+        ip = ips[0] if ips else ''
+        logger.info(
+            f"url for video({song.identifier}) is invalid now, will retry! "
+            f"maybe your public IP is changed (expected ip: {ip} ), (url: {url} )"
+        )
+        return self._get_media(song, quality)
+
+    def _get_media(self, song, quality: Quality.Audio):
         song_info = self.service.song_info(song.identifier)
         format_code, bitrate, format_str = song_info.get_media(quality)
         url = self.service.stream_url(song_info, song.identifier, format_code)

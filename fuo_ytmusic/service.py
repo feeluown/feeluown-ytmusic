@@ -344,13 +344,6 @@ class YtmusicService(metaclass=Singleton):
         response = self.api.get_history()
         return [YtmusicHistorySong(**data) for data in response]
 
-    def stream_url(self, song_info: SongInfo, video_id: str, format_code: int) -> Optional[str]:
-        formats = song_info.streamingData.adaptiveFormats
-        for f in formats:
-            if int(f.itag) == format_code:
-                return self._get_stream_url(f, video_id)
-        return None
-
     def create_playlist(
         self,
         title: str,
@@ -408,9 +401,18 @@ class YtmusicService(metaclass=Singleton):
         # STATUS_SUCCEEDED
         return self.api.delete_upload_entity(entity_id)
 
-    def _get_stream_url(
-        self, f: SongInfo.StreamingData.Format, video_id: str, retry=True
-    ) -> Optional[str]:
+    def stream_url(self, song_info: SongInfo, video_id: str, format_code: int) -> Optional[str]:
+        formats = song_info.streamingData.adaptiveFormats
+        for f in formats:
+            if int(f.itag) == format_code:
+                return self._get_stream_url(f, video_id)
+        return None
+
+    def check_stream_url(self, url):
+        resp = self._session.head(url)
+        return resp.status_code != 403
+
+    def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str) -> Optional[str]:
         if f.url is not None and f.url != "":
             return f.url
         sig_ch = f.signatureCipher
@@ -422,12 +424,6 @@ class YtmusicService(metaclass=Singleton):
                     res[key] = unquote(sig[len(key + "=") :])
         signature = self.get_cipher().get_signature(ciphered_signature=res["s"])
         _url = res["url"] + "&sig=" + signature
-        if retry:
-            r = self._session.head(_url)
-            if r.status_code == 403:
-                logger.info(f"{self._log_thread()} url for video({video_id}) is invalid, reset cipher and retry.")
-                self.reset_cipher()
-                return self._get_stream_url(f, video_id, retry=False)
         return _url
 
 
