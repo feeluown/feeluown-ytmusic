@@ -292,7 +292,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def video_get(self, identifier):
         song = self.song_get(identifier)
         return VideoModel(identifier=song.identifier, source=song.source, title=song.title,
-                          artists=[], duration=1, cover="")
+                          artists=song.artists, duration=song.duration, cover=song.pic_url)
 
     def video_get_media(self, video, quality) -> Optional[Media]:
         song_info = self.service.song_info(video.identifier)
