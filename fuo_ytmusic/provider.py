@@ -5,7 +5,7 @@ from typing import List, Optional
 from feeluown.excs import NoUserLoggedIn
 from feeluown.library import (
     AbstractProvider, ProviderV2, ProviderFlags as Pf,
-    SongModel, BriefVideoModel, BriefUserModel, ModelType,
+    SongModel, VideoModel, BriefVideoModel, BriefUserModel, ModelType,
     BriefPlaylistModel, BriefArtistModel, PlaylistModel, ModelNotFound,
 )
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
@@ -288,6 +288,11 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         id_ = video.identifier
         song_ = self.service.song_info(id_)
         return song_.list_video_formats() if song_ is not None else []
+
+    def video_get(self, identifier):
+        song = self.song_get(identifier)
+        return VideoModel(identifier=song.identifier, source=song.source, title=song.title,
+                          artists=song.artists, duration=song.duration, cover=song.pic_url)
 
     def video_get_media(self, video, quality) -> Optional[Media]:
         song_info = self.service.song_info(video.identifier)
