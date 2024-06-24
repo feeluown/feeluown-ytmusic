@@ -38,6 +38,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 
+- v0.4.0 (2024-06-25)
+  - 不在返回不可用的播放链接（pytube 失效了）
 - v0.3.4 (2024-01-21)
   - 修复由于 IP 变更导致歌曲链接一直失效的问题
   - 移除不太合理的缓存逻辑
