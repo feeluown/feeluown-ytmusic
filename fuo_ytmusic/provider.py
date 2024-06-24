@@ -154,11 +154,15 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return model
 
     def song_list_quality(self, song) -> List[Quality.Audio]:
+        return []
+
         id_ = song.identifier
         song_ = self.service.song_info(id_)
         return song_.list_formats() if song_ is not None else []
 
     def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
+        return None
+
         media = self._get_media(song, quality)
         if media is None:
             return media
@@ -195,6 +199,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             return Media(url, type_=MediaType.audio, bitrate=bitrate,
                          format=format_, http_proxy=self._http_proxy)
         return None
+
+    def song_get_web_url(self, song) -> str:
+        return f'https://music.youtube.com/watch?v={song.identifier}'
 
     def song_get(self, identifier):
         # ytmusicapi has not api to get song detail.
@@ -285,6 +292,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             raise
 
     def video_list_quality(self, video) -> List[Quality.Video]:
+        return []
+
         id_ = video.identifier
         song_ = self.service.song_info(id_)
         return song_.list_video_formats() if song_ is not None else []
@@ -295,6 +304,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                           artists=song.artists, duration=song.duration, cover=song.pic_url)
 
     def video_get_media(self, video, quality) -> Optional[Media]:
+        return None
+
         song_info = self.service.song_info(video.identifier)
         format_code = song_info.get_mv(quality)
         audio_formats = song_info.list_formats()

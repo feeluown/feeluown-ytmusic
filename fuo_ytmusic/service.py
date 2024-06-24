@@ -210,6 +210,14 @@ class YtmusicService(metaclass=Singleton):
             self._signature_timestamp = 0
 
     def get_signature_timestamp(self):
+        # This method works along with pytube cipher, which is used to get
+        # a playable media url. However, pytube cipher became invalid since 2024-06.
+        # The url processed by pytube cipher still returns 403.
+        # It seems others also met this problem: https://github.com/pytube/pytube/issues/1943
+        #
+        # So return 0 directly to avoid get_cipher, get_cipher costs too much time.
+        return 0
+
         if self._signature_timestamp == 0:
             logger.info(f"{self._log_thread()} signature timestamp is 0, try to refresh.")
             self.get_cipher()
