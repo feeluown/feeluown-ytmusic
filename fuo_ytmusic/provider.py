@@ -303,6 +303,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return VideoModel(identifier=song.identifier, source=song.source, title=song.title,
                           artists=song.artists, duration=song.duration, cover=song.pic_url)
 
+    def video_get_web_url(self, video) -> str:
+        return f'https://youtube.com/watch?v={video.identifier}'
+
     def video_get_media(self, video, quality) -> Optional[Media]:
         return None
 
