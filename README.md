@@ -37,7 +37,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
-
+- v0.4.1 (2024-06-25)
+  - 实现 SupportsVideoWebUrl 接口
 - v0.4.0 (2024-06-25)
   - 不在返回不可用的播放链接（pytube 失效了）
 - v0.3.4 (2024-01-21)
