@@ -6,11 +6,13 @@ import sys
 import threading
 from datetime import timedelta
 from enum import Enum
+from functools import partial
 from typing import Optional, Union, List
 from urllib.parse import unquote
 
 import requests
 from ytmusicapi import YTMusic as YTMusicBase
+from ytmusicapi.ytmusic import OAuthCredentials
 from cachetools.func import ttl_cache
 from requests import Response
 from feeluown.library import SearchType
@@ -225,7 +227,11 @@ class YtmusicService(metaclass=Singleton):
         return self._signature_timestamp
 
     def _initialize_by_headerfile(self):
-        options = dict(requests_session=self._session, language="zh_CN")
+        options = dict(
+            requests_session=self._session,
+            language="zh_CN",
+            oauth_credentials=OAuthCredentials(session=self._session),
+        )
         if HEADER_FILE.exists():
             logger.info("Initializing ytmusic api with headerfile.")
             self._api = YTMusic(str(HEADER_FILE), **options)
@@ -243,6 +249,13 @@ class YtmusicService(metaclass=Singleton):
             "http": http_proxy,
             "https": http_proxy,
         }
+
+    def setup_timeout(self, timeout):
+        if isinstance(self._session.request, partial):
+            request = self._session.request.func
+        else:
+            request = self._session.request
+        self._session.request = partial(request, timeout=timeout)
 
     def search(
         self,

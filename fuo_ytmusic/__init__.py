@@ -11,6 +11,7 @@ ui_mgr = None
 def init_config(config):
     # For example: http://127.0.0.1:7890. This will be used in API and media accessing.
     config.deffield('HTTP_PROXY', type_=str, default='', desc='YouTube Music HTTP proxy')
+    config.deffield('HTTP_TIMEOUT', type_=int, default=2, desc='HTTP requests timeout')
 
 
 def enable(app: App):
@@ -20,6 +21,7 @@ def enable(app: App):
     from fuo_ytmusic.provider import provider
 
     provider.setup_http_proxy(app.config.ytmusic.HTTP_PROXY)
+    provider.setup_http_timeout(app.config.ytmusic.HTTP_TIMEOUT)
     app.library.register(provider)
     if app.mode & app.GuiMode:
         ui_mgr = ui_mgr or YtmusicUiManager(app)

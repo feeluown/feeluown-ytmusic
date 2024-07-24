@@ -31,6 +31,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         self._http_proxy = http_proxy
         self.service.setup_http_proxy(http_proxy)
 
+    def setup_http_timeout(self, timeout):
+        self.service.setup_timeout(timeout)
+
     # noinspection PyPep8Naming
     class meta:
         identifier = 'ytmusic'
