@@ -37,6 +37,10 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.3 (2024-07-25)
+  - 修复代理设置失效的问题（该问题导致该插件几乎处于不可用状态）
+- v0.4.2 (2024-07-25)
+  - 发布失败，tag 打错了
 - v0.4.1 (2024-06-25)
   - 实现 SupportsVideoWebUrl 接口
 - v0.4.0 (2024-06-25)
