@@ -9,6 +9,7 @@ from enum import Enum
 from functools import partial
 from typing import Optional, Union, List
 from urllib.parse import unquote
+from pathlib import Path
 
 import requests
 from ytmusicapi import YTMusic as YTMusicBase
@@ -18,7 +19,6 @@ from requests import Response
 from feeluown.library import SearchType
 
 from fuo_ytmusic.cipher import Cipher
-from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import (
     YtmusicSearchSong,
@@ -183,7 +183,7 @@ class YtmusicService(metaclass=Singleton):
         if self._api is None:
             with self._api_lock:
                 if self._api is None:
-                    self._initialize_by_headerfile()
+                    self.reinitialize_by_headerfile()
         return self._api
 
     def _log_thread(self):
@@ -226,23 +226,22 @@ class YtmusicService(metaclass=Singleton):
         assert self._signature_timestamp != 0, "signature timestamp should not be 0 now."
         return self._signature_timestamp
 
-    def _initialize_by_headerfile(self):
+    def reinitialize_by_headerfile(self, headerfile=None):
         options = dict(
             requests_session=self._session,
             language="zh_CN",
             oauth_credentials=OAuthCredentials(session=self._session),
         )
-        if HEADER_FILE.exists():
+        # Due to https://github.com/sigma67/ytmusicapi/issues/676,
+        # YTMusic does not work in specific cases when auth file is provided.
+        # So initialize without auth file when 400 is returned.
+        if headerfile is not None and headerfile.exists():
             logger.info("Initializing ytmusic api with headerfile.")
-            self._api = YTMusic(str(HEADER_FILE), **options)
+            self._api = YTMusic(str(headerfile), **options)
         else:
             logger.info("Initializing ytmusic api with no headerfile.")
-            # Actually, YTMusic does not work if no auth file is provided.
             self._api = YTMusic(**options)
         threading.Thread(target=self.get_signature_timestamp).start()
-
-    def reload(self):
-        self._initialize_by_headerfile()
 
     def setup_http_proxy(self, http_proxy):
         self._session.proxies = {

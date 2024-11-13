@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QAction, QInputDialog, QMessageBox, QTextEdit
-from feeluown.utils import aio
-from feeluown.gui.widgets.login import CookiesLoginDialog
+from PyQt5.QtWidgets import QLabel, QAction, QInputDialog, QMessageBox, QVBoxLayout, QPushButton
+from feeluown.utils.aio import run_afn, run_fn
+from feeluown.gui.widgets.login import LoginDialog as LoginDialog_
 from feeluown.uimodels.my_music import MyMusicUiManager
 from feeluown.uimodels.playlist import PlaylistUiManager
 from feeluown.uimodels.provider import ProviderUiManager
@@ -104,82 +104,62 @@ class YtmusicUiManager:
         playlists_mgr.add(pls)
 
 
-class LoginDialog(CookiesLoginDialog):
+class LoginDialog(LoginDialog_):
     def __init__(self, provider):
-        super(LoginDialog, self).__init__(uri='https://music.youtube.com/',
-                                          required_cookies_fields=REQUIRED_COOKIE_FIELDS)
+        super().__init__()
+
         self._provider = provider
 
-        self.auth_text_edit = QTextEdit(self)
-        self.auth_text_edit.setAcceptRichText(False)
-        self.auth_text_edit.setPlaceholderText(
-            '请打开 music.youtube.com 并登陆，'
-            '然后从浏览器中复制 HTTP 请求 header 中的 Authorization 字段：\n\n'
-            '它类似这样：SAPISIDHASH 123333333_abfasdfs12fadcdfa2d'
-        )
+        self._layout = QVBoxLayout(self)
+        self._login_btn = QPushButton('登录')
         self.__hint_label = QLabel(
-            '还有另外一种登陆方式，你可以参考 ytmusicapi 的使用文档，使用'
-            ' ytmusicapi oauth 命令来生成登陆所需信息。你如果登陆成功，'
-            '它会生成一个 oauth.json 文件，你把 oauth.json 文件移动到'
-            ' ~/.FeelUOwn/data/ytmusic_header.json ，然后重新点击图标登陆即可。'
+            '请在终端运行 `ytmusicapi oauth` 命令来生成登陆所需信息。'
+            '你如果登陆成功，它会在运行命令的目录生成一个 oauth.json 文件，'
+            '这个文件包含登录所需的认证信息，你需要把该认证文件移动到 '
+            '~/.FeelUOwn/data/ytmusic_header.json ，'
+            '然后点击登录。'
         )
+        self.__hint_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.__progress_label = QLabel()
         self.__hint_label.setWordWrap(True)
-        # weblogin can't fetch the authorization field, so diable it.
-        self.weblogin_btn.hide()
-        self._layout.insertWidget(0, self.auth_text_edit)
+        self.__progress_label.setWordWrap(True)
         self._layout.addWidget(self.__hint_label)
+        self._layout.addWidget(self.__progress_label)
+        self._layout.addWidget(self._login_btn)
         self.setWindowFlags(self.windowFlags() | Qt.Dialog)
 
-    def setup_user(self, user):
-        self._provider.user = user
-
-    def get_cookies(self):
-        cookie = self.cookies_text_edit.toPlainText()
-        auth = self.auth_text_edit.toPlainText()
-        if not auth or not cookie:
-            self.show_hint(f'authorization is empty, you must fill it', color='orange')
-            return None
-
-        agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0'
-        # Note ytmusicapi needs the entire header, not only the authorization and cookie parts.
-        header = {
-            "user-agent": agent,
-            "accept": "*/*",
-            "accept-encoding": "gzip, deflate",
-            "content-type": "application/json",
-            "content-encoding": "gzip",
-            "origin": 'https://music.youtube.com',
-            'authorization': auth,
-            'cookie': cookie,
-        }
-        return header
-
-    async def user_from_cookies(self, cookies):
-        return self._provider.user_from_cookie(cookies)
-
-    def load_user_cookies(self):
-        self.load_header_file()
-
-    def load_header_file(self):
-        if HEADER_FILE.exists():
-            with HEADER_FILE.open('r') as f:
-                data = json.load(f)
-                return data
+        self._login_btn.clicked.connect(lambda: run_afn(self.login))
 
     def autologin(self):
-        """Overload super.autologin."""
-        header_or_oauth = self.load_header_file()
-        if header_or_oauth is not None:
-            self.show_hint('正在尝试加载已有用户...', color='green')
-            if 'cookie' in header_or_oauth:  # It is a header.
-                cookie = header_or_oauth['cookie']
-                auth = header_or_oauth['authorization']
-                self.cookies_text_edit.setText(cookie)
-                self.auth_text_edit.setText(auth)
-            else:
-                logger.debug('The header file is a oauth.json, will not load it to UI')
-            aio.create_task(self.login_with_cookies(header_or_oauth))
+        if HEADER_FILE.exists():
+            run_afn(self.login)
+        else:
+            self.show_progress(f'请按照上述指南登录...', color='blue')
 
-    def dump_user_cookies(self, user, cookies):
-        with HEADER_FILE.open('w') as f:
-            json.dump(cookies, f, indent=2)
+    async def login(self):
+        """Overload super.autologin."""
+        if HEADER_FILE.exists():
+            with HEADER_FILE.open('r') as f:
+                try:
+                    oauth = json.load(f)
+                except Exception as e:
+                    self.show_progress(f'该 json 文件无效：{e}', color='red')
+                    return
+            self.show_progress('正在尝试加载已有用户...', color='green')
+            user = self._provider.user_from_cookie(oauth)
+            self._provider.user = user
+            try:
+                await run_fn(self._provider.library_playlists)
+            except Exception as e:
+                logger.exception('Try to get user playlists failed')
+                self.show_progress(f'获取用户歌单失败：{e}。该认证信息可能无效。', color='red')
+                self._provider.user = None
+            else:
+                self.login_succeed.emit()
+        else:
+            self.show_progress(f'{HEADER_FILE} 文件不存在', color='red')
+
+    def show_progress(self, text, color='black'):
+        if color is None:
+            color = ''
+        self.__progress_label.setText(f"<p style='color: {color}'>{text}</p>")

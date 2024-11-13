@@ -53,7 +53,11 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     @user.setter
     def user(self, user):
-        self.service.reload()
+        if user is not None:
+            headerfile = HEADER_FILE
+        else:
+            headerfile = None
+        self.service.reinitialize_by_headerfile(headerfile)
         self._user = user
 
     def use_model_v2(self, mtype):
