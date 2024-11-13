@@ -37,6 +37,10 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.5 (2024-11-14)
+  - 简化登录窗口（之前登录窗口的部分按钮功能实际上不可用）
+    - 注：由于 https://github.com/sigma67/ytmusicapi/issues/676，当前登录功能不可用
+  - 修复登录失败导致整个插件不可用的问题
 - v0.4.4 (2024-08-18)
   - 修复包版本不对的问题
 - v0.4.3 (2024-07-25)
