@@ -351,7 +351,7 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
             songs=[t.v2_model_with_brief_album(brief_album) for t in self.tracks],
             artists=self.v2_brief_artist_models(),
             description=self.description or '',  # description may be None
-            released=self.year,
+            released=self.year or '',  # year may be None
         )
 
 
