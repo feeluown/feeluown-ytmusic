@@ -37,6 +37,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.6 (2024-12-01)
+  - 修复获取专辑详细信息失败的问题
 - v0.4.5 (2024-11-14)
   - 简化登录窗口（之前登录窗口的部分按钮功能实际上不可用）
     - 注：由于 https://github.com/sigma67/ytmusicapi/issues/676，当前登录功能不可用
