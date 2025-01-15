@@ -6,10 +6,10 @@ from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QAction, QInputDialog, QMessageBox, QVBoxLayout, QPushButton
 from feeluown.utils.aio import run_afn, run_fn
+from feeluown.gui import MyMusicUiManager
+from feeluown.gui import PlaylistUiManager
+from feeluown.gui import ProviderUiManager
 from feeluown.gui.widgets.login import LoginDialog as LoginDialog_
-from feeluown.uimodels.my_music import MyMusicUiManager
-from feeluown.uimodels.playlist import PlaylistUiManager
-from feeluown.uimodels.provider import ProviderUiManager
 
 from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
 
