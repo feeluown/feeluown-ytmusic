@@ -37,6 +37,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.7 (2025-01-15)
+  - 移除 feeluown.uimodels 的依赖
 - v0.4.6 (2024-12-01)
   - 修复获取专辑详细信息失败的问题
 - v0.4.5 (2024-11-14)
