@@ -11,6 +11,7 @@ from feeluown.library import (
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.library import SearchType, SimpleSearchResult
 from feeluown.library.model_protocol import BriefSongProtocol
+from yt_dlp import YoutubeDL, DownloadError
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.models import Categories, YtBriefUserModel, YtmusicWatchPlaylistSong
@@ -26,6 +27,21 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         self.service: YtmusicService = YtmusicService()
         self._user = None
         self._http_proxy = ''
+
+        self._default_ytdl_opts = {
+            'logger': logger,
+            'socket_timeout': 2,
+            'extractor_retries': 0,  # reduce retry
+        }
+        self._default_audio_ytdl_opts = {
+            # The following two options may be only valid for select_audio API.
+            # Remove these two options if needed.
+            'format': 'm4a/bestaudio/best',
+            **self._default_ytdl_opts,
+        }
+        self._default_video_ytdl_opts = {
+            **self._default_ytdl_opts,
+        }
 
     def setup_http_proxy(self, http_proxy):
         self._http_proxy = http_proxy
@@ -161,51 +177,35 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return model
 
     def song_list_quality(self, song) -> List[Quality.Audio]:
-        return []
+        return [Quality.Audio.sq]
 
         id_ = song.identifier
         song_ = self.service.song_info(id_)
         return song_.list_formats() if song_ is not None else []
 
     def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
-        return None
-
-        media = self._get_media(song, quality)
-        if media is None:
-            return media
-        url = media.url
-        # 推断(cosven): service.song_info 接口返回的 url 里面会记录请求时的 IP，
-        # 如果后面真正访问 url 时，如果自己的 IP 已经变了（比如自己的代理 IP 变了），
-        # 那么会碰到 403 错误。
-        #
-        # 注：你或许会想，把 url 中的 IP 改变当前的 public IP，是不是就行了？
-        #    这其实也是不行的，因为整个 url 是已经有摘要信息的，它要和摘要匹配。
-        if self.service.check_stream_url(url):
-            return media
-        parse_result = urlparse(url)
-        kvs = parse_qs(parse_result.query)
-        ips = kvs.get('ip', [])
-        ip = ips[0] if ips else ''
-        logger.info(
-            f"url for video({song.identifier}) is invalid now, will retry! "
-            f"maybe your public IP is changed (expected ip: {ip} ), (url: {url} )"
-        )
-        return self._get_media(song, quality)
-
-    def _get_media(self, song, quality: Quality.Audio):
-        song_info = self.service.song_info(song.identifier)
-        format_code, bitrate, format_str = song_info.get_media(quality)
-        url = self.service.stream_url(song_info, song.identifier, format_code)
-        if url is not None:
-            if 'video/mp4' in format_str:
-                format_ = 'mp4'
-            elif 'audio/mp4' in format_str:
-                format_ = 'm4a'
-            else:
-                format_ = ''
-            return Media(url, type_=MediaType.audio, bitrate=bitrate,
-                         format=format_, http_proxy=self._http_proxy)
-        return None
+        ytdl_opts = {}
+        ytdl_opts.update(self._default_audio_ytdl_opts)
+        ytdl_opts['proxy'] = self._http_proxy
+        url = self.song_get_web_url(song)
+        with YoutubeDL(ytdl_opts) as inner:
+            try:
+                info = inner.extract_info(url, download=False)
+            except DownloadError:  # noqa
+                logger.warning(f"extract_info failed for {url}")
+                info = None
+            if info:
+                media_url = info['url']
+                if media_url:
+                    # NOTE(cosven): do not set http headers, otherwise it can't play.
+                    # Tested with 'https://music.youtube.com/watch?v=vKwowKeEv5w'
+                    return Media(
+                        media_url,
+                        format=info['ext'],
+                        bitrate=int(info['abr']),
+                        http_proxy=self._http_proxy,
+                    )
+            return None
 
     def song_get_web_url(self, song) -> str:
         return f'https://music.youtube.com/watch?v={song.identifier}'
@@ -299,7 +299,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             raise
 
     def video_list_quality(self, video) -> List[Quality.Video]:
-        return []
+        return [Quality.Video.sd]
 
         id_ = video.identifier
         song_ = self.service.song_info(id_)
@@ -314,17 +314,41 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return f'https://youtube.com/watch?v={video.identifier}'
 
     def video_get_media(self, video, quality) -> Optional[Media]:
-        return None
+        ytdl_opts = {}
+        ytdl_opts.update(self._default_video_ytdl_opts)
+        ytdl_opts['proxy'] = self._http_proxy
+        url = self.video_get_web_url(video)
 
-        song_info = self.service.song_info(video.identifier)
-        format_code = song_info.get_mv(quality)
-        audio_formats = song_info.list_formats()
-        audio_code, _, __ = song_info.get_media(audio_formats[0])
-        url = self.service.stream_url(song_info, video.identifier, format_code)
-        audio_url = self.service.stream_url(song_info, video.identifier, audio_code)
-        if url is None or audio_url is None:
-            return None
-        return Media(VideoAudioManifest(url, audio_url), http_proxy=self._http_proxy)
+        audio_candidates = []  # [(url, abr)]  abr: average bitrate
+        video_candidates = []  # [(url, width)]
+        with YoutubeDL(ytdl_opts) as inner:
+            try:
+                info = inner.extract_info(url, download=False)
+            except DownloadError as e:  # noqa
+                logger.warning(f"extract_info failed for {url}")
+                info = None
+            if info:
+                for f in info['formats']:
+                    if f.get('acodec', 'none') not in ('none', None):
+                        audio_candidates.append((f['url'], f['abr']))
+                    if (
+                        f.get('vcodec', 'none') not in ('none', None)
+                        and f.get('protocol', '') in ('https', 'http')
+                    ):
+                        video_candidates.append((f['url'], f['width']))
+            if not (audio_candidates and video_candidates):
+                return None
+            audio_candidates = sorted(
+                audio_candidates, key=lambda c: c[1] or 0, reverse=True
+            )
+            video_candidates = sorted(
+                video_candidates, key=lambda c: c[1] or 0, reverse=True
+            )
+            # always use the best audio(with highest bitrate)
+            audio_url = audio_candidates[0][0]
+            # TODO: use policy on video because high-quality video may be slow
+            video_url = video_candidates[0][0]
+            return Media(VideoAudioManifest(video_url, audio_url), http_proxy=self._http_proxy)
 
     def song_get_mv(self, song: BriefSongProtocol) -> BriefVideoModel:
         return BriefVideoModel(identifier=song.identifier, source=song.source, title=song.title,
