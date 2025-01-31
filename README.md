@@ -37,6 +37,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.8 (2025-01-31)
+  - 使用 yt-dlp 作为获取音源的工具
 - v0.4.7 (2025-01-15)
   - 移除 feeluown.uimodels 的依赖
 - v0.4.6 (2024-12-01)
