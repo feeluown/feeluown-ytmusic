@@ -37,6 +37,9 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.9 (2025-02-04)
+  - 默认使用系统 HTTP 代理作为网络代理
+  - 修复 `HTTP_PROXY` 配置为空时，yt-dlp 不能使用系统代理的问题
 - v0.4.8 (2025-01-31)
   - 使用 yt-dlp 作为获取音源的工具
 - v0.4.7 (2025-01-15)

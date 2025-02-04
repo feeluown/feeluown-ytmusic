@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fuo-ytmusic"
-version = "0.4.8"
+version = "0.4.9"
 description = "feeluown Youtube Music plugin"
 authors = ["Bruce Zhang <zttt183525594@gmail.com>"]
 keywords = ["feeluown", "ytmusic", "youtube"]
