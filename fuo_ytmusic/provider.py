@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urlparse, parse_qs
 from typing import List, Optional
 
-from feeluown.excs import NoUserLoggedIn
+from feeluown.excs import NoUserLoggedIn, ProviderIOError
 from feeluown.library import (
     AbstractProvider, ProviderV2, ProviderFlags as Pf,
     SongModel, VideoModel, BriefVideoModel, BriefUserModel, ModelType,
@@ -49,6 +49,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def setup_http_timeout(self, timeout):
         self.service.setup_timeout(timeout)
+        self._default_ytdl_opts['socket_timeout'] = timeout
 
     # noinspection PyPep8Naming
     class meta:
@@ -186,25 +187,27 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
         ytdl_opts = {}
         ytdl_opts.update(self._default_audio_ytdl_opts)
-        ytdl_opts['proxy'] = self._http_proxy
+        # Only set proxy if it is nonempty.
+        # Ytdl can make use of system proxy when proxy is not set.
+        if self._http_proxy:
+            ytdl_opts['proxy'] = self._http_proxy
         url = self.song_get_web_url(song)
         with YoutubeDL(ytdl_opts) as inner:
             try:
                 info = inner.extract_info(url, download=False)
             except DownloadError:  # noqa
                 logger.warning(f"extract_info failed for {url}")
-                info = None
-            if info:
-                media_url = info['url']
-                if media_url:
-                    # NOTE(cosven): do not set http headers, otherwise it can't play.
-                    # Tested with 'https://music.youtube.com/watch?v=vKwowKeEv5w'
-                    return Media(
-                        media_url,
-                        format=info['ext'],
-                        bitrate=int(info['abr']),
-                        http_proxy=self._http_proxy,
-                    )
+                raise ProviderIOError('yt-dlp extract info failed', provider=self)
+            media_url = info['url']
+            if media_url:
+                # NOTE(cosven): do not set http headers, otherwise it can't play.
+                # Tested with 'https://music.youtube.com/watch?v=vKwowKeEv5w'
+                return Media(
+                    media_url,
+                    format=info['ext'],
+                    bitrate=int(info['abr']),
+                    http_proxy=self._http_proxy,
+                )
             return None
 
     def song_get_web_url(self, song) -> str:
@@ -316,7 +319,10 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def video_get_media(self, video, quality) -> Optional[Media]:
         ytdl_opts = {}
         ytdl_opts.update(self._default_video_ytdl_opts)
-        ytdl_opts['proxy'] = self._http_proxy
+        # Only set proxy if it is nonempty.
+        # Ytdl can make use of system proxy when proxy is not set.
+        if self._http_proxy:
+            ytdl_opts['proxy'] = self._http_proxy
         url = self.video_get_web_url(video)
 
         audio_candidates = []  # [(url, abr)]  abr: average bitrate
@@ -326,16 +332,15 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 info = inner.extract_info(url, download=False)
             except DownloadError as e:  # noqa
                 logger.warning(f"extract_info failed for {url}")
-                info = None
-            if info:
-                for f in info['formats']:
-                    if f.get('acodec', 'none') not in ('none', None):
-                        audio_candidates.append((f['url'], f['abr']))
-                    if (
-                        f.get('vcodec', 'none') not in ('none', None)
-                        and f.get('protocol', '') in ('https', 'http')
-                    ):
-                        video_candidates.append((f['url'], f['width']))
+                raise ProviderIOError('yt-dlp extract info failed', provider=self)
+            for f in info['formats']:
+                if f.get('acodec', 'none') not in ('none', None):
+                    audio_candidates.append((f['url'], f['abr']))
+                if (
+                    f.get('vcodec', 'none') not in ('none', None)
+                    and f.get('protocol', '') in ('https', 'http')
+                ):
+                    video_candidates.append((f['url'], f['width']))
             if not (audio_candidates and video_candidates):
                 return None
             audio_candidates = sorted(

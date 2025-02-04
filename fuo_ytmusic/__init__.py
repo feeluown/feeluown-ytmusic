@@ -1,3 +1,5 @@
+from urllib.request import getproxies
+
 from feeluown.app import App
 
 __alias__ = 'ytmusic'
@@ -20,7 +22,14 @@ def enable(app: App):
     from fuo_ytmusic.ui import YtmusicUiManager
     from fuo_ytmusic.provider import provider
 
-    provider.setup_http_proxy(app.config.ytmusic.HTTP_PROXY)
+    # Use system http proxy by default.
+    sys_proxies = getproxies()
+    sys_http_proxy = sys_proxies.get('http')
+    config_http_proxy = app.config.ytmusic.HTTP_PROXY
+    if not config_http_proxy and sys_http_proxy:
+        config_http_proxy = sys_http_proxy
+
+    provider.setup_http_proxy(config_http_proxy)
     provider.setup_http_timeout(app.config.ytmusic.HTTP_TIMEOUT)
     app.library.register(provider)
     if app.mode & app.GuiMode:
