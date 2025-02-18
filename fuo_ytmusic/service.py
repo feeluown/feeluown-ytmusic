@@ -230,7 +230,14 @@ class YtmusicService(metaclass=Singleton):
         options = dict(
             requests_session=self._session,
             language="zh_CN",
-            oauth_credentials=OAuthCredentials(session=self._session),
+            oauth_credentials=OAuthCredentials(
+                # In the new version of ytmusicapi, client_id and client_secret are required args.
+                #   https://github.com/sigma67/ytmusicapi/pull/688
+                # Hardcode the client_id and client_secret to workaround.
+                client_id="861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com",
+                client_secret="SboVhoG9s0rNafixCSGGKXAT",
+                session=self._session,
+            ),
         )
         # Due to https://github.com/sigma67/ytmusicapi/issues/676,
         # YTMusic does not work in specific cases when auth file is provided.
