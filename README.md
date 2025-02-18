@@ -37,6 +37,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.10 (2025-02-18)
+  - 兼容最新的 ytmusicapi 接口
 - v0.4.9 (2025-02-04)
   - 默认使用系统 HTTP 代理作为网络代理
   - 修复 `HTTP_PROXY` 配置为空时，yt-dlp 不能使用系统代理的问题
