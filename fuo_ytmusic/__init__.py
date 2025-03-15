@@ -19,7 +19,6 @@ def init_config(config):
 def enable(app: App):
     global ui_mgr
 
-    from fuo_ytmusic.ui import YtmusicUiManager
     from fuo_ytmusic.provider import provider
 
     # Use system http proxy by default.
@@ -33,6 +32,7 @@ def enable(app: App):
     provider.setup_http_timeout(app.config.ytmusic.HTTP_TIMEOUT)
     app.library.register(provider)
     if app.mode & app.GuiMode:
+        from fuo_ytmusic.ui import YtmusicUiManager
         ui_mgr = ui_mgr or YtmusicUiManager(app)
 
 

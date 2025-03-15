@@ -37,6 +37,9 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.11 (2025-03-15)
+  - 修复纯 CLI 模式不能运行的问题
+  - 发布 wheel 包
 - v0.4.10 (2025-02-18)
   - 兼容最新的 ytmusicapi 接口
 - v0.4.9 (2025-02-04)

@@ -16,6 +16,7 @@ jobs:
     - name: Build
       run: >-
         python setup.py sdist
+        python setup.py bdist_wheel
     - name: Publish
       uses: pypa/gh-action-pypi-publish@master
       with:
