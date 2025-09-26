@@ -3,8 +3,6 @@ import logging
 import json
 from pathlib import Path
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QAction, QInputDialog, QMessageBox, QVBoxLayout, QPushButton
 from feeluown.utils.aio import run_afn, run_fn
 from feeluown.gui import MyMusicUiManager
 from feeluown.gui import PlaylistUiManager
@@ -20,6 +18,10 @@ from fuo_ytmusic.consts import HEADER_FILE, REQUIRED_COOKIE_FIELDS
 # from .page_more import render as more_render
 from .page_fav import render as fav_render
 from .service import YtmusicPrivacyStatus
+from .qt_compat import (
+    QLabel, QAction, QInputDialog, QMessageBox, QVBoxLayout, QPushButton,
+    TextSelectableByMouse, ActionsContextMenu, Dialog
+)
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +77,7 @@ class YtmusicUiManager:
 
         # hack fuo to support add playlist
         pl_header: QLabel = self._app.ui.left_panel.playlists_header
-        pl_header.setContextMenuPolicy(Qt.ActionsContextMenu)
+        pl_header.setContextMenuPolicy(ActionsContextMenu)
         for a in pl_header.actions():
             pl_header.removeAction(a)
         new_pl_action = QAction('新建歌单', pl_header)
@@ -119,14 +121,14 @@ class LoginDialog(LoginDialog_):
             '~/.FeelUOwn/data/ytmusic_header.json ，'
             '然后点击登录。'
         )
-        self.__hint_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.__hint_label.setTextInteractionFlags(TextSelectableByMouse)
         self.__progress_label = QLabel()
         self.__hint_label.setWordWrap(True)
         self.__progress_label.setWordWrap(True)
         self._layout.addWidget(self.__hint_label)
         self._layout.addWidget(self.__progress_label)
         self._layout.addWidget(self._login_btn)
-        self.setWindowFlags(self.windowFlags() | Qt.Dialog)
+        self.setWindowFlags(self.windowFlags() | Dialog)
 
         self._login_btn.clicked.connect(lambda: run_afn(self.login))
 
