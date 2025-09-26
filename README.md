@@ -37,6 +37,8 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.12 (2025-09-26)
+  - 兼容 pyqt6
 - v0.4.11 (2025-03-15)
   - 修复纯 CLI 模式不能运行的问题
   - 发布 wheel 包
