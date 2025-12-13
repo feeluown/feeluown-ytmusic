@@ -1,15 +1,12 @@
 import logging
 import ntpath
 import os
-import re
 import sys
 import threading
 from datetime import timedelta
 from enum import Enum
 from functools import partial
 from typing import Optional, Union, List
-from urllib.parse import unquote
-from pathlib import Path
 
 import requests
 from ytmusicapi import YTMusic as YTMusicBase
@@ -18,7 +15,6 @@ from cachetools.func import ttl_cache
 from requests import Response
 from feeluown.library import SearchType
 
-from fuo_ytmusic.cipher import Cipher
 from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import (
     YtmusicSearchSong,
@@ -129,8 +125,8 @@ class YTMusic(YTMusicBase):
         supported_filetypes = ["mp3", "m4a", "wma", "flac", "ogg"]
         if os.path.splitext(filepath)[1][1:] not in supported_filetypes:
             raise Exception(
-                "The provided file type is not supported by YouTube Music. Supported file types are "
-                + ", ".join(supported_filetypes)
+                "The provided file type is not supported by YouTube Music."
+                f" Supported file types are {', '.join(supported_filetypes)}"
             )
 
         headers = self.headers.copy()
@@ -166,9 +162,7 @@ class YtmusicService(metaclass=Singleton):
         self._api: Optional[YTMusic] = None
         self._session.hooks["response"].append(self._do_logging)
 
-        self._cipher = None
         self._signature_timestamp = 0
-        self._cipher_lock = threading.Lock()
         self._api_lock = threading.Lock()
 
     @staticmethod
@@ -189,52 +183,22 @@ class YtmusicService(metaclass=Singleton):
     def _log_thread(self):
         return f"Thread({threading.get_ident()})"
 
-    def get_cipher(self):
-        if self._cipher is None:
-            logger.info(f"{self._log_thread()} try to get cipher...")
-            with self._cipher_lock:
-                if self._cipher is None:
-                    js_url = self.api.get_basejs_url()
-                    js = self._session.get(js_url).text
-                    match = re.search(r"signatureTimestamp[:=](\d+)", js)
-                    assert match is not None, "Unable to identify the signatureTimestamp."
-                    self._signature_timestamp = int(match.group(1))
-                    self._cipher = Cipher(js)
-                    logger.info(f"{self._log_thread()} got cipher")
-                else:
-                    logger.info(f"{self._log_thread()} cipher already exists")
-        return self._cipher
-
-    def reset_cipher(self):
-        with self._cipher_lock:
-            # I don't know if cipher has some relation with signature timestamp.
-            self._cipher = None
-            self._signature_timestamp = 0
-
     def get_signature_timestamp(self):
-        # This method works along with pytube cipher, which is used to get
-        # a playable media url. However, pytube cipher became invalid since 2024-06.
-        # The url processed by pytube cipher still returns 403.
-        # It seems others also met this problem: https://github.com/pytube/pytube/issues/1943
-        #
-        # So return 0 directly to avoid get_cipher, get_cipher costs too much time.
         return 0
-
-        if self._signature_timestamp == 0:
-            logger.info(f"{self._log_thread()} signature timestamp is 0, try to refresh.")
-            self.get_cipher()
-        assert self._signature_timestamp != 0, "signature timestamp should not be 0 now."
-        return self._signature_timestamp
 
     def reinitialize_by_headerfile(self, headerfile=None):
         options = dict(
             requests_session=self._session,
             language="zh_CN",
             oauth_credentials=OAuthCredentials(
-                # In the new version of ytmusicapi, client_id and client_secret are required args.
+                # In the new version of ytmusicapi, client_id and client_secret
+                # are required args.
                 #   https://github.com/sigma67/ytmusicapi/pull/688
                 # Hardcode the client_id and client_secret to workaround.
-                client_id="861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com",
+                client_id=(
+                    "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68"
+                    ".apps.googleusercontent.com"
+                ),
                 client_secret="SboVhoG9s0rNafixCSGGKXAT",
                 session=self._session,
             ),
@@ -248,7 +212,6 @@ class YtmusicService(metaclass=Singleton):
         else:
             logger.info("Initializing ytmusic api with no headerfile.")
             self._api = YTMusic(**options)
-        threading.Thread(target=self.get_signature_timestamp).start()
 
     def setup_http_proxy(self, http_proxy):
         self._session.proxies = {
@@ -315,8 +278,7 @@ class YtmusicService(metaclass=Singleton):
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def categories(self) -> List[Categories]:
         return [
-            Categories(key=k, value=v)
-            for k, v in self.api.get_mood_categories().items()
+            Categories(key=k, value=v) for k, v in self.api.get_mood_categories().items()
         ]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
@@ -334,9 +296,7 @@ class YtmusicService(metaclass=Singleton):
         self.api.auth = auth
         return TopCharts(**response)
 
-    def library_playlists(
-        self, limit: int = GLOBAL_LIMIT
-    ) -> List[PlaylistNestedResult]:
+    def library_playlists(self, limit: int = GLOBAL_LIMIT) -> List[PlaylistNestedResult]:
         response = self.api.get_library_playlists(limit)
         return [PlaylistNestedResult(**data) for data in response]
 
@@ -359,9 +319,7 @@ class YtmusicService(metaclass=Singleton):
         return [YtmusicLibraryArtist(**data) for data in response]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
-    def playlist_info(
-        self, playlist_id: str, limit: int = GLOBAL_LIMIT
-    ) -> PlaylistInfo:
+    def playlist_info(self, playlist_id: str, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
         return PlaylistInfo(**self.api.get_playlist(playlist_id, limit))
 
     def liked_songs(self, limit: int = GLOBAL_LIMIT) -> PlaylistInfo:
@@ -428,7 +386,9 @@ class YtmusicService(metaclass=Singleton):
         # STATUS_SUCCEEDED
         return self.api.delete_upload_entity(entity_id)
 
-    def stream_url(self, song_info: SongInfo, video_id: str, format_code: int) -> Optional[str]:
+    def stream_url(
+        self, song_info: SongInfo, video_id: str, format_code: int
+    ) -> Optional[str]:
         formats = song_info.streamingData.adaptiveFormats
         for f in formats:
             if int(f.itag) == format_code:
@@ -438,20 +398,6 @@ class YtmusicService(metaclass=Singleton):
     def check_stream_url(self, url):
         resp = self._session.head(url)
         return resp.status_code != 403
-
-    def _get_stream_url(self, f: SongInfo.StreamingData.Format, video_id: str) -> Optional[str]:
-        if f.url is not None and f.url != "":
-            return f.url
-        sig_ch = f.signatureCipher
-        sig_ex = sig_ch.split("&")
-        res = dict({"s": "", "url": ""})
-        for sig in sig_ex:
-            for key in res:
-                if sig.find(key + "=") >= 0:
-                    res[key] = unquote(sig[len(key + "=") :])
-        signature = self.get_cipher().get_signature(ciphered_signature=res["s"])
-        _url = res["url"] + "&sig=" + signature
-        return _url
 
 
 if __name__ == "__main__":
