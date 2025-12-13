@@ -454,16 +454,22 @@ class SongInfo(BaseModel):
         return None
 
 
+class PlaylistAuthor(BaseModel):
+    id: str
+    name: str
+
+
 class PlaylistNestedResult(BaseModel, YtmusicCoverMixin):
     title: str
     playlistId: str
+    author: List[PlaylistAuthor] | None = None
 
     def v2_brief_model(self) -> BriefPlaylistModel:
         return BriefPlaylistModel(
             identifier=self.playlistId,
             source=self.source,
             name=self.title,
-            creator_name='',
+            creator_name='/'.join([author.name for author in self.author or []]),
         )
 
 

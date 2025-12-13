@@ -32,8 +32,10 @@ def enable(app: App):
     provider.setup_http_timeout(app.config.ytmusic.HTTP_TIMEOUT)
     app.library.register(provider)
     if app.mode & app.GuiMode:
-        from fuo_ytmusic.ui import YtmusicUiManager
-        ui_mgr = ui_mgr or YtmusicUiManager(app)
+        from .provider_ui import ProviderUI
+
+        provider_ui = ProviderUI(app)
+        app.pvd_ui_mgr.register(provider_ui)
 
 
 def disable(app: App):

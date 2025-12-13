@@ -7,10 +7,12 @@ from feeluown.library import (
     AbstractProvider, ProviderV2, ProviderFlags as Pf,
     SongModel, VideoModel, BriefVideoModel, BriefUserModel, ModelType,
     BriefPlaylistModel, BriefArtistModel, PlaylistModel, ModelNotFound,
+    UserModel,
 )
 from feeluown.media import Quality, Media, VideoAudioManifest, MediaType
 from feeluown.library import SearchType, SimpleSearchResult
 from feeluown.library.model_protocol import BriefSongProtocol
+from feeluown.utils.dispatch import Signal
 from yt_dlp import YoutubeDL, DownloadError
 
 from fuo_ytmusic.consts import HEADER_FILE
@@ -25,6 +27,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def __init__(self):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
+        self.current_user_changed = Signal()
         self._user = None
         self._http_proxy = ''
 
@@ -64,54 +67,91 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def name(self):
         return self.meta.name
 
-    @property
-    def user(self):
+    def auto_login(self):
+        if HEADER_FILE.exists():
+            logger.info(f'Try to auto login with header file')
+            user = self.try_get_user_with_headerfile()
+            if user is None:
+                logger.info(f'Auto login failed')
+                return
+            self.auth(user)
+            self.current_user_changed.emit(user)
+        else:
+            logger.info(f'No header file found, skip auto login')
+
+    def try_get_user_with_headerfile(self):
+        if HEADER_FILE.exists():
+            self.service.reinitialize_by_headerfile(HEADER_FILE)
+            user = self.user_get('')
+            return user
+        return None
+
+    def has_current_user(self) -> bool:
+        return self._user is not None
+
+    def get_current_user(self):
+        if not self._user:
+            raise NoUserLoggedIn
         return self._user
 
-    @user.setter
-    def user(self, user):
-        if user is not None:
-            headerfile = HEADER_FILE
-        else:
-            headerfile = None
-        self.service.reinitialize_by_headerfile(headerfile)
-        self._user = user
+    def user_get(self, identifier):
+        # HACK: empty string means the current user.
+        if identifier == '':
+            try:
+                info = self.service.api.get_account_info()
+            except Exception:
+                raise ProviderIOError(f'get current account info failed: {e}')
+            return UserModel(
+                identifier='',
+                source=self.meta.identifier,
+                name=info['accountName'],
+                avatar_url=info['accountPhotoUrl'],
+            )
 
-    def use_model_v2(self, mtype):
-        return mtype in (
-            ModelType.song,
-            ModelType.album,
-            ModelType.artist,
-            ModelType.playlist,
+        user = self.service.user_info(identifier)
+        return BriefUserModel(
+            identifier=identifier,
+            source=self.meta.identifier,
+            name=user.name,
         )
 
-    def library_upload_songs(self):
-        songs = self.service.library_upload_songs(100)
-        return [song.model() for song in songs]
+    def current_user_list_playlists(self):
+        playlists = self.service.library_playlists(100)
+        # HACK: FeelUOwn fetches playlists in two places:
+        # 1. current_user_list_playlists
+        # 2. current_user_fav_create_playlists_rd
+        # We cache the playlists in current_user_list_playlists, so that we can
+        # avoid fetching playlists in current_user_fav_create_playlists_rd.
+        self._user.cache_set('playlists', playlists, ttl=10)
+        user_playlists = []
+        for playlist in [p.v2_brief_model() for p in playlists]:
+            # HACK: use name to filter playlists, because the user identifier
+            # may be unknown.
+            if playlist.creator_name == self._user.name:
+                user_playlists.append(playlist)
+        return user_playlists
 
-    def library_upload_artists(self):
-        artists = self.service.library_upload_artists(100)
-        return [artist.model() for artist in artists]
-
-    def library_upload_albums(self):
-        albums = self.service.library_upload_albums(100)
-        return [album.model() for album in albums]
-
-    def library_songs(self):
+    def current_user_fav_create_songs_rd(self):
         songs = self.service.library_songs(100)
         return [song.v2_model() for song in songs]
 
-    def library_albums(self):
-        albums = self.service.library_albums(100)
-        return [album.v2_brief_model() for album in albums]
-
-    def library_artists(self) -> List[BriefArtistModel]:
+    def current_user_fav_create_artists_rd(self):
         artists = self.service.library_subscription_artists(100)
         return [artist.v2_brief_model() for artist in artists]
 
-    def library_playlists(self) -> List[BriefPlaylistModel]:
-        playlists = self.service.library_playlists(100)
-        return [playlist.v2_brief_model() for playlist in playlists]
+    def current_user_fav_create_albums_rd(self):
+        albums = self.service.library_albums(100)
+        return [album.v2_brief_model() for album in albums]
+
+    def current_user_fav_create_playlists_rd(self) -> List[BriefPlaylistModel]:
+        playlists, exist = self._user.cache_get('playlists')
+        if not exist:
+            playlists = self.service.library_playlists(100)
+        user_fav_playlists = []
+        for playlist in [p.v2_brief_model() for p in playlists]:
+            if playlist.creator_name != self._user.name:
+                user_fav_playlists.append(playlist)
+        return user_fav_playlists
 
     def create_playlist(self, title: str, description: str, privacy_status: YtmusicPrivacyStatus,
                         video_ids: List[str] = None, source_playlist: str = None) -> bool:
@@ -136,27 +176,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def categories(self) -> List[Categories]:
         return self.service.categories()
-
-    def user_from_cookie(self, cookies: dict):
-        return YtBriefUserModel(
-            identifier='', source=self.meta.identifier, name='Me',
-            cookies=cookies)
-
-    def has_current_user(self) -> bool:
-        return self._user is not None
-
-    def get_current_user(self):
-        if not self._user:
-            raise NoUserLoggedIn
-        return self._user
-
-    def user_get(self, identifier):
-        if identifier is None:
-            return None
-        if identifier == '':
-            return BriefUserModel(identifier='', source=self.meta.identifier, name='Me')
-        user = self.service.user_info(identifier)
-        return BriefUserModel(identifier=identifier, source=self.meta.identifier, name=user.name)
 
     def search(self, keyword, type_, *args, **kwargs):
         type_ = SearchType.parse(type_)
@@ -205,7 +224,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 return Media(
                     media_url,
                     format=info['ext'],
-                    bitrate=int(info['abr']),
+                    bitrate=int(info['abr'] or 0),
                     http_proxy=self._http_proxy,
                 )
             return None
