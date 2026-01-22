@@ -33,6 +33,7 @@ class TestService:
         assert all(isinstance(r, YtmusicSearchAlbum) for r in result)
 
     def test_stream_url(self):
-        result = self.service.stream_url('U0XcqF7rqHk', 251)
+        song_info = self.service.song_info('U0XcqF7rqHk')
+        result = self.service.stream_url(song_info, 'U0XcqF7rqHk', 251)
         assert isinstance(result, str)
         assert result != ''
