@@ -1,9 +1,6 @@
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Tuple, get_origin
 
-# noinspection PyProtectedMember
-from pydantic.v1.fields import Field
-from pydantic.v1 import BaseModel as PydanticBaseModel
-from pydantic.v1.main import ModelMetaclass
+from pydantic import BaseModel as PydanticBaseModel, Field
 
 from feeluown.utils.reader import SequentialReader
 from feeluown.media import Quality
@@ -25,21 +22,41 @@ from feeluown.library import AlbumType
 from fuo_ytmusic.timeparse import timeparse
 
 
-class AllowOptional(ModelMetaclass):
+class AllowOptional(type(PydanticBaseModel)):
     def __new__(mcs, name, bases, namespaces, **kwargs):
-        annotations = namespaces.get("__annotations__", {})
+        annotations = namespaces.get("__annotations__")
+        if annotations is None:
+            annotate_func = namespaces.get("__annotate_func__")
+            if annotate_func is not None:
+                try:
+                    annotations = dict(annotate_func(0))
+                except Exception:
+                    annotations = {}
+            else:
+                annotations = {}
+        else:
+            annotations = dict(annotations)
+        local_fields = set(annotations.keys())
+        mixin_annotations = {}
         for base in bases:
-            if hasattr(base, "__annotations__"):
-                annotations = {**annotations, **base.__annotations__}
-        for field in annotations:
-            if not field.startswith("__"):
-                if (
-                    hasattr(annotations[field], "__origin__")
-                    and annotations[field].__origin__ is Union
-                ):
-                    continue
-                annotations[field] = Optional[annotations[field]]
+            if issubclass(base, PydanticBaseModel):
+                continue
+            base_annotations = getattr(base, "__annotations__", None)
+            if base_annotations:
+                mixin_annotations.update(base_annotations)
+        annotations = {**mixin_annotations, **annotations}
+        for field, annotation in annotations.items():
+            if field.startswith("__"):
+                continue
+            if get_origin(annotation) is Union:
+                continue
+            annotations[field] = Optional[annotation]
         namespaces["__annotations__"] = annotations
+        for field in local_fields | set(mixin_annotations.keys()):
+            if field.startswith("__"):
+                continue
+            if field not in namespaces:
+                namespaces[field] = None
         return super().__new__(mcs, name, bases, namespaces, **kwargs)
 
 

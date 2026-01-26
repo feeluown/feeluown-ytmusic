@@ -10,7 +10,7 @@ Sees: [Documentation](https://feeluown.readthedocs.io/)
 ```shell
 pip install fuo-ytmusic  # Lastest stable release
 pip install https://github.com/feeluown/feeluown-ytmusic.git  # master branch
-poetry install  # Local development
+uv sync  # Local development
 ```
 
 ## Configuration

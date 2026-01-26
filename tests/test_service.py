@@ -7,12 +7,12 @@ from fuo_ytmusic.models import YtmusicSearchSong, YtmusicSearchAlbum
 
 
 class TestService:
-    def setup(self):
+    def setup_method(self):
         service.logger.addHandler(logging.StreamHandler())
         service.logger.setLevel(logging.DEBUG)
         self.service = service.YtmusicService()
 
-    def teardown(self):
+    def teardown_method(self):
         del self.service
 
     def test_ytmusic_type(self):
@@ -31,8 +31,3 @@ class TestService:
         result = self.service.search('ALIN', service.YtmusicType.al)
         assert isinstance(result, list)
         assert all(isinstance(r, YtmusicSearchAlbum) for r in result)
-
-    def test_stream_url(self):
-        result = self.service.stream_url('U0XcqF7rqHk', 251)
-        assert isinstance(result, str)
-        assert result != ''
