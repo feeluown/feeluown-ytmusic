@@ -1,11 +1,8 @@
-import json
 import logging
 import ntpath
 import os
 import sys
 import threading
-import time
-from http.cookies import SimpleCookie
 from datetime import timedelta
 from enum import Enum
 from functools import partial
@@ -13,13 +10,13 @@ from typing import Optional, Union, List
 
 import requests
 from ytmusicapi import YTMusic as YTMusicBase
-from ytmusicapi.constants import YTM_BASE_API, YTM_DOMAIN
 from ytmusicapi.ytmusic import OAuthCredentials
 from cachetools.func import ttl_cache
 from requests import Response
 from feeluown.library import SearchType
 
 from fuo_ytmusic.helpers import Singleton
+from fuo_ytmusic.profile import YtmusicProfileManager
 from fuo_ytmusic.models import (
     YtmusicSearchSong,
     YtmusicSearchAlbum,
@@ -168,8 +165,7 @@ class YtmusicService(metaclass=Singleton):
 
         self._signature_timestamp = 0
         self._api_lock = threading.Lock()
-        self._account_override = None
-        self._forced_gaia_id = None
+        self._profile_manager = YtmusicProfileManager(self)
 
     @staticmethod
     def _do_logging(r: Response, *_, **__):
@@ -257,388 +253,15 @@ class YtmusicService(metaclass=Singleton):
         return [YtmusicDispatcher.search_result_dispatcher(**data) for data in response]
 
     def get_current_account_info(self) -> dict:
-        self.api._check_auth()
-        if self._account_override is not None:
-            return self._account_override
-        fallback_info = self._safe_get_account_menu_info()
-
-        switcher = self._get_account_switcher()
-        if switcher is not None:
-            items = self._find_account_items(switcher)
-            datasync_id = self._extract_datasync_id(switcher)
-            selected = self._pick_account_item(
-                items, datasync_id, self._forced_gaia_id
-            )
-            if selected is None:
-                fallback_info = self._safe_get_account_menu_info()
-                if fallback_info is not None:
-                    selected = self._find_account_item_by_name(
-                        items, fallback_info.get("accountName")
-                    )
-            if selected is not None:
-                info = self._build_account_info(selected)
-                if info is not None:
-                    return info
-
-        accounts_list = self._get_accounts_list()
-        if accounts_list is not None:
-            items = self._find_account_items(accounts_list)
-            datasync_id = self._extract_datasync_id(accounts_list)
-            selected = self._pick_account_item(
-                items, datasync_id, self._forced_gaia_id
-            )
-            if selected is None and fallback_info is None:
-                fallback_info = self._safe_get_account_menu_info()
-            if selected is None and fallback_info is not None:
-                selected = self._find_account_item_by_name(
-                    items, fallback_info.get("accountName")
-                )
-            if selected is not None:
-                info = self._build_account_info(selected)
-                if info is not None:
-                    return info
-
-        if fallback_info is not None:
-            return fallback_info
-        raise ValueError("No account info available")
+        return self._profile_manager.get_current_account_info()
 
     def list_profiles(self) -> List[dict]:
-        switcher = self._get_account_switcher()
-        if switcher is None:
-            switcher = self._get_accounts_list()
-        if switcher is None:
-            return []
-
-        items = self._find_account_items(switcher)
-        datasync_id = self._extract_datasync_id(switcher)
-        profiles = []
-        for item in items:
-            name = self._extract_text(item.get("accountName"))
-            if not name:
-                continue
-            channel_handle = self._extract_text(item.get("channelHandle"))
-            if not channel_handle:
-                continue
-            profiles.append(
-                {
-                    "accountName": name,
-                    "channelHandle": channel_handle,
-                    "accountPhotoUrl": self._extract_thumbnail_url(
-                        item.get("accountPhoto")
-                    ),
-                    "gaiaId": self._extract_obfuscated_gaia_id(item),
-                    "isSelected": self._is_item_selected(item, datasync_id),
-                }
-            )
-        return profiles
+        return self._profile_manager.list_profiles()
 
     def switch_profile(self, account_name: str = None, gaia_id: str = None) -> dict:
-        if not account_name and not gaia_id:
-            self._set_on_behalf_of_user(None)
-            self._account_override = None
-            self._forced_gaia_id = None
-            self._clear_caches()
-            return self.get_current_account_info()
-
-        switcher = self._get_account_switcher()
-        if switcher is None:
-            switcher = self._get_accounts_list()
-        if switcher is None:
-            raise ValueError("No account switcher data available")
-
-        items = self._find_account_items(switcher)
-        selected = None
-        if gaia_id:
-            for item in items:
-                if self._extract_obfuscated_gaia_id(item) == gaia_id:
-                    selected = item
-                    break
-        else:
-            selected = self._find_account_item_by_name(items, account_name)
-
-        if selected is None:
-            raise ValueError("Profile not found")
-
-        selected_gaia_id = self._extract_obfuscated_gaia_id(selected)
-        self._set_on_behalf_of_user(selected_gaia_id)
-        self._forced_gaia_id = selected_gaia_id
-        self._account_override = self._build_account_info(selected)
-        self._clear_caches()
-        return self._account_override
-
-    def _set_on_behalf_of_user(self, gaia_id):
-        context = self.api.context.setdefault("context", {})
-        user_ctx = context.setdefault("user", {})
-        if gaia_id:
-            user_ctx["onBehalfOfUser"] = gaia_id
-        else:
-            user_ctx.pop("onBehalfOfUser", None)
-
-    def _clear_caches(self):
-        self.artist_info.cache_clear()
-        self.artist_albums.cache_clear()
-        self.user_info.cache_clear()
-        self.album_info.cache_clear()
-        self.categories.cache_clear()
-        self.category_playlists.cache_clear()
-        self.get_charts.cache_clear()
-        self.playlist_info.cache_clear()
-
-    def _get_account_switcher(self):
-        response = self._request_account_switcher(
-            url="https://music.youtube.com/getAccountSwitcherEndpoint",
-            origin=YTM_DOMAIN,
+        return self._profile_manager.switch_profile(
+            account_name=account_name, gaia_id=gaia_id
         )
-        if self._has_account_items(response):
-            return response
-        return None
-
-    def _request_account_switcher(self, url, origin):
-        try:
-            headers = dict(self.api.headers)
-            headers["origin"] = origin
-            response = self._session.request(
-                "GET",
-                url,
-                headers=headers,
-                proxies=self._session.proxies,
-                cookies=self.api.cookies,
-            )
-            response_text = response.text
-        except Exception as e:
-            logger.debug("account switcher request failed: %s", e)
-            return None
-
-        if response.status_code >= 400:
-            logger.debug(
-                "account switcher request failed with status %s",
-                response.status_code,
-            )
-            return None
-
-        self._update_auth_cookie_from_response(response)
-
-        payload = self._strip_xssi_prefix(response_text)
-        try:
-            return json.loads(payload)
-        except Exception as e:
-            logger.debug("account switcher parse failed: %s", e)
-            return None
-
-    @staticmethod
-    def _strip_xssi_prefix(text):
-        if not isinstance(text, str):
-            return text
-        if text.startswith(")]}'"):
-            newline = text.find("\n")
-            if newline != -1:
-                return text[newline + 1 :]
-            return text[4:]
-        return text
-
-    def _get_accounts_list(self):
-        try:
-            response = self.api._send_request("account/accounts_list", {})
-        except Exception as e:
-            logger.debug("accounts_list api request failed: %s", e)
-            response = None
-        if self._has_account_items(response):
-            return response
-
-        response = self._request_accounts_list(
-            client_name="WEB_REMIX",
-            origin=YTM_DOMAIN,
-            url=f"{YTM_BASE_API}account/accounts_list{self.api.params}",
-        )
-        if self._has_account_items(response):
-            return response
-
-        response = self._request_accounts_list(
-            client_name="WEB",
-            origin="https://www.youtube.com",
-            url="https://www.youtube.com/youtubei/v1/account/accounts_list?alt=json",
-        )
-        if self._has_account_items(response):
-            return response
-        return None
-
-    def _request_accounts_list(self, client_name, origin, url):
-        try:
-            body = {"context": self._build_accounts_list_context(client_name)}
-            headers = dict(self.api.headers)
-            headers["origin"] = origin
-            response = self._session.request(
-                "POST",
-                url,
-                json=body,
-                headers=headers,
-                proxies=self._session.proxies,
-                cookies=self.api.cookies,
-            )
-            response_text = response.json()
-        except Exception as e:
-            logger.debug("accounts_list request failed: %s", e)
-            return None
-
-        if response.status_code >= 400:
-            logger.debug(
-                "accounts_list request failed with status %s", response.status_code
-            )
-            return None
-        self._update_auth_cookie_from_response(response)
-        return response_text
-
-    def _build_accounts_list_context(self, client_name):
-        base_context = self.api.context.get("context", {})
-        client = dict(base_context.get("client", {}))
-        user = dict(base_context.get("user", {}))
-        client["clientName"] = client_name
-        if client_name == "WEB" and client.get("clientVersion", "").startswith("1."):
-            client["clientVersion"] = "2." + time.strftime("%Y%m%d") + ".00.00"
-        return {"client": client, "user": user}
-
-    @staticmethod
-    def _find_account_items(data):
-        items = []
-        if isinstance(data, dict):
-            for key in ("accountItem", "accountItemRenderer"):
-                item = data.get(key)
-                if isinstance(item, dict):
-                    items.append(item)
-            for value in data.values():
-                items.extend(YtmusicService._find_account_items(value))
-        elif isinstance(data, list):
-            for value in data:
-                items.extend(YtmusicService._find_account_items(value))
-        return items
-
-    @staticmethod
-    def _pick_account_item(items, datasync_id=None, gaia_id=None):
-        if gaia_id:
-            for item in items:
-                if YtmusicService._extract_obfuscated_gaia_id(item) == gaia_id:
-                    return item
-        for item in items:
-            if item.get("isSelected") or item.get("isCurrent") or item.get("isActive"):
-                return item
-        if datasync_id:
-            for item in items:
-                if YtmusicService._extract_obfuscated_gaia_id(item) == datasync_id:
-                    return item
-        return None
-
-    @staticmethod
-    def _find_account_item_by_name(items, name):
-        if not name:
-            return None
-        for item in items:
-            if YtmusicService._extract_text(item.get("accountName")) == name:
-                return item
-        return None
-
-    @staticmethod
-    def _extract_datasync_id(response):
-        if not isinstance(response, dict):
-            return None
-        response_context = response.get("responseContext", {})
-        main_context = response_context.get("mainAppWebResponseContext", {})
-        datasync_id = main_context.get("datasyncId")
-        if not datasync_id or not isinstance(datasync_id, str):
-            return None
-        return datasync_id.split("||", 1)[0]
-
-    @staticmethod
-    def _extract_obfuscated_gaia_id(item):
-        if not isinstance(item, dict):
-            return None
-        service_endpoint = item.get("serviceEndpoint", {})
-        select_endpoint = service_endpoint.get("selectActiveIdentityEndpoint", {})
-        tokens = select_endpoint.get("supportedTokens", [])
-        if not isinstance(tokens, list):
-            return None
-        for token in tokens:
-            account_state = token.get("accountStateToken")
-            if isinstance(account_state, dict):
-                obfuscated_id = account_state.get("obfuscatedGaiaId")
-                if obfuscated_id:
-                    return obfuscated_id
-        return None
-
-    @staticmethod
-    def _has_account_items(response):
-        if response is None:
-            return False
-        return bool(YtmusicService._find_account_items(response))
-
-    def _safe_get_account_menu_info(self):
-        try:
-            return self.api.get_account_info()
-        except Exception as e:
-            logger.debug("account_menu request failed: %s", e)
-            return None
-
-    def _update_auth_cookie_from_response(self, response):
-        try:
-            cookie_header = self.api.headers.get("cookie", "")
-        except Exception:
-            cookie_header = ""
-        if not response.cookies:
-            return
-        jar = SimpleCookie()
-        if cookie_header:
-            jar.load(cookie_header)
-        for cookie in response.cookies:
-            jar[cookie.name] = cookie.value
-        new_cookie = "; ".join([f"{m.key}={m.value}" for m in jar.values()])
-        if new_cookie:
-            self.api._auth_headers["cookie"] = new_cookie
-
-    @staticmethod
-    def _extract_text(value):
-        if isinstance(value, dict):
-            runs = value.get("runs")
-            if isinstance(runs, list) and runs:
-                text = runs[0].get("text")
-                if text:
-                    return text
-            simple_text = value.get("simpleText")
-            if simple_text:
-                return simple_text
-        if isinstance(value, str):
-            return value
-        return None
-
-    @staticmethod
-    def _build_account_info(item):
-        account_name = YtmusicService._extract_text(item.get("accountName"))
-        if not account_name:
-            return None
-        channel_handle = YtmusicService._extract_text(item.get("channelHandle"))
-        account_photo_url = YtmusicService._extract_thumbnail_url(
-            item.get("accountPhoto")
-        )
-        return {
-            "accountName": account_name,
-            "channelHandle": channel_handle,
-            "accountPhotoUrl": account_photo_url,
-        }
-
-    @staticmethod
-    def _extract_thumbnail_url(account_photo):
-        if not isinstance(account_photo, dict):
-            return None
-        thumbnails = account_photo.get("thumbnails")
-        if isinstance(thumbnails, list) and thumbnails:
-            return thumbnails[0].get("url")
-        return None
-
-    @staticmethod
-    def _is_item_selected(item, datasync_id=None):
-        if item.get("isSelected") or item.get("isCurrent") or item.get("isActive"):
-            return True
-        if datasync_id:
-            return YtmusicService._extract_obfuscated_gaia_id(item) == datasync_id
-        return False
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def artist_info(self, channel_id: str) -> ArtistInfo:

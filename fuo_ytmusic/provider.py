@@ -106,7 +106,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             except Exception as e:
                 raise ProviderIOError(f"get current account info failed: {e}")
             return UserModel(
-                identifier="",
+                identifier=info.get("channelId") or "",
                 source=self.meta.identifier,
                 name=info["accountName"],
                 avatar_url=info["accountPhotoUrl"],
@@ -130,7 +130,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         except Exception as e:
             raise ProviderIOError(f"switch profile failed: {e}")
         user = UserModel(
-            identifier="",
+            identifier=info.get("channelId") or "",
             source=self.meta.identifier,
             name=info["accountName"],
             avatar_url=info["accountPhotoUrl"],

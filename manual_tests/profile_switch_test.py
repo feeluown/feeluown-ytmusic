@@ -1,6 +1,9 @@
+"""Manual test for YouTube Music profile listing/switching."""
+
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.provider import provider
 
+# Update the proxy URL if you use a different local proxy.
 provider.setup_http_proxy("http://127.0.0.1:7890")
 
 
