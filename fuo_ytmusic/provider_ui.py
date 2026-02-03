@@ -1,5 +1,4 @@
 import logging
-import json
 from pathlib import Path
 
 from feeluown.gui.provider_ui import AbstractProviderUi
@@ -19,6 +18,7 @@ from fuo_ytmusic.qt_compat import (
 )
 from fuo_ytmusic.provider import provider
 from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.headerfile import write_headerfile
 
 logger = logging.getLogger(__name__)
 
@@ -102,16 +102,7 @@ class LoginDialog(LoginDialog_):
         self._login_btn.clicked.connect(lambda: aio.run_afn_ref(self.login))
 
     def generate_header_file(self, auth: str, cookie: str):
-        tpl = {
-            "Accept": "*/*",
-            "Authorization": auth,
-            "Content-Type": "application/json",
-            "X-Goog-AuthUser": "0",
-            "x-origin": "https://music.youtube.com",
-            "Cookie": cookie,
-        }
-        with HEADER_FILE.open("w") as f:
-            json.dump(tpl, f, indent=2)
+        write_headerfile(auth, cookie, HEADER_FILE)
 
     async def login(self):
         auth = self.__input_auth_header.text()
