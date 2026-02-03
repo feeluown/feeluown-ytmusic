@@ -35,6 +35,28 @@ def test_current_user():
     info = provider.service.get_current_account_info()
     print("Account info:", info)
 
+def test_auto_login_and_playlists():
+    if not HEADER_FILE.exists():
+        print(f"Header file not found: {HEADER_FILE}")
+        return
+    try:
+        provider.service.reinitialize_by_headerfile(HEADER_FILE)
+    except Exception as e:
+        print(f"Failed to initialize service for profiles: {e}")
+        return
+    provider.auto_login()
+    if not provider.has_current_user():
+        print("Auto login failed: no current user")
+        return
+    user = provider.get_current_user()
+    print("Auto login user:", user)
+    try:
+        playlists = provider.current_user_list_playlists()
+    except Exception as e:
+        print(f"Failed to fetch playlists after auto login: {e}")
+        return
+    print(f"Playlists count: {len(playlists)}")
+
 
 def test_switch_profile():
     profile_name = None
@@ -51,6 +73,7 @@ def test_all():
     test_current_user()
     test_list_profiles()
     test_switch_profile()
+    test_auto_login_and_playlists()
 
 
 if __name__ == "__main__":

@@ -86,8 +86,23 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def try_get_user_with_headerfile(self):
         if HEADER_FILE.exists():
             self.service.reinitialize_by_headerfile(HEADER_FILE)
-            user = self.user_get("")
-            return user
+            try:
+                info = self.service.get_current_account_info()
+            except Exception as e:
+                logger.info("Auto login failed to get account info: %s", e)
+                return None
+            gaia_id = info.get("gaiaId")
+            if gaia_id:
+                try:
+                    info = self.service.switch_profile(gaia_id=gaia_id)
+                except Exception as e:
+                    logger.warning("Auto login profile switch failed: %s", e)
+            return UserModel(
+                identifier=info.get("channelId") or "",
+                source=self.meta.identifier,
+                name=info["accountName"],
+                avatar_url=info["accountPhotoUrl"],
+            )
         return None
 
     def has_current_user(self) -> bool:

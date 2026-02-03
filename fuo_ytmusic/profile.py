@@ -285,6 +285,7 @@ class YtmusicProfileManager:
             return None
         channel_handle = cls._extract_text(item.get("channelHandle"))
         channel_id = cls._extract_channel_id(item)
+        gaia_id = cls._extract_obfuscated_gaia_id(item)
         account_photo_url = cls._extract_thumbnail_url(
             item.get("accountPhoto")
         )
@@ -293,6 +294,7 @@ class YtmusicProfileManager:
             "channelHandle": channel_handle,
             "accountPhotoUrl": account_photo_url,
             "channelId": channel_id,
+            "gaiaId": gaia_id,
         }
 
     @classmethod
