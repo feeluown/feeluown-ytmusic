@@ -38,52 +38,52 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 
 ## Changelog
 - v0.4.15 (2026-02-03)
-  - 支持多账号 profile 切换
-  - 同步 auto login 的 profile 选择
+  - Support multi-profile switching
+  - Sync auto-login profile selection
 - v0.4.14 (2026-01-26)
-  - 支持 Python 3.14
-  - 使用 uv + pyproject.toml 来管理项目
+  - Support Python 3.14
+  - Manage the project with uv + pyproject.toml
 - v0.4.13 (2025-12-13)
-  - 修复登录功能
-  - 使用 ruff 格式化代码
+  - Fix login flow
+  - Format code with ruff
 - v0.4.12 (2025-09-26)
-  - 兼容 pyqt6
+  - Compatible with pyqt6
 - v0.4.11 (2025-03-15)
-  - 修复纯 CLI 模式不能运行的问题
-  - 发布 wheel 包
+  - Fix CLI-only mode not working
+  - Publish wheel package
 - v0.4.10 (2025-02-18)
-  - 兼容最新的 ytmusicapi 接口
+  - Compatible with latest ytmusicapi
 - v0.4.9 (2025-02-04)
-  - 默认使用系统 HTTP 代理作为网络代理
-  - 修复 `HTTP_PROXY` 配置为空时，yt-dlp 不能使用系统代理的问题
+  - Use system HTTP proxy by default
+  - Fix yt-dlp not using system proxy when `HTTP_PROXY` is empty
 - v0.4.8 (2025-01-31)
-  - 使用 yt-dlp 作为获取音源的工具
+  - Use yt-dlp to fetch media
 - v0.4.7 (2025-01-15)
-  - 移除 feeluown.uimodels 的依赖
+  - Remove dependency on feeluown.uimodels
 - v0.4.6 (2024-12-01)
-  - 修复获取专辑详细信息失败的问题
+  - Fix album detail fetch failures
 - v0.4.5 (2024-11-14)
-  - 简化登录窗口（之前登录窗口的部分按钮功能实际上不可用）
-    - 注：由于 https://github.com/sigma67/ytmusicapi/issues/676，当前登录功能不可用
-  - 修复登录失败导致整个插件不可用的问题
+  - Simplify login window (some buttons were not functional)
+    - Note: login currently unavailable due to https://github.com/sigma67/ytmusicapi/issues/676
+  - Fix plugin unusable when login fails
 - v0.4.4 (2024-08-18)
-  - 修复包版本不对的问题
+  - Fix incorrect package version
 - v0.4.3 (2024-07-25)
-  - 修复代理设置失效的问题（该问题导致该插件几乎处于不可用状态）
+  - Fix proxy settings not taking effect (plugin was nearly unusable)
 - v0.4.2 (2024-07-25)
-  - 发布失败，tag 打错了
+  - Release failed due to wrong tag
 - v0.4.1 (2024-06-25)
-  - 实现 SupportsVideoWebUrl 接口
+  - Implement SupportsVideoWebUrl
 - v0.4.0 (2024-06-25)
-  - 不在返回不可用的播放链接（pytube 失效了）
+  - Stop returning unavailable playback URLs (pytube broken)
 - v0.3.4 (2024-01-21)
-  - 修复由于 IP 变更导致歌曲链接一直失效的问题
-  - 移除不太合理的缓存逻辑
+  - Fix playback URLs failing due to IP changes
+  - Remove unreasonable caching logic
 - v0.3.3 (2024-01-15)
-  - 修复过度依赖 fuo-netease 的问题
-  - 修复有时获取歌曲链接一直失败的问题
+  - Fix over-reliance on fuo-netease
+  - Fix intermittent song URL fetch failures
 - v0.3.2 (2023-12-03)
-  - 修复密钥过期的问题
+  - Fix expired key issues
 - v0.3.1 (2023-08-15)
   - remove the 'pytube' dependency
 - v0.3.0 (2023-07-18)
