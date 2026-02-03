@@ -3,6 +3,7 @@ import ntpath
 import os
 import sys
 import threading
+from http.cookies import SimpleCookie
 from datetime import timedelta
 from enum import Enum
 from functools import partial
@@ -16,6 +17,7 @@ from requests import Response
 from feeluown.library import SearchType
 
 from fuo_ytmusic.helpers import Singleton
+from fuo_ytmusic.headerfile import update_headerfile_cookie
 from fuo_ytmusic.profile import YtmusicProfileManager
 from fuo_ytmusic.models import (
     YtmusicSearchSong,
@@ -77,6 +79,57 @@ class YtmusicScope(Enum):
 
 
 class YTMusic(YTMusicBase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.headerfile_path = None
+
+    def set_headerfile_path(self, headerfile_path):
+        self.headerfile_path = headerfile_path
+
+    def check_auth(self):
+        self._check_auth()
+
+    def set_on_behalf_of_user(self, gaia_id):
+        context = self.context.setdefault("context", {})
+        user_ctx = context.setdefault("user", {})
+        if gaia_id:
+            user_ctx["onBehalfOfUser"] = gaia_id
+        else:
+            user_ctx.pop("onBehalfOfUser", None)
+
+    def send_api_request(self, endpoint: str, body: dict):
+        return self._send_request(endpoint, body)
+
+    def request_with_auth(self, method: str, url: str, origin: str = None, json_body=None):
+        headers = dict(self.headers)
+        if origin:
+            headers["origin"] = origin
+        return self._session.request(
+            method,
+            url,
+            json=json_body,
+            headers=headers,
+            proxies=self._session.proxies,
+            cookies=self.cookies,
+        )
+
+    def update_auth_cookie_from_response(self, response):
+        cookie_header = self._auth_headers.get("cookie", "")
+        if not response.cookies:
+            return
+        jar = SimpleCookie()
+        if cookie_header:
+            jar.load(cookie_header)
+        for cookie in response.cookies:
+            jar[cookie.name] = cookie.value
+        new_cookie = "; ".join([f"{m.key}={m.value}" for m in jar.values()])
+        if new_cookie:
+            self._auth_headers["cookie"] = new_cookie
+            self._persist_cookie_to_headerfile(new_cookie)
+
+    def _persist_cookie_to_headerfile(self, cookie_value: str):
+        update_headerfile_cookie(cookie_value, self.headerfile_path)
+
     class IterableToFileAdapter(object):
         def __init__(self, iterable):
             self.iterator = iter(iterable)
@@ -211,6 +264,7 @@ class YtmusicService(metaclass=Singleton):
         if headerfile is not None and headerfile.exists():
             logger.info("Initializing ytmusic api with headerfile.")
             self._api = YTMusic(str(headerfile), **options)
+            self._api.set_headerfile_path(headerfile)
         else:
             logger.info("Initializing ytmusic api with no headerfile.")
             self._api = YTMusic(**options)
