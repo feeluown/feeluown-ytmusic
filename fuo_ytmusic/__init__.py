@@ -3,7 +3,7 @@ from urllib.request import getproxies
 from feeluown.app import App
 
 __alias__ = "ytmusic"
-__version__ = "0.3.0"
+__version__ = "0.4.15"
 __desc__ = "YouTube Music plugin"
 
 

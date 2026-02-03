@@ -37,6 +37,9 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.15 (2026-02-03)
+  - 支持多账号 profile 切换
+  - 同步 auto login 的 profile 选择
 - v0.4.14 (2026-01-26)
   - 支持 Python 3.14
   - 使用 uv + pyproject.toml 来管理项目

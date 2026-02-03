@@ -1,6 +1,6 @@
 [project]
 name = "fuo-ytmusic"
-version = "0.4.14"
+version = "0.4.15"
 description = "feeluown Youtube Music plugin"
 readme = "README.md"
 requires-python = ">=3.8,<4.0"
