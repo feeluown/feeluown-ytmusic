@@ -432,7 +432,7 @@ webengine = [
 
 [[package]]
 name = "fuo-ytmusic"
-version = "0.4.13"
+version = "0.4.15"
 source = { editable = "." }
 dependencies = [
     { name = "cachetools", version = "5.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },

@@ -21,3 +21,17 @@
 ## Logging & Error Handling
 - Provide clear, user-actionable errors for auth failures (e.g., cookie expired).
 - Avoid masking network/proxy issues as auth errors when possible.
+
+## Localization (Language Selection)
+- Avoid hard-coding `ytmusicapi` language; pick a supported value dynamically.
+- Use `LANGUAGE` config for overrides, and fall back to app/system locale when unset.
+- Keep the mapping logic in a shared helper module and cover it with unit tests.
+
+## Workflow
+- Keep a lightweight `todo` list for the current task:
+  - Update it before/after each meaningful step.
+  - Mark items done as soon as they are completed.
+- Keep a short `proposal` note for design changes:
+  - Capture the intended approach, tradeoffs, and assumptions.
+  - Use it to confirm alignment before coding.
+- Store these notes under `.agent_tasks/` (replaces `progress/`).
