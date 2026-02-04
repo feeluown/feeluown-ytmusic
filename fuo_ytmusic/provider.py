@@ -58,6 +58,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         self.service.setup_timeout(timeout)
         self._default_ytdl_opts["socket_timeout"] = timeout
 
+    def setup_language(self, language: str):
+        self.service.setup_language(language)
+
     # noinspection PyPep8Naming
     class meta:
         identifier = "ytmusic"

@@ -21,3 +21,8 @@
 ## Logging & Error Handling
 - Provide clear, user-actionable errors for auth failures (e.g., cookie expired).
 - Avoid masking network/proxy issues as auth errors when possible.
+
+## Localization (Language Selection)
+- Avoid hard-coding `ytmusicapi` language; pick a supported value dynamically.
+- Use `LANGUAGE` config for overrides, and fall back to app/system locale when unset.
+- Keep the mapping logic in a shared helper module and cover it with unit tests.

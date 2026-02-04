@@ -219,6 +219,7 @@ class YtmusicService(metaclass=Singleton):
         self._signature_timestamp = 0
         self._api_lock = threading.Lock()
         self._profile_manager = YtmusicProfileManager(self)
+        self._language: Optional[str] = None
 
     @staticmethod
     def _do_logging(r: Response, *_, **__):
@@ -242,9 +243,10 @@ class YtmusicService(metaclass=Singleton):
         return 0
 
     def reinitialize_by_headerfile(self, headerfile=None):
+        language = self._language or "zh_CN"
         options = dict(
             requests_session=self._session,
-            language="zh_CN",
+            language=language,
             oauth_credentials=OAuthCredentials(
                 # In the new version of ytmusicapi, client_id and client_secret
                 # are required args.
@@ -268,6 +270,10 @@ class YtmusicService(metaclass=Singleton):
         else:
             logger.info("Initializing ytmusic api with no headerfile.")
             self._api = YTMusic(**options)
+
+    def setup_language(self, language: str):
+        self._language = language
+
 
     def setup_http_proxy(self, http_proxy):
         self._session.proxies = {
