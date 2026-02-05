@@ -1,6 +1,7 @@
 from urllib.request import getproxies
 
 from feeluown.app import App
+
 from fuo_ytmusic.language import resolve_language
 
 __alias__ = "ytmusic"

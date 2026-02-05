@@ -1,12 +1,11 @@
 """Manual test for YouTube Music profile listing/switching."""
 
+import pytest
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.provider import provider
 
-# Update the proxy URL if you use a different local proxy.
-provider.setup_http_proxy("http://127.0.0.1:7890")
 
-
+@pytest.mark.manual
 def test_list_profiles():
     if not HEADER_FILE.exists():
         print(f"Header file not found: {HEADER_FILE}")
@@ -19,6 +18,7 @@ def test_list_profiles():
     profiles = provider.list_profiles()
     print("Profiles:", profiles)
 
+@pytest.mark.manual
 def test_current_user():
     if not HEADER_FILE.exists():
         print(f"Header file not found: {HEADER_FILE}")
@@ -35,6 +35,7 @@ def test_current_user():
     info = provider.service.get_current_account_info()
     print("Account info:", info)
 
+@pytest.mark.manual
 def test_auto_login_and_playlists():
     if not HEADER_FILE.exists():
         print(f"Header file not found: {HEADER_FILE}")
@@ -58,6 +59,7 @@ def test_auto_login_and_playlists():
     print(f"Playlists count: {len(playlists)}")
 
 
+@pytest.mark.manual
 def test_switch_profile():
     profile_name = None
     gaia_id = None
@@ -69,12 +71,9 @@ def test_switch_profile():
     print("UserModel after switch:", user)
 
 
+@pytest.mark.manual
 def test_all():
     test_current_user()
     test_list_profiles()
     test_switch_profile()
     test_auto_login_and_playlists()
-
-
-if __name__ == "__main__":
-    test_all()

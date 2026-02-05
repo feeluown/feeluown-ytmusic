@@ -1,24 +1,24 @@
 import logging
 from pathlib import Path
 
-from feeluown.gui.provider_ui import AbstractProviderUi
 from feeluown.app.gui_app import GuiApp
+from feeluown.gui.provider_ui import AbstractProviderUi
 from feeluown.gui.widgets.login import LoginDialog as LoginDialog_
 from feeluown.utils import aio
 from feeluown.utils.dispatch import Signal
 
-from fuo_ytmusic.qt_compat import (
-    QVBoxLayout,
-    QPushButton,
-    QLabel,
-    QLineEdit,
-    QFormLayout,
-    TextSelectableByMouse,
-    Dialog,
-)
-from fuo_ytmusic.provider import provider
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.headerfile import write_headerfile
+from fuo_ytmusic.provider import provider
+from fuo_ytmusic.qt_compat import (
+    Dialog,
+    QFormLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QVBoxLayout,
+    TextSelectableByMouse,
+)
 
 logger = logging.getLogger(__name__)
 

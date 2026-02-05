@@ -1,23 +1,29 @@
-from typing import Optional, Union, List, Tuple, get_origin
+from typing import List, Optional, Tuple, Union, get_origin
 
-from pydantic import BaseModel as PydanticBaseModel, Field
-
-from feeluown.utils.reader import SequentialReader
-from feeluown.media import Quality
 from feeluown.library import (
-    VideoModel,
-    ModelState,
-    BriefArtistModel,
-    BriefUserModel,
     AlbumModel as AlbumModelV2,
-    BriefSongModel,
-    SongModel as SongModelV2,
-    BriefAlbumModel,
-    ArtistModel as ArtistModelV2,
-    PlaylistModel,
-    BriefPlaylistModel,
 )
-from feeluown.library import AlbumType
+from feeluown.library import (
+    AlbumType,
+    BriefAlbumModel,
+    BriefArtistModel,
+    BriefPlaylistModel,
+    BriefSongModel,
+    BriefUserModel,
+    ModelState,
+    PlaylistModel,
+    VideoModel,
+)
+from feeluown.library import (
+    ArtistModel as ArtistModelV2,
+)
+from feeluown.library import (
+    SongModel as SongModelV2,
+)
+from feeluown.media import Quality
+from feeluown.utils.reader import SequentialReader
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field
 
 from fuo_ytmusic.timeparse import timeparse
 

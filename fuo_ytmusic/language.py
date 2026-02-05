@@ -1,5 +1,5 @@
-from typing import Optional
 import locale
+from typing import Optional
 
 from ytmusicapi.constants import SUPPORTED_LANGUAGES
 

@@ -2,12 +2,12 @@ import asyncio
 import os
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QUrl, QObject, pyqtProperty, pyqtSlot, pyqtSignal
+from feeluown.gui.base_renderer import TabBarRendererMixin
+from feeluown.library import BriefPlaylistModel
+from PyQt5.QtCore import QObject, Qt, QUrl, pyqtProperty, pyqtSignal, pyqtSlot
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWidgets import QWidget
 
-from feeluown.library import BriefPlaylistModel
-from feeluown.gui.base_renderer import TabBarRendererMixin
 from fuo_ytmusic import YtmusicProvider
 
 

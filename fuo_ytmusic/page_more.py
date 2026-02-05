@@ -2,26 +2,26 @@ import logging
 import threading
 import time
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
+from feeluown.gui.base_renderer import LibraryTabRendererMixin
+from feeluown.gui.page_containers.table import Renderer
+from feeluown.gui.widgets import TextButton
+from feeluown.gui.widgets.songs import SongsTableView
+from feeluown.gui.widgets.tabbar import Tab
+from feeluown.utils import aio
 from PyQt5.QtCore import (
-    QObject,
-    QUrl,
-    pyqtSlot,
-    QVariant,
-    Qt,
-    QModelIndex,
     QAbstractTableModel,
+    QModelIndex,
+    QObject,
+    Qt,
+    QUrl,
+    QVariant,
     pyqtProperty,
+    pyqtSlot,
 )
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
-from feeluown.gui.widgets import TextButton
-from feeluown.gui.widgets.songs import SongsTableView
-from feeluown.utils import aio
-from feeluown.gui.base_renderer import LibraryTabRendererMixin
-from feeluown.gui.page_containers.table import Renderer
-from feeluown.gui.widgets.tabbar import Tab
 
 from fuo_ytmusic import YtmusicProvider
 
