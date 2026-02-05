@@ -15,6 +15,7 @@ from fuo_ytmusic.qt_compat import (
     QFormLayout,
     QLabel,
     QLineEdit,
+    QInputDialog,
     QPushButton,
     QVBoxLayout,
     TextSelectableByMouse,
@@ -35,6 +36,10 @@ class ProviderUI(AbstractProviderUi):
     def get_colorful_svg(self) -> str:
         return (Path(__file__).parent / "assets" / "icon.svg").as_posix()
 
+    def context_menu_add_items(self, menu):
+        action = menu.addAction("切换账号")
+        action.triggered.connect(lambda: aio.run_afn_ref(self.switch_profile_dialog))
+
     def login_or_go_home(self):
         if not provider.has_current_user():
             self._dialog = LoginDialog(self.provider)
@@ -51,6 +56,50 @@ class ProviderUI(AbstractProviderUi):
     def on_login_succeed(self):
         del self._dialog
         self.login_event.emit(self, 1)
+
+    async def switch_profile_dialog(self):
+        if not provider.has_current_user():
+            self._app.show_msg("请先登录后再切换账号")
+            return
+        try:
+            profiles = await aio.run_fn(provider.list_profiles)
+        except Exception as e:
+            self._app.show_msg(f"获取账号列表失败：{e}")
+            return
+        if not profiles:
+            self._app.show_msg("未获取到可用账号")
+            return
+
+        items = []
+        mapping = {}
+        for profile in profiles:
+            name = profile.get("accountName") or "Unknown"
+            handle = profile.get("channelHandle")
+            display = f"{name} ({handle})" if handle else name
+            items.append(display)
+            mapping[display] = profile
+
+        selected, ok = QInputDialog.getItem(
+            self._app,
+            "切换账号",
+            "选择账号",
+            items,
+            0,
+            False,
+        )
+        if not ok or not selected:
+            return
+        profile = mapping.get(selected)
+        if not profile:
+            return
+        try:
+            await aio.run_fn(provider.switch_profile, profile.get("accountName"))
+        except Exception as e:
+            self._app.show_msg(f"切换账号失败：{e}")
+            return
+        self._app.show_msg(f"已切换到：{profile.get('accountName')}")
+        # Notify UI to refresh current user data/playlists.
+        self.login_event.emit(self, 2)
 
 
 class LoginDialog(LoginDialog_):
