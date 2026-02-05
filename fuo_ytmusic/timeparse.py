@@ -50,8 +50,14 @@ DAYCLOCK = (
     r"(?P<mins>\d{2}):(?P<secs>\d{2}(?:\.\d+)?)"
 )
 
-OPT = lambda x: r"(?:{x})?".format(x=x, SEPARATORS=SEPARATORS)
-OPTSEP = lambda x: r"(?:{x}\s*(?:{SEPARATORS}\s*)?)?".format(x=x, SEPARATORS=SEPARATORS)
+def OPT(x):
+    return r"(?:{x})?".format(x=x)
+
+
+def OPTSEP(x):
+    return r"(?:{x}\s*(?:{SEPARATORS}\s*)?)?".format(
+        x=x, SEPARATORS=SEPARATORS
+    )
 
 TIMEFORMATS = [
     r"{WEEKS}\s*{DAYS}\s*{HOURS}\s*{MINS}\s*{SECS}".format(

@@ -4,25 +4,26 @@ from typing import List, Optional
 from feeluown.excs import NoUserLoggedIn, ProviderIOError
 from feeluown.library import (
     AbstractProvider,
-    ProviderV2,
-    SongModel,
-    VideoModel,
-    BriefVideoModel,
-    BriefUserModel,
     BriefPlaylistModel,
-    PlaylistModel,
+    BriefUserModel,
+    BriefVideoModel,
     ModelNotFound,
+    PlaylistModel,
+    ProviderV2,
+    SearchType,
+    SimpleSearchResult,
+    SongModel,
     UserModel,
+    VideoModel,
 )
-from feeluown.media import Quality, Media, VideoAudioManifest
-from feeluown.library import SearchType, SimpleSearchResult
 from feeluown.library.model_protocol import BriefSongProtocol
+from feeluown.media import Media, Quality, VideoAudioManifest
 from feeluown.utils.dispatch import Signal
-from yt_dlp import YoutubeDL, DownloadError
+from yt_dlp import DownloadError, YoutubeDL
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.models import Categories, YtmusicWatchPlaylistSong
-from fuo_ytmusic.service import YtmusicService, YtmusicType, YtmusicPrivacyStatus
+from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicType
 
 logger = logging.getLogger(__name__)
 

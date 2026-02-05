@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 from fuo_ytmusic.consts import HEADER_FILE
 

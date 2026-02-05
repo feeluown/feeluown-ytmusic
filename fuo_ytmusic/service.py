@@ -3,44 +3,43 @@ import ntpath
 import os
 import sys
 import threading
-from http.cookies import SimpleCookie
 from datetime import timedelta
 from enum import Enum
 from functools import partial
-from typing import Optional, Union, List
+from http.cookies import SimpleCookie
+from typing import List, Optional, Union
 
 import requests
+from cachetools.func import ttl_cache
+from feeluown.library import SearchType
+from requests import Response
 from ytmusicapi import YTMusic as YTMusicBase
 from ytmusicapi.ytmusic import OAuthCredentials
-from cachetools.func import ttl_cache
-from requests import Response
-from feeluown.library import SearchType
 
-from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.headerfile import update_headerfile_cookie
-from fuo_ytmusic.profile import YtmusicProfileManager
+from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import (
-    YtmusicSearchSong,
+    AlbumInfo,
+    ArtistInfo,
+    Categories,
+    PlaylistAddItemResponse,
+    PlaylistInfo,
+    PlaylistNestedResult,
+    SongInfo,
+    TopCharts,
+    UserInfo,
+    YtmusicDispatcher,
+    YtmusicHistorySong,
+    YtmusicLibraryArtist,
+    YtmusicLibrarySong,
     YtmusicSearchAlbum,
     YtmusicSearchArtist,
-    YtmusicSearchVideo,
-    YtmusicSearchPlaylist,
     YtmusicSearchBase,
-    YtmusicDispatcher,
-    ArtistInfo,
-    UserInfo,
-    AlbumInfo,
-    SongInfo,
-    Categories,
-    PlaylistNestedResult,
-    TopCharts,
-    YtmusicLibrarySong,
-    YtmusicLibraryArtist,
-    PlaylistInfo,
-    YtmusicHistorySong,
-    PlaylistAddItemResponse,
+    YtmusicSearchPlaylist,
+    YtmusicSearchSong,
+    YtmusicSearchVideo,
 )
-
+from fuo_ytmusic.profile import YtmusicProfileManager
 
 CACHE_TTL = timedelta(minutes=10).seconds
 CACHE_SIZE = 1

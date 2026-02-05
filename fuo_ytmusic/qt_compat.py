@@ -1,5 +1,5 @@
-import os
 import importlib
+import os
 
 # 新版 FeelUOwn 会在启动的时候，设置这个环境变量
 qt_moduel_name = os.getenv("FEELUOWN_QT_API", "PyQt5")

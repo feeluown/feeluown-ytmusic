@@ -25,6 +25,7 @@ ytmusic = "fuo_ytmusic"
 [dependency-groups]
 dev = [
   "pytest",
+  "ruff",
   "types-cachetools",
   "feeluown[qt,webengine]",
 ]
@@ -37,6 +38,21 @@ packages = ["fuo_ytmusic"]
 
 [tool.setuptools.package-data]
 fuo_ytmusic = ["assets/*.svg", "qml/*.qml", "qml/dummydata/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "manual: tests that require real network/auth/session state",
+]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+extend-exclude = ["manual_tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

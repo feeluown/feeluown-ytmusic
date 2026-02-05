@@ -17,6 +17,7 @@
 ## Manual Tests
 - Keep `manual_tests/` scripts concise and focused on user workflows.
 - Avoid leaving verbose debug output in manual tests after verification.
+- Manual tests should not hardcode proxies; let users configure networking explicitly.
 
 ## Logging & Error Handling
 - Provide clear, user-actionable errors for auth failures (e.g., cookie expired).
@@ -34,4 +35,9 @@
 - Keep a short `proposal` note for design changes:
   - Capture the intended approach, tradeoffs, and assumptions.
   - Use it to confirm alignment before coding.
+
+## Code Style
+- Use `ruff` for linting and formatting.
+- Lint with `ruff check .` (or `uv run ruff check .`).
+- Format with `ruff format .` (or `uv run ruff format .`).
 - Store these notes under `.agent_tasks/` (replaces `progress/`).
