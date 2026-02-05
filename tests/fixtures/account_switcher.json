@@ -1,0 +1,437 @@
+{
+  "code": "SUCCESS",
+  "data": {
+    "responseContext": {
+      "serviceTrackingParams": [
+        {
+          "service": "CSI",
+          "params": [
+            {
+              "key": "c",
+              "value": "WEB"
+            },
+            {
+              "key": "cver",
+              "value": "2.20200422"
+            },
+            {
+              "key": "yt_li",
+              "value": "1"
+            },
+            {
+              "key": "GetAccountsList_rid",
+              "value": "0xa6f2d7c9bf474f9a"
+            }
+          ]
+        },
+        {
+          "service": "GFEEDBACK",
+          "params": [
+            {
+              "key": "logged_in",
+              "value": "1"
+            },
+            {
+              "key": "encrypted_pageid",
+              "value": "AdvxGFUCkiC_t-Vm6J-Ha91xGrO4mspZWm2ixRA1g47uGC7NfXPzmmOcZVVL8ohOgyfxESS9R0QplB1UwXTjrFrf"
+            }
+          ]
+        },
+        {
+          "service": "GUIDED_HELP",
+          "params": [
+            {
+              "key": "logged_in",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "service": "ECATCHER",
+          "params": [
+            {
+              "key": "client.version",
+              "value": "2.20250331"
+            },
+            {
+              "key": "client.name",
+              "value": "WEB"
+            }
+          ]
+        }
+      ],
+      "mainAppWebResponseContext": {
+        "datasyncId": "GAIA_1||GAIA_2",
+        "loggedOut": false,
+        "trackingParam": "kV9fmPxhojXCz39TnrslLKPQSQR"
+      },
+      "webResponseContextExtensionData": {
+        "webResponseContextPreloadData": {
+          "preloadMessageNames": [
+            "multiPageMenuRenderer",
+            "simpleMenuHeaderRenderer",
+            "buttonRenderer",
+            "accountSectionListRenderer",
+            "accountItemSectionRenderer",
+            "accountItem",
+            "compactLinkRenderer",
+            "googleAccountHeaderRenderer",
+            "multiPageMenuSectionRenderer"
+          ]
+        },
+        "hasDecorated": true
+      }
+    },
+    "selectText": {
+      "simpleText": "OK"
+    },
+    "actions": [
+      {
+        "getMultiPageMenuAction": {
+          "menu": {
+            "multiPageMenuRenderer": {
+              "header": {
+                "simpleMenuHeaderRenderer": {
+                  "backButton": {
+                    "buttonRenderer": {
+                      "style": "STYLE_BLACK",
+                      "size": "SIZE_DEFAULT",
+                      "isDisabled": false,
+                      "icon": {
+                        "iconType": "BACK"
+                      },
+                      "accessibility": {
+                        "label": "Back"
+                      },
+                      "accessibilityData": {
+                        "accessibilityData": {
+                          "label": "Back"
+                        }
+                      }
+                    }
+                  },
+                  "title": {
+                    "simpleText": "Accounts"
+                  }
+                }
+              },
+              "sections": [
+                {
+                  "accountSectionListRenderer": {
+                    "contents": [
+                      {
+                        "accountItemSectionRenderer": {
+                          "contents": [
+                            {
+                              "accountItem": {
+                                "accountName": {
+                                  "simpleText": "User 1"
+                                },
+                                "accountPhoto": {
+                                  "thumbnails": [
+                                    {
+                                      "url": "https://example.com/url_1",
+                                      "width": 48,
+                                      "height": 48
+                                    }
+                                  ]
+                                },
+                                "isSelected": false,
+                                "isDisabled": false,
+                                "hasChannel": true,
+                                "serviceEndpoint": {
+                                  "selectActiveIdentityEndpoint": {
+                                    "supportedTokens": [
+                                      {
+                                        "accountStateToken": {
+                                          "hasChannel": true,
+                                          "isMerged": true,
+                                          "obfuscatedGaiaId": "GAIA_2"
+                                        }
+                                      },
+                                      {
+                                        "offlineCacheKeyToken": {
+                                          "clientCacheKey": "CACHE_1"
+                                        }
+                                      },
+                                      {
+                                        "accountSigninToken": {
+                                          "signinUrl": "/signin?action_handle_signin=true&authuser=0&next=%2F&feature=masthead_switcher&skip_identity_prompt=true"
+                                        }
+                                      },
+                                      {
+                                        "datasyncIdToken": {
+                                          "datasyncIdToken": "112326092353349343107||"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "accountByline": {
+                                  "simpleText": "Byline 1"
+                                },
+                                "channelHandle": {
+                                  "simpleText": "@user_1"
+                                },
+                                "accountLogDirectiveInts": [
+                                  3
+                                ]
+                              }
+                            },
+                            {
+                              "accountItem": {
+                                "accountName": {
+                                  "simpleText": "User 2"
+                                },
+                                "accountPhoto": {
+                                  "thumbnails": [
+                                    {
+                                      "url": "https://example.com/url_2",
+                                      "width": 48,
+                                      "height": 48
+                                    }
+                                  ]
+                                },
+                                "isSelected": true,
+                                "isDisabled": false,
+                                "hasChannel": true,
+                                "serviceEndpoint": {
+                                  "selectActiveIdentityEndpoint": {
+                                    "supportedTokens": [
+                                      {
+                                        "pageIdToken": {
+                                          "pageId": "PAGE_1"
+                                        }
+                                      },
+                                      {
+                                        "accountStateToken": {
+                                          "hasChannel": true,
+                                          "isMerged": true,
+                                          "obfuscatedGaiaId": "GAIA_1"
+                                        }
+                                      },
+                                      {
+                                        "offlineCacheKeyToken": {
+                                          "clientCacheKey": "CACHE_2"
+                                        }
+                                      },
+                                      {
+                                        "accountSigninToken": {
+                                          "signinUrl": "/signin?action_handle_signin=true&authuser=0&pageid=104635794352882897023&next=%2F&feature=masthead_switcher&skip_identity_prompt=true"
+                                        }
+                                      },
+                                      {
+                                        "datasyncIdToken": {
+                                          "datasyncIdToken": "104635794352882897023||112326092353349343107"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "accountByline": {
+                                  "simpleText": "Byline 2"
+                                },
+                                "channelHandle": {
+                                  "simpleText": "@user_2"
+                                },
+                                "accountLogDirectiveInts": [
+                                  4
+                                ]
+                              }
+                            },
+                            {
+                              "compactLinkRenderer": {
+                                "title": {
+                                  "simpleText": "View all channels"
+                                },
+                                "navigationEndpoint": {
+                                  "commandMetadata": {
+                                    "webCommandMetadata": {
+                                      "url": "/channel_switcher",
+                                      "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                                      "rootVe": 83769
+                                    }
+                                  },
+                                  "signalNavigationEndpoint": {
+                                    "signal": "CHANNEL_SWITCHER"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "header": {
+                      "googleAccountHeaderRenderer": {
+                        "name": {
+                          "simpleText": "shaowen yin"
+                        },
+                        "email": {
+                          "simpleText": "yinshaowen241@gmail.com"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "accountSectionListRenderer": {
+                    "contents": [
+                      {
+                        "accountItemSectionRenderer": {
+                          "contents": [
+                            {
+                              "accountItem": {
+                                "accountName": {
+                                  "simpleText": "User 3"
+                                },
+                                "accountPhoto": {
+                                  "thumbnails": [
+                                    {
+                                      "url": "https://example.com/url_3",
+                                      "width": 36,
+                                      "height": 36
+                                    }
+                                  ]
+                                },
+                                "isSelected": false,
+                                "isDisabled": false,
+                                "hasChannel": false,
+                                "serviceEndpoint": {
+                                  "selectActiveIdentityEndpoint": {
+                                    "supportedTokens": [
+                                      {
+                                        "accountStateToken": {
+                                          "hasChannel": false,
+                                          "isMerged": true,
+                                          "obfuscatedGaiaId": "GAIA_3"
+                                        }
+                                      },
+                                      {
+                                        "offlineCacheKeyToken": {
+                                          "clientCacheKey": "CACHE_3"
+                                        }
+                                      },
+                                      {
+                                        "accountSigninToken": {
+                                          "signinUrl": "/signin?action_handle_signin=true&authuser=1&next=%2F&feature=masthead_switcher&skip_identity_prompt=true"
+                                        }
+                                      },
+                                      {
+                                        "datasyncIdToken": {
+                                          "datasyncIdToken": "113610605202365385425||"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                },
+                                "accountByline": {
+                                  "simpleText": "Byline 3"
+                                },
+                                "accountLogDirectiveInts": [
+                                  3
+                                ]
+                              }
+                            }
+                          ],
+                          "header": {
+                            "accountItemSectionHeaderRenderer": {
+                              "title": {
+                                "runs": [
+                                  {
+                                    "text": "cosven.yin@gmail.com",
+                                    "navigationEndpoint": {
+                                      "commandMetadata": {
+                                        "webCommandMetadata": {
+                                          "url": "https://example.com/url_4",
+                                          "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                                          "rootVe": 83769
+                                        }
+                                      },
+                                      "urlEndpoint": {
+                                        "url": "https://example.com/url_5"
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ],
+                    "header": {
+                      "accountsDialogHeaderRenderer": {
+                        "text": {
+                          "runs": [
+                            {
+                              "text": "Other accounts",
+                              "bold": true
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              ],
+              "footer": {
+                "multiPageMenuSectionRenderer": {
+                  "items": [
+                    {
+                      "compactLinkRenderer": {
+                        "icon": {
+                          "iconType": "PERSON_ADD"
+                        },
+                        "title": {
+                          "simpleText": "Add account"
+                        },
+                        "navigationEndpoint": {
+                          "commandMetadata": {
+                            "webCommandMetadata": {
+                              "url": "https://example.com/url_6",
+                              "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                              "rootVe": 83769
+                            }
+                          },
+                          "urlEndpoint": {
+                            "url": "https://example.com/url_6"
+                          }
+                        },
+                        "style": "COMPACT_LINK_STYLE_TYPE_ACCOUNT_SWITCHER_FOOTER"
+                      }
+                    },
+                    {
+                      "compactLinkRenderer": {
+                        "icon": {
+                          "iconType": "EXIT_TO_APP"
+                        },
+                        "title": {
+                          "simpleText": "Sign out"
+                        },
+                        "navigationEndpoint": {
+                          "commandMetadata": {
+                            "webCommandMetadata": {
+                              "url": "/logout",
+                              "webPageType": "WEB_PAGE_TYPE_UNKNOWN",
+                              "rootVe": 83769
+                            }
+                          },
+                          "signOutEndpoint": {
+                            "hack": true
+                          }
+                        },
+                        "style": "COMPACT_LINK_STYLE_TYPE_ACCOUNT_SWITCHER_FOOTER"
+                      }
+                    }
+                  ]
+                }
+              },
+              "style": "MULTI_PAGE_MENU_STYLE_TYPE_SWITCHER"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
