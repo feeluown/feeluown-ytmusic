@@ -1,8 +1,10 @@
+from typing import TYPE_CHECKING
 from urllib.request import getproxies
 
-from feeluown.app import App
-
 from fuo_ytmusic.language import resolve_language
+
+if TYPE_CHECKING:
+    from feeluown.app import App
 
 __alias__ = "ytmusic"
 __version__ = "0.4.15"
@@ -24,7 +26,7 @@ def init_config(config):
     )
 
 
-def enable(app: App):
+def enable(app: "App"):
     global ui_mgr
 
     from fuo_ytmusic.provider import provider
@@ -47,7 +49,7 @@ def enable(app: App):
         app.pvd_ui_mgr.register(provider_ui)
 
 
-def disable(app: App):
+def disable(app: "App"):
     global ui_mgr
 
     provider = app.library.get("ytmusic")
