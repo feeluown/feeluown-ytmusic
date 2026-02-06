@@ -34,6 +34,7 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [x] Get song detail by id
 - [ ] Add/remove song from a playlist
 - [ ] Upload songs to cloud
+- [x] Daily recommendation page (songs/playlists)
 - [ ] Discovering page
 
 ## Changelog

@@ -311,6 +311,9 @@ class YtmusicService(metaclass=Singleton):
         )
         return [YtmusicDispatcher.search_result_dispatcher(**data) for data in response]
 
+    def home_sections(self, limit: int = 6):
+        return self.api.get_home(limit)
+
     def get_current_account_info(self) -> dict:
         return self._profile_manager.get_current_account_info()
 
