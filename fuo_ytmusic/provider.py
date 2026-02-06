@@ -22,6 +22,7 @@ from feeluown.utils.dispatch import Signal
 from yt_dlp import DownloadError, YoutubeDL
 
 from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.headerfile import get_profile_gaia_id, update_profile_gaia_id
 from fuo_ytmusic.models import Categories, YtmusicWatchPlaylistSong
 from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicType
 
@@ -90,17 +91,26 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def try_get_user_with_headerfile(self):
         if HEADER_FILE.exists():
             self.service.reinitialize_by_headerfile(HEADER_FILE)
-            try:
-                info = self.service.get_current_account_info()
-            except Exception as e:
-                logger.info("Auto login failed to get account info: %s", e)
-                return None
-            gaia_id = info.get("gaiaId")
-            if gaia_id:
+            info = None
+            # Prefer persisted profile selection (if any) to keep app restarts stable.
+            stored_gaia_id = get_profile_gaia_id(HEADER_FILE)
+            if stored_gaia_id:
                 try:
-                    info = self.service.switch_profile(gaia_id=gaia_id)
+                    info = self.service.switch_profile(gaia_id=stored_gaia_id)
                 except Exception as e:
                     logger.warning("Auto login profile switch failed: %s", e)
+            if info is None:
+                try:
+                    info = self.service.get_current_account_info()
+                except Exception as e:
+                    logger.info("Auto login failed to get account info: %s", e)
+                    return None
+                gaia_id = info.get("gaiaId")
+                if gaia_id:
+                    try:
+                        info = self.service.switch_profile(gaia_id=gaia_id)
+                    except Exception as e:
+                        logger.warning("Auto login profile switch failed: %s", e)
             return UserModel(
                 identifier=info.get("channelId") or "",
                 source=self.meta.identifier,
@@ -148,6 +158,11 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             )
         except Exception as e:
             raise ProviderIOError(f"switch profile failed: {e}")
+        # Persist selection for next restart; clear when switching back to default.
+        if account_name is None and gaia_id is None:
+            update_profile_gaia_id(None, HEADER_FILE)
+        else:
+            update_profile_gaia_id(info.get("gaiaId"), HEADER_FILE)
         user = UserModel(
             identifier=info.get("channelId") or "",
             source=self.meta.identifier,
