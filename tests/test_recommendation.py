@@ -34,6 +34,10 @@ def test_rec_list_daily_songs_extracts_and_deduplicates():
                     "duration": "3:10",
                 },
                 {
+                    "title": "Song B",
+                    "videoId": "vid-b",
+                },
+                {
                     "title": "Playlist only",
                     "playlistId": "PL1",
                 },
@@ -44,9 +48,9 @@ def test_rec_list_daily_songs_extracts_and_deduplicates():
 
     songs = provider.rec_list_daily_songs()
 
-    assert len(songs) == 1
-    assert songs[0].identifier == "vid-a"
+    assert [song.identifier for song in songs] == ["vid-a", "vid-b"]
     assert songs[0].title == "Song A"
+    assert songs[1].title == "Song B"
 
 
 def test_rec_list_daily_playlists_extracts_and_deduplicates():
@@ -58,7 +62,7 @@ def test_rec_list_daily_playlists_extracts_and_deduplicates():
                     "title": "Mix 1",
                     "playlistId": "PL-1",
                     "description": "desc",
-                    "count": "12",
+                    "count": "1,234 songs",
                     "author": [{"name": "YouTube Music"}],
                     "thumbnails": [{"url": "https://example.com/p1.jpg"}],
                 },
@@ -83,6 +87,7 @@ def test_rec_list_daily_playlists_extracts_and_deduplicates():
     assert playlists[0].identifier == "PL-1"
     assert playlists[0].name == "Mix 1"
     assert playlists[0].creator_name == "YouTube Music"
+    assert playlists[0].play_count == 1234
 
 
 def test_rec_list_daily_returns_empty_when_home_sections_failed():

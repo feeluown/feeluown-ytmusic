@@ -311,8 +311,22 @@ class YtmusicService(metaclass=Singleton):
         )
         return [YtmusicDispatcher.search_result_dispatcher(**data) for data in response]
 
-    def home_sections(self, limit: int = 6):
+
+    def _daily_home_cache_key(self) -> str:
+        context = getattr(self.api, "context", {})
+        if not isinstance(context, dict):
+            return ""
+        user_ctx = context.get("context", {}).get("user", {})
+        if not isinstance(user_ctx, dict):
+            return ""
+        return str(user_ctx.get("onBehalfOfUser") or "")
+
+    @ttl_cache(maxsize=8, ttl=30)
+    def _home_sections_cached(self, limit: int, account_key: str):
         return self.api.get_home(limit)
+
+    def home_sections(self, limit: int = 6):
+        return self._home_sections_cached(limit, self._daily_home_cache_key())
 
     def get_current_account_info(self) -> dict:
         return self._profile_manager.get_current_account_info()
