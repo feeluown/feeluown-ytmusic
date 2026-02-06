@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional, Tuple, Union, get_origin
 
 from feeluown.library import (
@@ -233,6 +234,19 @@ class YtmusicLibrarySong(YtmusicSearchSong):
 
 class YtmusicHistorySong(YtmusicLibrarySong):
     played: str  # 上次播放 eg November 2021
+
+
+class YtmusicHomeSong(YtmusicSearchSong):
+    class Album(YtmusicSearchSong.Album):
+        pass
+
+    category: str = "Songs"
+    resultType: str = "song"
+    album: Album = Field(default_factory=lambda: YtmusicHomeSong.Album(id="", name=""))
+    feedbackTokens: dict = Field(default_factory=dict)
+    isAvailable: bool = True
+    isExplicit: bool = False
+    duration: str = "0:00"
 
 
 class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin):
@@ -534,6 +548,33 @@ class PlaylistNestedResult(BaseModel, YtmusicCoverMixin):
             source=self.source,
             name=self.title,
             creator_name="/".join([author.name for author in self.author or []]),
+        )
+
+
+class YtmusicHomePlaylist(PlaylistNestedResult):
+    description: str = ""
+    count: Union[int, str, None] = None
+
+    @staticmethod
+    def parse_play_count(raw_count) -> int:
+        if raw_count is None:
+            return -1
+        if isinstance(raw_count, int):
+            return raw_count
+        digits = "".join(re.findall(r"\d+", str(raw_count)))
+        if not digits:
+            return -1
+        return int(digits)
+
+    def v2_model(self) -> PlaylistModel:
+        return PlaylistModel(
+            identifier=self.playlistId,
+            source=self.source,
+            name=self.title,
+            creator_name="/".join([author.name for author in self.author or []]),
+            cover=self.cover or "",
+            description=self.description or "",
+            play_count=self.parse_play_count(self.count),
         )
 
 

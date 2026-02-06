@@ -23,7 +23,12 @@ from yt_dlp import DownloadError, YoutubeDL
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.headerfile import get_profile_gaia_id, update_profile_gaia_id
-from fuo_ytmusic.models import Categories, YtmusicWatchPlaylistSong
+from fuo_ytmusic.models import (
+    Categories,
+    YtmusicHomePlaylist,
+    YtmusicHomeSong,
+    YtmusicWatchPlaylistSong,
+)
 from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicType
 
 logger = logging.getLogger(__name__)
@@ -210,6 +215,73 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             if playlist.creator_name != self._user.name:
                 user_fav_playlists.append(playlist)
         return user_fav_playlists
+
+    def _get_daily_home_sections(self, limit: int = 6):
+        try:
+            return self.service.home_sections(limit=limit)
+        except Exception as e:
+            logger.warning("fetch ytmusic home sections failed: %s", e)
+            return []
+
+    @staticmethod
+    def _iter_home_contents(sections):
+        for section in sections or []:
+            if not isinstance(section, dict):
+                continue
+            contents = section.get("contents")
+            if not isinstance(contents, list):
+                continue
+            for content in contents:
+                if isinstance(content, dict):
+                    yield content
+
+    def rec_list_daily_songs(self) -> List[SongModel]:
+        songs: List[SongModel] = []
+        seen_video_ids = set()
+        sections = self._get_daily_home_sections(limit=6)
+
+        for content in self._iter_home_contents(sections):
+            video_id = content.get("videoId")
+            if not video_id or video_id in seen_video_ids:
+                continue
+            try:
+                song = YtmusicHomeSong(**content).v2_model()
+            except Exception as e:
+                logger.warning(
+                    "skip invalid home song item(%s): %s",
+                    video_id,
+                    e,
+                )
+                continue
+            if not song.identifier:
+                continue
+            seen_video_ids.add(song.identifier)
+            songs.append(song)
+        return songs
+
+    def rec_list_daily_playlists(self) -> List[PlaylistModel]:
+        playlists: List[PlaylistModel] = []
+        seen_playlist_ids = set()
+        sections = self._get_daily_home_sections(limit=6)
+
+        for content in self._iter_home_contents(sections):
+            playlist_id = content.get("playlistId")
+            if not playlist_id or playlist_id in seen_playlist_ids:
+                continue
+            try:
+                playlist = YtmusicHomePlaylist(**content).v2_model()
+            except Exception as e:
+                logger.warning(
+                    "skip invalid home playlist item(%s): %s",
+                    playlist_id,
+                    e,
+                )
+                continue
+            if not playlist.identifier:
+                continue
+            seen_playlist_ids.add(playlist.identifier)
+            playlists.append(playlist)
+        return playlists
 
     def create_playlist(
         self,
