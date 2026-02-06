@@ -36,6 +36,13 @@
   - Capture the intended approach, tradeoffs, and assumptions.
   - Use it to confirm alignment before coding.
 
+## PR Description
+- Avoid inline `gh pr create --body "..."` for markdown with backticks/newlines.
+- Prefer `--body-file` with a temporary markdown file for both create/edit.
+- If using `gh api` to patch PR body, pass a JSON file via `--input`.
+- Verify final body with `gh api repos/<owner>/<repo>/pulls/<num> --jq '.body'`.
+- Keep structure stable: `## Summary` and `## Testing`.
+
 ## Code Style
 - Use `ruff` for linting and formatting.
 - Lint with `ruff check .` (or `uv run ruff check .`).
