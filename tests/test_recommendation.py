@@ -1,3 +1,5 @@
+from feeluown.library import BriefSongModel
+
 from fuo_ytmusic.provider import YtmusicProvider
 
 
@@ -48,6 +50,7 @@ def test_rec_list_daily_songs_extracts_and_deduplicates():
 
     songs = provider.rec_list_daily_songs()
 
+    assert all(isinstance(song, BriefSongModel) for song in songs)
     assert [song.identifier for song in songs] == ["vid-a", "vid-b"]
     assert songs[0].title == "Song A"
     assert songs[1].title == "Song B"

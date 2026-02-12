@@ -5,6 +5,7 @@ from feeluown.excs import NoUserLoggedIn, ProviderIOError
 from feeluown.library import (
     AbstractProvider,
     BriefPlaylistModel,
+    BriefSongModel,
     BriefUserModel,
     BriefVideoModel,
     ModelNotFound,
@@ -235,8 +236,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 if isinstance(content, dict):
                     yield content
 
-    def rec_list_daily_songs(self) -> List[SongModel]:
-        songs: List[SongModel] = []
+    def rec_list_daily_songs(self) -> List[BriefSongModel]:
+        songs: List[BriefSongModel] = []
         seen_video_ids = set()
         sections = self._get_daily_home_sections(limit=6)
 
@@ -245,7 +246,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             if not video_id or video_id in seen_video_ids:
                 continue
             try:
-                song = YtmusicHomeSong(**content).v2_model()
+                song = YtmusicHomeSong(**content).v2_brief_model()
             except Exception as e:
                 logger.warning(
                     "skip invalid home song item(%s): %s",
