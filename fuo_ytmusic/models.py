@@ -236,17 +236,36 @@ class YtmusicHistorySong(YtmusicLibrarySong):
     played: str  # 上次播放 eg November 2021
 
 
-class YtmusicHomeSong(YtmusicSearchSong):
-    class Album(YtmusicSearchSong.Album):
-        pass
+class YtmusicHomeSong(BaseModel, YtmusicCoverMixin, YtmusicArtistsMixin, YtmusicDurationMixin):
+    """Home feed song item.
 
+    Keep this model independent from YtmusicSearchSong:
+    home payload does not guarantee full search-song fields.
+    """
+
+    class Album(BaseModel):
+        id: str
+        name: str
+
+    title: str
+    videoId: str
+    album: Album = Field(default_factory=lambda: YtmusicHomeSong.Album(id="", name=""))
+    duration: str = "0:00"
     category: str = "Songs"
     resultType: str = "song"
-    album: Album = Field(default_factory=lambda: YtmusicHomeSong.Album(id="", name=""))
-    feedbackTokens: dict = Field(default_factory=dict)
-    isAvailable: bool = True
-    isExplicit: bool = False
-    duration: str = "0:00"
+
+    def v2_brief_model(self) -> BriefSongModel:
+        song = BriefSongModel(
+            identifier=self.videoId or "",
+            source=self.source,
+            title=self.title,
+            artists_name=self.artists_name,
+            album_name=self.album.name if self.album else "",
+            duration_ms=self.duration,
+        )
+        if not song.identifier:
+            song.state = ModelState.not_exists
+        return song
 
 
 class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMixin):
