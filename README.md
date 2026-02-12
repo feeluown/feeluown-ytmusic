@@ -38,6 +38,9 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.16 (2026-02-12)
+  - Support daily recommendation feed (songs/playlists)
+  - Refactor home recommendation song model to avoid search-song coupling
 - v0.4.15 (2026-02-03)
   - Support multi-profile switching
   - Sync auto-login profile selection
