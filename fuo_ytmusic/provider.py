@@ -8,6 +8,8 @@ from feeluown.library import (
     BriefSongModel,
     BriefUserModel,
     BriefVideoModel,
+    Collection,
+    CollectionType,
     ModelNotFound,
     PlaylistModel,
     ProviderV2,
@@ -24,10 +26,9 @@ from yt_dlp import DownloadError, YoutubeDL
 
 from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.headerfile import get_profile_gaia_id, update_profile_gaia_id
+from fuo_ytmusic.home_recommendation import YtmusicHomeRecommendationBuilder
 from fuo_ytmusic.models import (
     Categories,
-    YtmusicHomePlaylist,
-    YtmusicHomeSong,
     YtmusicWatchPlaylistSong,
 )
 from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicType
@@ -36,9 +37,14 @@ logger = logging.getLogger(__name__)
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
+    HOME_SECTION_LIMIT = 12
+
     def __init__(self):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
+        self._home_recommendation_builder = YtmusicHomeRecommendationBuilder(
+            source=self.meta.identifier
+        )
         self.current_user_changed = Signal()
         self._user = None
         self._http_proxy = ""
@@ -217,71 +223,44 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 user_fav_playlists.append(playlist)
         return user_fav_playlists
 
-    def _get_daily_home_sections(self, limit: int = 6):
+    def _get_daily_home_sections(self, limit: int = HOME_SECTION_LIMIT):
         try:
             return self.service.home_sections(limit=limit)
         except Exception as e:
             logger.warning("fetch ytmusic home sections failed: %s", e)
             return []
 
-    @staticmethod
-    def _iter_home_contents(sections):
-        for section in sections or []:
-            if not isinstance(section, dict):
-                continue
-            contents = section.get("contents")
-            if not isinstance(contents, list):
-                continue
-            for content in contents:
-                if isinstance(content, dict):
-                    yield content
+    def rec_list_collections(self, limit: Optional[int] = None) -> List[Collection]:
+        section_limit = self._home_recommendation_builder.normalize_limit(
+            limit, self.HOME_SECTION_LIMIT
+        )
+        sections = self._get_daily_home_sections(limit=section_limit)
+        return self._home_recommendation_builder.build_collections(sections)
 
     def rec_list_daily_songs(self) -> List[BriefSongModel]:
         songs: List[BriefSongModel] = []
         seen_video_ids = set()
-        sections = self._get_daily_home_sections(limit=6)
-
-        for content in self._iter_home_contents(sections):
-            video_id = content.get("videoId")
-            if not video_id or video_id in seen_video_ids:
+        for collection in self.rec_list_collections():
+            if collection.type_ != CollectionType.only_songs:
                 continue
-            try:
-                song = YtmusicHomeSong(**content).v2_brief_model()
-            except Exception as e:
-                logger.warning(
-                    "skip invalid home song item(%s): %s",
-                    video_id,
-                    e,
-                )
-                continue
-            if not song.identifier:
-                continue
-            seen_video_ids.add(song.identifier)
-            songs.append(song)
+            for song in collection.models:
+                if not song.identifier or song.identifier in seen_video_ids:
+                    continue
+                seen_video_ids.add(song.identifier)
+                songs.append(song)
         return songs
 
     def rec_list_daily_playlists(self) -> List[PlaylistModel]:
         playlists: List[PlaylistModel] = []
         seen_playlist_ids = set()
-        sections = self._get_daily_home_sections(limit=6)
-
-        for content in self._iter_home_contents(sections):
-            playlist_id = content.get("playlistId")
-            if not playlist_id or playlist_id in seen_playlist_ids:
+        for collection in self.rec_list_collections():
+            if collection.type_ != CollectionType.only_playlists:
                 continue
-            try:
-                playlist = YtmusicHomePlaylist(**content).v2_model()
-            except Exception as e:
-                logger.warning(
-                    "skip invalid home playlist item(%s): %s",
-                    playlist_id,
-                    e,
-                )
-                continue
-            if not playlist.identifier:
-                continue
-            seen_playlist_ids.add(playlist.identifier)
-            playlists.append(playlist)
+            for playlist in collection.models:
+                if not playlist.identifier or playlist.identifier in seen_playlist_ids:
+                    continue
+                seen_playlist_ids.add(playlist.identifier)
+                playlists.append(playlist)
         return playlists
 
     def create_playlist(

@@ -325,7 +325,7 @@ class YtmusicService(metaclass=Singleton):
     def _home_sections_cached(self, limit: int, account_key: str):
         return self.api.get_home(limit)
 
-    def home_sections(self, limit: int = 6):
+    def home_sections(self, limit: int = 12):
         return self._home_sections_cached(limit, self._daily_home_cache_key())
 
     def get_current_account_info(self) -> dict:
