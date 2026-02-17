@@ -4,10 +4,13 @@ from typing import List, Optional
 from feeluown.excs import NoUserLoggedIn, ProviderIOError
 from feeluown.library import (
     AbstractProvider,
+    BriefAlbumModel,
     BriefPlaylistModel,
     BriefSongModel,
     BriefUserModel,
     BriefVideoModel,
+    Collection,
+    CollectionType,
     ModelNotFound,
     PlaylistModel,
     ProviderV2,
@@ -28,6 +31,7 @@ from fuo_ytmusic.models import (
     Categories,
     YtmusicHomePlaylist,
     YtmusicHomeSong,
+    YtmusicSearchAlbum,
     YtmusicWatchPlaylistSong,
 )
 from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicType
@@ -36,6 +40,8 @@ logger = logging.getLogger(__name__)
 
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
+    HOME_SECTION_LIMIT = 12
+
     def __init__(self):
         super(YtmusicProvider, self).__init__()
         self.service: YtmusicService = YtmusicService()
@@ -217,7 +223,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 user_fav_playlists.append(playlist)
         return user_fav_playlists
 
-    def _get_daily_home_sections(self, limit: int = 6):
+    def _get_daily_home_sections(self, limit: int = HOME_SECTION_LIMIT):
         try:
             return self.service.home_sections(limit=limit)
         except Exception as e:
@@ -236,12 +242,52 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 if isinstance(content, dict):
                     yield content
 
-    def rec_list_daily_songs(self) -> List[BriefSongModel]:
+    @classmethod
+    def _normalize_home_limit(cls, limit: Optional[int]) -> int:
+        if limit is None:
+            return cls.HOME_SECTION_LIMIT
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            return cls.HOME_SECTION_LIMIT
+        return limit if limit > 0 else cls.HOME_SECTION_LIMIT
+
+    @staticmethod
+    def _detect_home_item_type(content):
+        if not isinstance(content, dict):
+            return None
+        playlist_id = content.get("playlistId")
+        video_id = content.get("videoId")
+        artists = content.get("artists")
+        album = content.get("album")
+
+        if playlist_id and not video_id:
+            # Includes watch playlist and mix/radio-like playlist rows.
+            return CollectionType.only_playlists
+
+        if content.get("videoId"):
+            # Some cards may carry both videoId and playlistId; treat cards
+            # without artist/album metadata as playlist-like entries.
+            if playlist_id and not artists and not album:
+                return CollectionType.only_playlists
+            # YTMusic home videos usually carry views.
+            if content.get("views"):
+                return CollectionType.only_videos
+            return CollectionType.only_songs
+        if playlist_id:
+            return CollectionType.only_playlists
+        if content.get("browseId") and content.get("artists") is not None:
+            # Artists also carry browseId; require artists field to identify albums.
+            return CollectionType.only_albums
+        return None
+
+    @classmethod
+    def _build_home_songs(cls, contents):
         songs: List[BriefSongModel] = []
         seen_video_ids = set()
-        sections = self._get_daily_home_sections(limit=6)
-
-        for content in self._iter_home_contents(sections):
+        for content in contents:
+            if cls._detect_home_item_type(content) != CollectionType.only_songs:
+                continue
             video_id = content.get("videoId")
             if not video_id or video_id in seen_video_ids:
                 continue
@@ -260,12 +306,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             songs.append(song)
         return songs
 
-    def rec_list_daily_playlists(self) -> List[PlaylistModel]:
+    @classmethod
+    def _build_home_playlists(cls, contents):
         playlists: List[PlaylistModel] = []
         seen_playlist_ids = set()
-        sections = self._get_daily_home_sections(limit=6)
-
-        for content in self._iter_home_contents(sections):
+        for content in contents:
+            if cls._detect_home_item_type(content) != CollectionType.only_playlists:
+                continue
             playlist_id = content.get("playlistId")
             if not playlist_id or playlist_id in seen_playlist_ids:
                 continue
@@ -282,6 +329,139 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 continue
             seen_playlist_ids.add(playlist.identifier)
             playlists.append(playlist)
+        return playlists
+
+    @classmethod
+    def _build_home_albums(cls, contents):
+        albums: List[BriefAlbumModel] = []
+        seen_browse_ids = set()
+        for content in contents:
+            if cls._detect_home_item_type(content) != CollectionType.only_albums:
+                continue
+            browse_id = content.get("browseId")
+            if not browse_id or browse_id in seen_browse_ids:
+                continue
+            try:
+                album = YtmusicSearchAlbum(**content).v2_brief_model()
+            except Exception as e:
+                logger.warning(
+                    "skip invalid home album item(%s): %s",
+                    browse_id,
+                    e,
+                )
+                continue
+            if not album.identifier:
+                continue
+            seen_browse_ids.add(album.identifier)
+            albums.append(album)
+        return albums
+
+    @classmethod
+    def _build_home_videos(cls, contents):
+        videos: List[BriefVideoModel] = []
+        seen_video_ids = set()
+        for content in contents:
+            if cls._detect_home_item_type(content) != CollectionType.only_videos:
+                continue
+            video_id = content.get("videoId")
+            if not video_id or video_id in seen_video_ids:
+                continue
+            artists = content.get("artists")
+            artists_name = " / ".join(
+                artist.get("name", "")
+                for artist in (artists or [])
+                if isinstance(artist, dict) and artist.get("name")
+            )
+            videos.append(
+                BriefVideoModel(
+                    identifier=video_id,
+                    source=cls.meta.identifier,
+                    title=content.get("title") or "",
+                    artists_name=artists_name,
+                    duration_ms=content.get("duration") or "",
+                )
+            )
+            seen_video_ids.add(video_id)
+        return videos
+
+    def rec_list_collections(self, limit: Optional[int] = None) -> List[Collection]:
+        collections: List[Collection] = []
+        section_limit = self._normalize_home_limit(limit)
+        sections = self._get_daily_home_sections(limit=section_limit)
+        type_builder_pairs = [
+            (CollectionType.only_songs, self._build_home_songs),
+            (CollectionType.only_playlists, self._build_home_playlists),
+            (CollectionType.only_albums, self._build_home_albums),
+            (CollectionType.only_videos, self._build_home_videos),
+        ]
+        type_title_suffixes = {
+            CollectionType.only_songs: "Songs",
+            CollectionType.only_playlists: "Playlists",
+            CollectionType.only_albums: "Albums",
+            CollectionType.only_videos: "Videos",
+        }
+
+        for section in sections or []:
+            if not isinstance(section, dict):
+                continue
+            contents = section.get("contents")
+            if not isinstance(contents, list):
+                continue
+            section_title = section.get("title") or "Recommendations"
+            section_collections = []
+            for section_type, builder in type_builder_pairs:
+                models = builder(contents)
+                if not models:
+                    continue
+                section_collections.append((section_type, models))
+            if not section_collections:
+                continue
+
+            if len(section_collections) == 1:
+                section_type, models = section_collections[0]
+                collections.append(
+                    Collection(
+                        name=section_title,
+                        type_=section_type,
+                        models=models,
+                    )
+                )
+                continue
+
+            for section_type, models in section_collections:
+                collections.append(
+                    Collection(
+                        name=f"{section_title} · {type_title_suffixes[section_type]}",
+                        type_=section_type,
+                        models=models,
+                    )
+                )
+        return collections
+
+    def rec_list_daily_songs(self) -> List[BriefSongModel]:
+        songs: List[BriefSongModel] = []
+        seen_video_ids = set()
+        for collection in self.rec_list_collections():
+            if collection.type_ != CollectionType.only_songs:
+                continue
+            for song in collection.models:
+                if not song.identifier or song.identifier in seen_video_ids:
+                    continue
+                seen_video_ids.add(song.identifier)
+                songs.append(song)
+        return songs
+
+    def rec_list_daily_playlists(self) -> List[PlaylistModel]:
+        playlists: List[PlaylistModel] = []
+        seen_playlist_ids = set()
+        for collection in self.rec_list_collections():
+            if collection.type_ != CollectionType.only_playlists:
+                continue
+            for playlist in collection.models:
+                if not playlist.identifier or playlist.identifier in seen_playlist_ids:
+                    continue
+                seen_playlist_ids.add(playlist.identifier)
+                playlists.append(playlist)
         return playlists
 
     def create_playlist(
