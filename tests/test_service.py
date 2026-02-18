@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from feeluown.library import SearchType
 
@@ -35,12 +36,18 @@ class TestService:
                     "isAvailable": True,
                     "isExplicit": False,
                     "artists": [{"id": "AR1", "name": "Green Day"}],
-                    "thumbnails": [{"url": "https://example.com/1.jpg", "width": 100, "height": 100}],
+                    "thumbnails": [
+                        {
+                            "url": "https://example.com/1.jpg",
+                            "width": 100,
+                            "height": 100,
+                        }
+                    ],
                     "duration": "3:50",
                 }
             ]
         )
-        result = self.service.search('21 Guns', service.YtmusicType.so)
+        result = self.service.search("21 Guns", service.YtmusicType.so)
         assert isinstance(result, list)
         assert all(isinstance(r, YtmusicSearchSong) for r in result)
 
@@ -56,13 +63,55 @@ class TestService:
                     "browseId": "ALB2",
                     "isExplicit": False,
                     "artists": [{"id": "AR2", "name": "A-Lin"}],
-                    "thumbnails": [{"url": "https://example.com/2.jpg", "width": 100, "height": 100}],
+                    "thumbnails": [
+                        {
+                            "url": "https://example.com/2.jpg",
+                            "width": 100,
+                            "height": 100,
+                        }
+                    ],
                 }
             ]
         )
-        result = self.service.search('ALIN', service.YtmusicType.al)
+        result = self.service.search("ALIN", service.YtmusicType.al)
         assert isinstance(result, list)
         assert all(isinstance(r, YtmusicSearchAlbum) for r in result)
+
+    def test_get_auth_cookie(self):
+        self.service._api = _AuthContextApi(
+            cookie="SID=abc; HSID=def", user_agent="ytmusic-agent"
+        )
+
+        assert self.service.get_auth_cookie() == "SID=abc; HSID=def"
+
+    def test_get_user_agent(self):
+        self.service._api = _AuthContextApi(
+            cookie="SID=abc; HSID=def", user_agent="ytmusic-agent"
+        )
+
+        assert self.service.get_user_agent() == "ytmusic-agent"
+
+    def test_get_auth_context_empty_values(self):
+        self.service._api = _AuthContextApi(cookie="", user_agent="")
+
+        assert self.service.get_auth_cookie() == ""
+        assert self.service.get_user_agent() == ""
+
+    def test_get_and_sync_ytdlp_cookiefile(self, tmp_path):
+        headerfile = tmp_path / "ytmusic_header.json"
+        self.service._api = _AuthContextApi(
+            cookie="SID=abc; HSID=def",
+            user_agent="ytmusic-agent",
+            headerfile_path=headerfile,
+        )
+
+        cookiefile_path = self.service.get_ytdlp_cookiefile_path()
+        assert cookiefile_path.endswith(".cookies.txt")
+
+        cookiefile = self.service.sync_ytdlp_cookiefile()
+        content = Path(cookiefile).read_text(encoding="utf-8")
+        assert ".youtube.com	TRUE	/	TRUE	0	SID	abc" in content
+        assert ".google.com	TRUE	/	TRUE	0	HSID	def" in content
 
 
 class _StubApi:
@@ -71,3 +120,16 @@ class _StubApi:
 
     def search(self, *_args, **_kwargs):
         return list(self._payload)
+
+
+class _AuthContextApi:
+    def __init__(self, cookie: str, user_agent: str, headerfile_path=None):
+        self._cookie = cookie
+        self._user_agent = user_agent
+        self.headerfile_path = headerfile_path
+
+    def get_auth_cookie(self):
+        return self._cookie
+
+    def get_user_agent(self):
+        return self._user_agent

@@ -329,31 +329,56 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         song_ = self.service.song_info(id_)
         return song_.list_formats() if song_ is not None else []
 
-    def song_get_media(self, song: SongModel, quality: Quality.Audio) -> Optional[Media]:
+    def _song_get_media_from_ytdlp(self, song: SongModel) -> Optional[Media]:
         ytdl_opts = {}
         ytdl_opts.update(self._default_audio_ytdl_opts)
         # Only set proxy if it is nonempty.
         # Ytdl can make use of system proxy when proxy is not set.
         if self._http_proxy:
             ytdl_opts["proxy"] = self._http_proxy
+
+        # service keeps cookiefile synced with headerfile lifecycle; provider
+        # only consumes the stable path to configure yt-dlp runtime options.
+        cookiefile_path = self.service.get_ytdlp_cookiefile_path()
+        if cookiefile_path:
+            ytdl_opts["cookiefile"] = cookiefile_path
+
+        user_agent = self.service.get_user_agent()
+        if user_agent:
+            ytdl_opts["user_agent"] = user_agent
+
         url = self.song_get_web_url(song)
         with YoutubeDL(ytdl_opts) as inner:
-            try:
-                info = inner.extract_info(url, download=False)
-            except DownloadError:  # noqa
-                logger.warning(f"extract_info failed for {url}")
-                raise ProviderIOError("yt-dlp extract info failed", provider=self)
-            media_url = info["url"]
-            if media_url:
-                # NOTE(cosven): do not set http headers, otherwise it can't play.
-                # Tested with 'https://music.youtube.com/watch?v=vKwowKeEv5w'
-                return Media(
-                    media_url,
-                    format=info["ext"],
-                    bitrate=int(info["abr"] or 0),
-                    http_proxy=self._http_proxy,
-                )
+            info = inner.extract_info(url, download=False)
+        media_url = info.get("url")
+        if not media_url:
             return None
+        # NOTE(cosven): do not set http headers, otherwise it can't play.
+        # Tested with 'https://music.youtube.com/watch?v=vKwowKeEv5w'
+        return Media(
+            media_url,
+            format=info.get("ext") or "",
+            bitrate=int(info.get("abr") or 0),
+            http_proxy=self._http_proxy,
+        )
+
+    def song_get_media(
+        self, song: SongModel, quality: Quality.Audio
+    ) -> Optional[Media]:
+        try:
+            media = self._song_get_media_from_ytdlp(song)
+        except DownloadError as e:
+            logger.warning("yt-dlp extract info failed for %s: %s", song.identifier, e)
+            raise ProviderIOError(
+                "failed to resolve media url; your YouTube cookies may be expired, please re-export ytmusic_header.json",
+                provider=self,
+            )
+        if media is not None:
+            return media
+        raise ProviderIOError(
+            "failed to resolve media url from yt-dlp",
+            provider=self,
+        )
 
     def song_get_web_url(self, song) -> str:
         return f"https://music.youtube.com/watch?v={song.identifier}"
