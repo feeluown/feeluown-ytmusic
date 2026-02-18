@@ -31,7 +31,6 @@ from fuo_ytmusic.models import (
     PlaylistInfo,
     PlaylistNestedResult,
     SongInfo,
-    TopCharts,
     UserInfo,
     YtmusicDispatcher,
     YtmusicHistorySong,
@@ -422,14 +421,9 @@ class YtmusicService(metaclass=Singleton):
         return [PlaylistNestedResult(**data) for data in response]
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
-    def get_charts(self, country: str = "ZZ") -> TopCharts:
-        # temp workaround for ytmusicapi#236
-        # sees: https://github.com/sigma67/ytmusicapi/issues/236
-        auth = self.api.auth
-        self.api.auth = None
+    def get_charts(self, country: str = "ZZ") -> dict:
         response = self.api.get_charts(country)
-        self.api.auth = auth
-        return TopCharts(**response)
+        return response if isinstance(response, dict) else {}
 
     def library_playlists(
         self, limit: int = GLOBAL_LIMIT
