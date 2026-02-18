@@ -113,6 +113,18 @@ class TestService:
         assert ".youtube.com	TRUE	/	TRUE	0	SID	abc" in content
         assert ".google.com	TRUE	/	TRUE	0	HSID	def" in content
 
+    def test_get_charts_returns_raw_dict(self):
+        self.service.get_charts.cache_clear()
+        self.service._api = _ChartsApi(payload={"videos": []})
+
+        assert self.service.get_charts("ZZ") == {"videos": []}
+
+    def test_get_charts_returns_empty_when_payload_invalid(self):
+        self.service.get_charts.cache_clear()
+        self.service._api = _ChartsApi(payload=[{"playlistId": "PL-1"}])
+
+        assert self.service.get_charts("ZZ") == {}
+
 
 class _StubApi:
     def __init__(self, payload):
@@ -133,3 +145,11 @@ class _AuthContextApi:
 
     def get_user_agent(self):
         return self._user_agent
+
+
+class _ChartsApi:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def get_charts(self, *_args, **_kwargs):
+        return self.payload

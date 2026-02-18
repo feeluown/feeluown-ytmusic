@@ -38,6 +38,8 @@ logger = logging.getLogger(__name__)
 
 class YtmusicProvider(AbstractProvider, ProviderV2):
     HOME_SECTION_LIMIT = 12
+    # get_charts returns playlist sections under these keys; artists are omitted.
+    TOPLIST_CHART_KEYS = ("daily", "weekly", "videos", "genres")
 
     def __init__(self):
         super(YtmusicProvider, self).__init__()
@@ -262,6 +264,42 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
                 seen_playlist_ids.add(playlist.identifier)
                 playlists.append(playlist)
         return playlists
+
+    def _build_toplist_playlists(self, charts: dict) -> List[BriefPlaylistModel]:
+        toplists: List[BriefPlaylistModel] = []
+        seen_playlist_ids = set()
+        for key in self.TOPLIST_CHART_KEYS:
+            section = charts.get(key)
+            if not isinstance(section, list):
+                continue
+            for item in section:
+                if not isinstance(item, dict):
+                    continue
+                playlist_id = item.get("playlistId")
+                if not playlist_id or playlist_id in seen_playlist_ids:
+                    continue
+                toplists.append(
+                    BriefPlaylistModel(
+                        identifier=playlist_id,
+                        source=self.meta.identifier,
+                        name=item.get("title") or "",
+                    )
+                )
+                seen_playlist_ids.add(playlist_id)
+        return toplists
+
+    def toplist_list(self) -> List[BriefPlaylistModel]:
+        try:
+            charts = self.service.get_charts(country="ZZ")
+        except Exception as e:
+            logger.warning("fetch ytmusic charts failed: %s", e)
+            return []
+        if not isinstance(charts, dict):
+            return []
+        return self._build_toplist_playlists(charts)
+
+    def toplist_get(self, toplist_id) -> PlaylistModel:
+        return self.service.playlist_info(toplist_id).v2_model()
 
     def create_playlist(
         self,
