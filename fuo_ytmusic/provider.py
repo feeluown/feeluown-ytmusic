@@ -63,10 +63,10 @@ def _parse_ytdlp_version(version: str) -> Optional[Tuple[int, int, int]]:
 class YtmusicProvider(AbstractProvider, ProviderV2):
     HOME_SECTION_LIMIT = 12
     # NOTE:
-    # yt-dlp >= 2026.02.04 may fail with cookiefile in some YouTube Music
+    # yt-dlp >= 2025.12.08 may fail with cookiefile in some YouTube Music
     # sessions due to PO token restrictions. For these versions, keep running
     # yt-dlp without cookiefile and rely on proxy/timeout only.
-    YTDLP_COOKIEFILE_DISABLED_FROM = (2026, 2, 4)
+    YTDLP_COOKIEFILE_DISABLED_FROM = (2025, 12, 8)
     # get_charts returns playlist sections under these keys; artists are omitted.
     TOPLIST_CHART_KEYS = ("daily", "weekly", "videos", "genres")
 

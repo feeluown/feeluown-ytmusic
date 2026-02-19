@@ -160,11 +160,12 @@ def test_video_get_media_uses_configured_timeout(monkeypatch):
     assert "cookiefile" not in _YtdlpCaptureVideo.last_opts
 
 
-def test_get_ytdlp_cookiefile_path_requires_current_user(tmp_path):
+def test_get_ytdlp_cookiefile_path_requires_current_user(monkeypatch, tmp_path):
     headerfile = tmp_path / "ytmusic_header.json"
     headerfile.write_text("{}", encoding="utf-8")
     provider = YtmusicProvider()
     provider.service = _ServiceStub(_ApiStub(headerfile_path=headerfile))
+    monkeypatch.setattr(provider_module, "YTDLP_VERSION", "2025.12.07")
 
     assert provider._get_ytdlp_cookiefile_path() == ""
 
@@ -182,14 +183,14 @@ def test_get_ytdlp_cookiefile_path_disabled_for_new_ytdlp_version(
     provider = YtmusicProvider()
     provider.service = _ServiceStub(_ApiStub(headerfile_path=headerfile))
     provider._user = object()
-    monkeypatch.setattr(provider_module, "YTDLP_VERSION", "2026.02.04")
+    monkeypatch.setattr(provider_module, "YTDLP_VERSION", "2025.12.08")
 
     assert provider._get_ytdlp_cookiefile_path() == ""
 
 
 def test_parse_ytdlp_version():
-    assert _parse_ytdlp_version("2026.02.04") == (2026, 2, 4)
     assert _parse_ytdlp_version("2025.12.08") == (2025, 12, 8)
+    assert _parse_ytdlp_version("2025.12.07") == (2025, 12, 7)
     assert _parse_ytdlp_version("invalid") is None
     assert _parse_ytdlp_version("2026.02") is None
 
