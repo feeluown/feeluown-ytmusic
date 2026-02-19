@@ -16,11 +16,8 @@ from requests import Response
 from ytmusicapi import YTMusic as YTMusicBase
 from ytmusicapi.ytmusic import OAuthCredentials
 
-from fuo_ytmusic.consts import HEADER_FILE
 from fuo_ytmusic.headerfile import (
-    get_ytdlp_cookiefile_path,
     update_headerfile_cookie,
-    write_ytdlp_cookiefile,
 )
 from fuo_ytmusic.helpers import Singleton
 from fuo_ytmusic.models import (
@@ -131,22 +128,6 @@ class YTMusic(YTMusicBase):
         if new_cookie:
             self._auth_headers["cookie"] = new_cookie
             self._persist_cookie_to_headerfile(new_cookie)
-
-    def get_auth_cookie(self) -> str:
-        auth_headers = getattr(self, "_auth_headers", None)
-        if isinstance(auth_headers, dict):
-            cookie = auth_headers.get("cookie") or auth_headers.get("Cookie")
-            if isinstance(cookie, str):
-                return cookie.strip()
-        return ""
-
-    def get_user_agent(self) -> str:
-        headers = getattr(self, "headers", None)
-        if isinstance(headers, dict):
-            user_agent = headers.get("User-Agent") or headers.get("user-agent")
-            if isinstance(user_agent, str):
-                return user_agent.strip()
-        return ""
 
     def _persist_cookie_to_headerfile(self, cookie_value: str):
         update_headerfile_cookie(cookie_value, self.headerfile_path)
@@ -292,10 +273,6 @@ class YtmusicService(metaclass=Singleton):
             logger.info("Initializing ytmusic api with no headerfile.")
             self._api = YTMusic(**options)
 
-        # Keep yt-dlp cookiefile synchronized with current auth cookie so its
-        # lifecycle matches headerfile auth state.
-        self.sync_ytdlp_cookiefile()
-
     def setup_language(self, language: str):
         self._language = language
 
@@ -311,26 +288,6 @@ class YtmusicService(metaclass=Singleton):
         else:
             request = self._session.request
         self._session.request = partial(request, timeout=timeout)
-
-    def get_auth_cookie(self) -> str:
-        return self.api.get_auth_cookie()
-
-    def get_user_agent(self) -> str:
-        return self.api.get_user_agent()
-
-    def get_ytdlp_cookiefile_path(self) -> str:
-        # Read-only accessor used by provider when building yt-dlp options.
-        headerfile_path = getattr(self.api, "headerfile_path", None) or HEADER_FILE
-        cookiefile_path = get_ytdlp_cookiefile_path(headerfile_path)
-        return "" if cookiefile_path is None else str(cookiefile_path)
-
-    def sync_ytdlp_cookiefile(self) -> str:
-        # Explicitly refresh persistent cookiefile from current auth cookie.
-        headerfile_path = getattr(self.api, "headerfile_path", None) or HEADER_FILE
-        cookiefile_path = write_ytdlp_cookiefile(
-            self.get_auth_cookie(), headerfile_path
-        )
-        return "" if cookiefile_path is None else str(cookiefile_path)
 
     def search(
         self,
