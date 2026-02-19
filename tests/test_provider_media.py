@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 from feeluown.excs import ProviderIOError
-from feeluown.media import Quality
+from feeluown.media import MediaType, Quality
 from yt_dlp import DownloadError
 
 from fuo_ytmusic import provider as provider_module
@@ -105,3 +105,35 @@ def test_song_get_media_raises_user_actionable_error(monkeypatch):
         provider.song_get_media(
             SimpleNamespace(identifier="video-id"), Quality.Audio.sq
         )
+
+
+def test_img_url_to_media_passes_http_proxy():
+    provider = YtmusicProvider()
+    provider.setup_http_proxy("http://127.0.0.1:7890")
+
+    media = provider.img_url_to_media("https://img.example.com/cover.jpg")
+
+    assert media.type_ == MediaType.image
+    assert media.url == "https://img.example.com/cover.jpg"
+    assert media.http_proxy == "http://127.0.0.1:7890"
+
+
+def test_img_url_to_media_omits_proxy_when_unset(monkeypatch):
+    provider = YtmusicProvider()
+    captured = {}
+
+    def _media_factory(url, type_, **kwargs):
+        captured["url"] = url
+        captured["type_"] = type_
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(
+            url=url, type_=type_, http_proxy=kwargs.get("http_proxy", "")
+        )
+
+    monkeypatch.setattr(provider_module, "Media", _media_factory)
+
+    media = provider.img_url_to_media("https://img.example.com/cover.jpg")
+
+    assert media.type_ == MediaType.image
+    assert media.url == "https://img.example.com/cover.jpg"
+    assert "http_proxy" not in captured["kwargs"]

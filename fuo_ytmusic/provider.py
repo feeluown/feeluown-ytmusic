@@ -20,7 +20,7 @@ from feeluown.library import (
     VideoModel,
 )
 from feeluown.library.model_protocol import BriefSongProtocol
-from feeluown.media import Media, Quality, VideoAudioManifest
+from feeluown.media import Media, MediaType, Quality, VideoAudioManifest
 from feeluown.utils.dispatch import Signal
 from yt_dlp import DownloadError, YoutubeDL
 
@@ -76,6 +76,11 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     def setup_language(self, language: str):
         self.service.setup_language(language)
+
+    def img_url_to_media(self, pic_url: str) -> Media:
+        if self._http_proxy:
+            return Media(pic_url, MediaType.image, http_proxy=self._http_proxy)
+        return Media(pic_url, MediaType.image)
 
     # noinspection PyPep8Naming
     class meta:
