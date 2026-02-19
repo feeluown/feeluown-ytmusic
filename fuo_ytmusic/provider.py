@@ -431,10 +431,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         if cookiefile_path:
             ytdl_opts["cookiefile"] = cookiefile_path
 
-        user_agent = self.service.get_user_agent()
-        if user_agent:
-            ytdl_opts["user_agent"] = user_agent
-
         debug_opts = dict(ytdl_opts)
         debug_opts.pop("logger", None)
         print(f"song_get_media yt-dlp options for {song.identifier}: {debug_opts}")

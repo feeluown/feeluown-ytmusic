@@ -129,14 +129,6 @@ class YTMusic(YTMusicBase):
             self._auth_headers["cookie"] = new_cookie
             self._persist_cookie_to_headerfile(new_cookie)
 
-    def get_user_agent(self) -> str:
-        headers = getattr(self, "headers", None)
-        if headers is not None and hasattr(headers, "get"):
-            user_agent = headers.get("User-Agent") or headers.get("user-agent")
-            if isinstance(user_agent, str):
-                return user_agent.strip()
-        return ""
-
     def _persist_cookie_to_headerfile(self, cookie_value: str):
         update_headerfile_cookie(cookie_value, self.headerfile_path)
 
@@ -296,9 +288,6 @@ class YtmusicService(metaclass=Singleton):
         else:
             request = self._session.request
         self._session.request = partial(request, timeout=timeout)
-
-    def get_user_agent(self) -> str:
-        return self.api.get_user_agent()
 
     def search(
         self,

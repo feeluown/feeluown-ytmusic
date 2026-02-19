@@ -11,21 +11,14 @@ from fuo_ytmusic.provider import YtmusicProvider, _parse_ytdlp_version
 
 
 class _ApiStub:
-    def __init__(self, user_agent="", headerfile_path=None):
-        self._user_agent = user_agent
+    def __init__(self, headerfile_path=None):
         self.headerfile_path = headerfile_path
-
-    def get_user_agent(self):
-        return self._user_agent
 
 
 class _ServiceStub:
     def __init__(self, api):
         self.api = api
         self.timeout = None
-
-    def get_user_agent(self):
-        return self.api.get_user_agent()
 
     def setup_timeout(self, timeout):
         self.timeout = timeout
@@ -98,9 +91,9 @@ class _YtdlpCaptureVideo:
         }
 
 
-def test_song_get_media_passes_cookiefile_and_user_agent_to_ytdlp(monkeypatch):
+def test_song_get_media_passes_cookiefile_to_ytdlp(monkeypatch):
     provider = YtmusicProvider()
-    provider.service = _ServiceStub(_ApiStub(user_agent="ytmusic-agent"))
+    provider.service = _ServiceStub(_ApiStub())
     monkeypatch.setattr(
         provider, "_get_ytdlp_cookiefile_path", lambda: "/tmp/ytmusic.cookies.txt"
     )
@@ -114,7 +107,6 @@ def test_song_get_media_passes_cookiefile_and_user_agent_to_ytdlp(monkeypatch):
     assert media.props.format == "m4a"
     assert media.props.bitrate == 128
     assert _YtdlpCapture.last_opts["cookiefile"] == "/tmp/ytmusic.cookies.txt"
-    assert _YtdlpCapture.last_opts["user_agent"] == "ytmusic-agent"
 
 
 def test_song_get_media_skips_cookiefile_when_unavailable(monkeypatch):
@@ -126,7 +118,6 @@ def test_song_get_media_skips_cookiefile_when_unavailable(monkeypatch):
     provider.song_get_media(SimpleNamespace(identifier="video-id"), Quality.Audio.sq)
 
     assert "cookiefile" not in _YtdlpCapture.last_opts
-    assert "user_agent" not in _YtdlpCapture.last_opts
 
 
 def test_song_get_media_raises_user_actionable_error(monkeypatch):

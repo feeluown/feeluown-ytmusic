@@ -1,8 +1,6 @@
 import logging
-from types import SimpleNamespace
 
 from feeluown.library import SearchType
-from requests.structures import CaseInsensitiveDict
 
 from fuo_ytmusic import service
 from fuo_ytmusic.models import YtmusicSearchAlbum, YtmusicSearchSong
@@ -78,24 +76,6 @@ class TestService:
         assert isinstance(result, list)
         assert all(isinstance(r, YtmusicSearchAlbum) for r in result)
 
-    def test_get_user_agent(self):
-        self.service._api = _AuthContextApi(
-            user_agent="ytmusic-agent"
-        )
-
-        assert self.service.get_user_agent() == "ytmusic-agent"
-
-    def test_get_auth_context_empty_values(self):
-        self.service._api = _AuthContextApi(user_agent="")
-        assert self.service.get_user_agent() == ""
-
-    def test_ytmusic_get_user_agent_supports_mapping_headers(self):
-        fake_api = SimpleNamespace(headers=CaseInsensitiveDict({"User-Agent": "ua-x"}))
-
-        user_agent = service.YTMusic.get_user_agent(fake_api)
-
-        assert user_agent == "ua-x"
-
     def test_get_charts_returns_raw_dict(self):
         self.service.get_charts.cache_clear()
         self.service._api = _ChartsApi(payload={"videos": []})
@@ -115,14 +95,6 @@ class _StubApi:
 
     def search(self, *_args, **_kwargs):
         return list(self._payload)
-
-
-class _AuthContextApi:
-    def __init__(self, user_agent: str):
-        self._user_agent = user_agent
-
-    def get_user_agent(self):
-        return self._user_agent
 
 
 class _ChartsApi:
