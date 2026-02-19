@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from feeluown.excs import NoUserLoggedIn, ProviderIOError
 from feeluown.library import (
@@ -23,9 +23,14 @@ from feeluown.library.model_protocol import BriefSongProtocol
 from feeluown.media import Media, MediaType, Quality, VideoAudioManifest
 from feeluown.utils.dispatch import Signal
 from yt_dlp import DownloadError, YoutubeDL
+from yt_dlp.version import __version__ as YTDLP_VERSION
 
 from fuo_ytmusic.consts import HEADER_FILE
-from fuo_ytmusic.headerfile import get_profile_gaia_id, update_profile_gaia_id
+from fuo_ytmusic.headerfile import (
+    YtdlpCookiefileManager,
+    get_profile_gaia_id,
+    update_profile_gaia_id,
+)
 from fuo_ytmusic.home_recommendation import YtmusicHomeRecommendationBuilder
 from fuo_ytmusic.models import (
     Categories,
@@ -36,8 +41,32 @@ from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicTyp
 logger = logging.getLogger(__name__)
 
 
+class _NoCookieSaveYoutubeDL(YoutubeDL):
+    """Load cookies from file but skip yt-dlp cookiefile write-back."""
+
+    def save_cookies(self):
+        # yt-dlp persists cookie jar on close by default. Keep this hook for
+        # experiments where cookiefile must be treated as read-only input.
+        return
+
+
+def _parse_ytdlp_version(version: str) -> Optional[Tuple[int, int, int]]:
+    parts = version.split(".")
+    if len(parts) < 3:
+        return None
+    try:
+        return int(parts[0]), int(parts[1]), int(parts[2])
+    except ValueError:
+        return None
+
+
 class YtmusicProvider(AbstractProvider, ProviderV2):
     HOME_SECTION_LIMIT = 12
+    # NOTE:
+    # yt-dlp >= 2026.02.04 may fail with cookiefile in some YouTube Music
+    # sessions due to PO token restrictions. For these versions, keep running
+    # yt-dlp without cookiefile and rely on proxy/timeout only.
+    YTDLP_COOKIEFILE_DISABLED_FROM = (2026, 2, 4)
     # get_charts returns playlist sections under these keys; artists are omitted.
     TOPLIST_CHART_KEYS = ("daily", "weekly", "videos", "genres")
 
@@ -56,15 +85,6 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             "socket_timeout": 2,
             "extractor_retries": 0,  # reduce retry
         }
-        self._default_audio_ytdl_opts = {
-            # The following two options may be only valid for select_audio API.
-            # Remove these two options if needed.
-            "format": "m4a/bestaudio/best",
-            **self._default_ytdl_opts,
-        }
-        self._default_video_ytdl_opts = {
-            **self._default_ytdl_opts,
-        }
 
     def setup_http_proxy(self, http_proxy):
         self._http_proxy = http_proxy
@@ -73,6 +93,34 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def setup_http_timeout(self, timeout):
         self.service.setup_timeout(timeout)
         self._default_ytdl_opts["socket_timeout"] = timeout
+
+    def _build_audio_ytdl_opts(self):
+        return {
+            # The following option may be only valid for select_audio API.
+            "format": "m4a/bestaudio/best",
+            **self._default_ytdl_opts,
+        }
+
+    def _build_video_ytdl_opts(self):
+        return dict(self._default_ytdl_opts)
+
+    def _should_use_ytdlp_cookiefile(self) -> bool:
+        parsed = _parse_ytdlp_version(YTDLP_VERSION)
+        if parsed is None:
+            # Keep old behavior for unknown version strings.
+            return True
+        return parsed < self.YTDLP_COOKIEFILE_DISABLED_FROM
+
+    def _get_ytdlp_cookiefile_path(self) -> str:
+        # Only authenticated provider sessions should pass cookiefile to yt-dlp.
+        # For anonymous sessions, keep yt-dlp behavior unchanged.
+        if not self.has_current_user():
+            return ""
+        if not self._should_use_ytdlp_cookiefile():
+            return ""
+        headerfile_path = getattr(self.service.api, "headerfile_path", None) or HEADER_FILE
+        cookiefile_path = YtdlpCookiefileManager(headerfile_path).cookiefile_path
+        return "" if cookiefile_path is None else str(cookiefile_path)
 
     def setup_language(self, language: str):
         self.service.setup_language(language)
@@ -373,16 +421,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return song_.list_formats() if song_ is not None else []
 
     def _song_get_media_from_ytdlp(self, song: SongModel) -> Optional[Media]:
-        ytdl_opts = {}
-        ytdl_opts.update(self._default_audio_ytdl_opts)
+        ytdl_opts = self._build_audio_ytdl_opts()
         # Only set proxy if it is nonempty.
         # Ytdl can make use of system proxy when proxy is not set.
         if self._http_proxy:
             ytdl_opts["proxy"] = self._http_proxy
 
-        # service keeps cookiefile synced with headerfile lifecycle; provider
-        # only consumes the stable path to configure yt-dlp runtime options.
-        cookiefile_path = self.service.get_ytdlp_cookiefile_path()
+        cookiefile_path = self._get_ytdlp_cookiefile_path()
         if cookiefile_path:
             ytdl_opts["cookiefile"] = cookiefile_path
 
@@ -390,8 +435,13 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         if user_agent:
             ytdl_opts["user_agent"] = user_agent
 
+        debug_opts = dict(ytdl_opts)
+        debug_opts.pop("logger", None)
+        print(f"song_get_media yt-dlp options for {song.identifier}: {debug_opts}")
+
         url = self.song_get_web_url(song)
-        with YoutubeDL(ytdl_opts) as inner:
+        print(f"song_get_media source url for {song.identifier}: {url}")
+        with _NoCookieSaveYoutubeDL(ytdl_opts) as inner:
             info = inner.extract_info(url, download=False)
         media_url = info.get("url")
         if not media_url:
@@ -521,17 +571,19 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         return f"https://youtube.com/watch?v={video.identifier}"
 
     def video_get_media(self, video, quality) -> Optional[Media]:
-        ytdl_opts = {}
-        ytdl_opts.update(self._default_video_ytdl_opts)
+        ytdl_opts = self._build_video_ytdl_opts()
         # Only set proxy if it is nonempty.
         # Ytdl can make use of system proxy when proxy is not set.
         if self._http_proxy:
             ytdl_opts["proxy"] = self._http_proxy
+        cookiefile_path = self._get_ytdlp_cookiefile_path()
+        if cookiefile_path:
+            ytdl_opts["cookiefile"] = cookiefile_path
         url = self.video_get_web_url(video)
 
         audio_candidates = []  # [(url, abr)]  abr: average bitrate
         video_candidates = []  # [(url, width)]
-        with YoutubeDL(ytdl_opts) as inner:
+        with _NoCookieSaveYoutubeDL(ytdl_opts) as inner:
             try:
                 info = inner.extract_info(url, download=False)
             except DownloadError as e:  # noqa
