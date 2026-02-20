@@ -1,0 +1,192 @@
+{
+  "title": "Shape of You",
+  "type": "EP",
+  "thumbnails": [
+    {
+      "url": "https://lh3.googleusercontent.com/wPcnr5USxejXv0GsQa9q7liyfl-XjK5OYPYvbL5mbWyBPA9fmpZlAWPHVCrGMlms8eRWqcIHSHOjgz40ig=w60-h60-l90-rj",
+      "width": 60,
+      "height": 60
+    },
+    {
+      "url": "https://lh3.googleusercontent.com/wPcnr5USxejXv0GsQa9q7liyfl-XjK5OYPYvbL5mbWyBPA9fmpZlAWPHVCrGMlms8eRWqcIHSHOjgz40ig=w120-h120-l90-rj",
+      "width": 120,
+      "height": 120
+    },
+    {
+      "url": "https://lh3.googleusercontent.com/wPcnr5USxejXv0GsQa9q7liyfl-XjK5OYPYvbL5mbWyBPA9fmpZlAWPHVCrGMlms8eRWqcIHSHOjgz40ig=w226-h226-l90-rj",
+      "width": 226,
+      "height": 226
+    },
+    {
+      "url": "https://lh3.googleusercontent.com/wPcnr5USxejXv0GsQa9q7liyfl-XjK5OYPYvbL5mbWyBPA9fmpZlAWPHVCrGMlms8eRWqcIHSHOjgz40ig=w544-h544-l90-rj",
+      "width": 544,
+      "height": 544
+    }
+  ],
+  "isExplicit": false,
+  "description": null,
+  "year": "2026",
+  "artists": [
+    {
+      "name": "Jay Speaks",
+      "id": null
+    }
+  ],
+  "trackCount": 5,
+  "duration": "12 minutes, 2 seconds",
+  "audioPlaylistId": "OLAK5uy_msZYO-0G7PdUDPa78gCwHU6onIZYXYbEk",
+  "likeStatus": "INDIFFERENT",
+  "tracks": [
+    {
+      "videoId": "WrqXkuZ_aDs",
+      "title": "Shape of You",
+      "artists": [
+        {
+          "name": "Jay Speaks",
+          "id": null
+        }
+      ],
+      "album": "Shape of You",
+      "likeStatus": "INDIFFERENT",
+      "inLibrary": false,
+      "pinnedToListenAgain": false,
+      "feedbackTokens": {
+        "add": "AB9zfpKie918_-at5JWvm6YyG530C-KA89YaFBmCDfAh-1ZULF5WtXiKsHB4CgTPa8O7glnNP-d-da3rJOLWpWsH_cBmoYPaYQ",
+        "remove": "AB9zfpIZt6Ba8BCmeuEYEmz6hH0Q-wad8V__fTKRdhdzSRIYwvggartR7lrrLC-PVO-xM8LgmUZBBu4qJkjmeYvPBFc2da9wfg"
+      },
+      "listenAgainFeedbackTokens": {
+        "pin": "AB9zfpLSKJqL3xZ8hQPq0NFM_5wWLtGKjOe-Jz6RiQd5brdjb6sHSv0Id_RHGgOoBsn2RRGjdfiYsug7IBLuxu0zIQFNhSxmzo-rXmd7JVv3RR4aNn7BUMc",
+        "unpin": "AB9zfpKncrbQRv1-594aH-AaDtjW0_rZPX9CsDApXvMhySEUeErHDhkmuI_Bw8YtZGzy_YbnnGJxm4F5Etb8nk2aRG6KelEcfYtcdzSC6qdS76aHvCfjg7U"
+      },
+      "thumbnails": null,
+      "isAvailable": true,
+      "isExplicit": false,
+      "videoType": "MUSIC_VIDEO_TYPE_ATV",
+      "views": "18 plays",
+      "trackNumber": 1,
+      "duration": "2:56",
+      "duration_seconds": 176
+    },
+    {
+      "videoId": "T0VtwIKus7s",
+      "title": "Faith",
+      "artists": [
+        {
+          "name": "Jay Speaks",
+          "id": null
+        }
+      ],
+      "album": "Shape of You",
+      "likeStatus": "INDIFFERENT",
+      "inLibrary": false,
+      "pinnedToListenAgain": false,
+      "feedbackTokens": {
+        "add": "AB9zfpJuN_Xbq9AS9pmp_cv0b1-8VzwzNOtLMGpge4G8Fhd7Ar41oMiGNW4GwKQRoc8WEpHR5m4Oc8129Rawfds2GSAcKLYUgw",
+        "remove": "AB9zfpKg_gY2TH-LH-XGa2KKl8tx0ky67F6tU21mm3PQS_Mebt5jSk6QtyiGMp_skazqmxUdbgNAQP628qEJi1ZBe8rqOt6RRQ"
+      },
+      "listenAgainFeedbackTokens": {
+        "pin": "AB9zfpKHRCB00-iRJmM3prVanO2xGIu4lJJFbBncx6KJbb49yFkD6dcvkV_A-pHGapxPP6Tq-8maAe1G78uddAUangUOCWNa1r75_irnXg-ecgjC5SSzVok",
+        "unpin": "AB9zfpJ1cR-cCwc1kwINoM-RbrTdtdJQWc6FunM3jEBc2EqtkTuNR5Eu85jAmbv52AWOyliItq8z1z58wLF0ACJRJyDiJDETOo9umxFkJ-dubfuuJ2YBG9A"
+      },
+      "thumbnails": null,
+      "isAvailable": true,
+      "isExplicit": false,
+      "videoType": "MUSIC_VIDEO_TYPE_ATV",
+      "views": "1 play",
+      "trackNumber": 2,
+      "duration": "2:31",
+      "duration_seconds": 151
+    },
+    {
+      "videoId": "wHFypA4CCCI",
+      "title": "No Words Needed",
+      "artists": [
+        {
+          "name": "Jay Speaks",
+          "id": null
+        }
+      ],
+      "album": "Shape of You",
+      "likeStatus": "INDIFFERENT",
+      "inLibrary": false,
+      "pinnedToListenAgain": false,
+      "feedbackTokens": {
+        "add": "AB9zfpKcVXBes4yyPuO16-U-msScg8_7zq0mpVVEwgcl0OR9q_MO1VnqEekUl_XsX1qFXLIPg2M2XURnPKxO-V2ZZ8NTWNSN9g",
+        "remove": "AB9zfpKsXt_gGwW_ettg1JvBnogV5EGtiQUNwdWQ94xqYTeu0HIXENW18adgDvVdA6Kdg1m2WDmkA-uXnN7FeteVcsOg17XqPw"
+      },
+      "listenAgainFeedbackTokens": {
+        "pin": "AB9zfpJY171LBAG5Kha2IW4JvwQ47loo2bfV2XuJO-kk0JknwNNKl8KyjP5ZCqmSY2A6E-XMDQRpPtjMTf0u7lhbasUSdTY-Ud1_F-75l4KVkcz_tJz1K40",
+        "unpin": "AB9zfpIu1bopFSrHoqsA-ijwY20PNlz0lxYKxaDjz0j72rmLg0L_hcdGinZ6QijLiWblrTwrcz6WxhkruWgunbGnJC0iomZ0kod4I5YW39itSAHYoRkckkA"
+      },
+      "thumbnails": null,
+      "isAvailable": true,
+      "isExplicit": false,
+      "videoType": "MUSIC_VIDEO_TYPE_ATV",
+      "views": "1 play",
+      "trackNumber": 3,
+      "duration": "1:59",
+      "duration_seconds": 119
+    },
+    {
+      "videoId": "RRSYHl7BeuU",
+      "title": "Electric",
+      "artists": [
+        {
+          "name": "Jay Speaks",
+          "id": null
+        }
+      ],
+      "album": "Shape of You",
+      "likeStatus": "INDIFFERENT",
+      "inLibrary": false,
+      "pinnedToListenAgain": false,
+      "feedbackTokens": {
+        "add": "AB9zfpJ_TcphAtvknZ65sS9oUg94DX9C3GnQQ-gHg95chdiVeTejx_dV9wW4ic0qG_1n6HLyT7PBoQpYJMSo1U4dqUU-ZMELhg",
+        "remove": "AB9zfpIDijRaP7i35sE1EGX6VppmV8r5QIEZeV2p09OrrC_gZmn2lsdp_hMC8M6wvuco3jv884AyvAOkuKx2RNBJVXGLZ9pqLQ"
+      },
+      "listenAgainFeedbackTokens": {
+        "pin": "AB9zfpJgkrBy7NAXF31uKin46UxTBcv4-OzewZJTj-95ibfwUd4Z_9pZLRifhxPk5LF7dBYK2HYstCeN-5wjf6uPE5nvWrubeYMq7NofvmFIWApTzzAGE2c",
+        "unpin": "AB9zfpLRAmjO7tDv2sM4q-s6pKnMFXtwaVh4k95wuVRtdJ0-e7a_uBaj5bveBhk6l1UT8MwTGHmGKrlloo9lGNvPKGuOLELoy4he-pohJEhUWZkcu-aYgnE"
+      },
+      "thumbnails": null,
+      "isAvailable": true,
+      "isExplicit": false,
+      "videoType": "MUSIC_VIDEO_TYPE_ATV",
+      "views": "0 plays",
+      "trackNumber": 4,
+      "duration": "2:33",
+      "duration_seconds": 153
+    },
+    {
+      "videoId": "Mlu8wRGk78k",
+      "title": "Disrupted",
+      "artists": [
+        {
+          "name": "Jay Speaks",
+          "id": null
+        }
+      ],
+      "album": "Shape of You",
+      "likeStatus": "INDIFFERENT",
+      "inLibrary": false,
+      "pinnedToListenAgain": false,
+      "feedbackTokens": {
+        "add": "AB9zfpKUdNqiAo_mLJQXd2z-QT8WxRboDWq_yfAw0yKlWi0D6eL8q4xiXUfXIFJnBi-dv6-_i2eYZgM34LajN_AVZRQix_emzA",
+        "remove": "AB9zfpLRleee_jqRkefcOX_zR5AO6V2BvgQ7iZnl4lEujTsPdj2oxLsjbL1BKqzgpe2ZRvCxhVjWuf8hZiUm4YZivfk63heFyg"
+      },
+      "listenAgainFeedbackTokens": {
+        "pin": "AB9zfpJ84wHml81Iiz2ffy98TyvXOZl8AB2CEKP3Utq6DfhzLFixDKLxR62Q3WGy97BP9cS0En1sqRUxQKhzci2KO2aPX2KCgV2xrNhpw9SqBfNF07yir6w",
+        "unpin": "AB9zfpK8i_wM8rYzy4BaDU-HUSQBQnOcSuXpbMBBDUtEjLFKYZuv7MoZt6YPMXKrzUW8x-TufUIzT-ztkjNra43oPNt981OAVn0T1j9C1LgjNYRem1xT8Mo"
+      },
+      "thumbnails": null,
+      "isAvailable": true,
+      "isExplicit": false,
+      "videoType": "MUSIC_VIDEO_TYPE_ATV",
+      "views": "0 plays",
+      "trackNumber": 5,
+      "duration": "2:03",
+      "duration_seconds": 123
+    }
+  ],
+  "duration_seconds": 722
+}

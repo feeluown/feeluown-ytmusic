@@ -472,13 +472,25 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def song_get_web_url(self, song) -> str:
         return f"https://music.youtube.com/watch?v={song.identifier}"
 
+    @staticmethod
+    def _normalize_watch_playlist_track(track: dict) -> dict:
+        normalized = dict(track)
+        # get_watch_playlist uses `thumbnail`/`length`, while search-like models
+        # expect `thumbnails`/`duration`.
+        if "thumbnails" not in normalized and isinstance(normalized.get("thumbnail"), list):
+            normalized["thumbnails"] = normalized["thumbnail"]
+        if not normalized.get("duration") and normalized.get("length"):
+            normalized["duration"] = normalized["length"]
+        return normalized
+
     def song_get(self, identifier):
         # ytmusicapi has not api to get song detail.
         # hack(cosven): we use get_watch_playlist to try to get song detail.
         # It works for song like '如愿-王菲'.
         result = self.service.api.get_watch_playlist(identifier)
         songs = [
-            YtmusicWatchPlaylistSong(**track).v2_model() for track in result["tracks"]
+            YtmusicWatchPlaylistSong(**self._normalize_watch_playlist_track(track)).v2_model()
+            for track in result["tracks"]
         ]
         for song in songs:
             if song.identifier == identifier:
@@ -489,7 +501,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
     def song_list_similar(self, song):
         result = self.service.api.get_watch_playlist(song.identifier)
         songs = [
-            YtmusicWatchPlaylistSong(**track).v2_model()
+            YtmusicWatchPlaylistSong(**self._normalize_watch_playlist_track(track)).v2_model()
             for track in result["tracks"]
             if track["videoId"] != song.identifier
         ]
