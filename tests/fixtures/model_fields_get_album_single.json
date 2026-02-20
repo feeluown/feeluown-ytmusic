@@ -1,0 +1,324 @@
+{
+  "title": "Hello",
+  "type": "Single",
+  "thumbnails": [
+    {
+      "url": "https://lh3.googleusercontent.com/Z2dj8R0tovfB1M-0vR-VkpkVN-8Mvm77EYU7nbLpGJqgrn5BtcJBMAOQ8RYvU2KPSftGbtuQZ-Kchs0=w60-h60-l90-rj",
+      "width": 60,
+      "height": 60
+    },
+    {
+      "url": "https://lh3.googleusercontent.com/Z2dj8R0tovfB1M-0vR-VkpkVN-8Mvm77EYU7nbLpGJqgrn5BtcJBMAOQ8RYvU2KPSftGbtuQZ-Kchs0=w120-h120-l90-rj",
+      "width": 120,
+      "height": 120
+    },
+    {
+      "url": "https://lh3.googleusercontent.com/Z2dj8R0tovfB1M-0vR-VkpkVN-8Mvm77EYU7nbLpGJqgrn5BtcJBMAOQ8RYvU2KPSftGbtuQZ-Kchs0=w226-h226-l90-rj",
+      "width": 226,
+      "height": 226
+    },
+    {
+      "url": "https://lh3.googleusercontent.com/Z2dj8R0tovfB1M-0vR-VkpkVN-8Mvm77EYU7nbLpGJqgrn5BtcJBMAOQ8RYvU2KPSftGbtuQZ-Kchs0=w544-h544-l90-rj",
+      "width": 544,
+      "height": 544
+    }
+  ],
+  "isExplicit": false,
+  "description": null,
+  "year": "2015",
+  "artists": [
+    {
+      "name": "Adele",
+      "id": "UCRw0x9_EfawqmgDI2IgQLLg"
+    }
+  ],
+  "trackCount": 1,
+  "duration": "4 minutes, 56 seconds",
+  "audioPlaylistId": "OLAK5uy_kLtwm-FKrhwUhGf9eUT8tTKbj-kCEFdMI",
+  "likeStatus": "INDIFFERENT",
+  "tracks": [
+    {
+      "videoId": "YQHsXMglC9A",
+      "title": "Hello",
+      "artists": [
+        {
+          "name": "Adele",
+          "id": "UCRw0x9_EfawqmgDI2IgQLLg"
+        }
+      ],
+      "album": "Hello",
+      "likeStatus": "INDIFFERENT",
+      "inLibrary": false,
+      "pinnedToListenAgain": false,
+      "feedbackTokens": {
+        "add": "AB9zfpJgomnrg0SSFQ5ZulPIkT-nv4Z-bFmleIxclQWLvQbAEfvxPaE_MWwL0x3hhAXBnA5UOh6qxe2LIsp1aS8A0fRVywR5jA",
+        "remove": "AB9zfpKHzzf38gKVIrhzFoGdzj5u2D6TUcwCNIiVtDW_POO0u2Isrx27zqSZOrrsLUmq6bSRf3N_xPW_kJPZUThZTJUcR5LTow"
+      },
+      "listenAgainFeedbackTokens": {
+        "pin": "AB9zfpJEUPJGZZa6pJPvWFbQV66pEuRk0l3C6mn5lpQ3WjZgNJLU-QyHetHe8JHYf0e9ubnkTWaWmZQSsBK23aszpU-mg4VRIUp1N5Mu_E98kks0FYy0XxA",
+        "unpin": "AB9zfpKrpjGHsTeTFTKaiqv4heC0P4S3upJTUa7SCJYZ9-F2eBc-7-0Jy0UtDXI76zCDTfDlwTSFJIRXnsnumcEMGMCqEDOrBJu338TI8Ze-mn0ABkARYAc"
+      },
+      "thumbnails": null,
+      "isAvailable": true,
+      "isExplicit": false,
+      "videoType": "MUSIC_VIDEO_TYPE_OMV",
+      "views": "3.5B plays",
+      "trackNumber": 1,
+      "duration": "4:56",
+      "duration_seconds": 296
+    }
+  ],
+  "related_recommendations": [
+    {
+      "title": "Twenty Twenty",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCAghI5xbYodvPr6cr4byXqg",
+          "name": "Ronan Keating"
+        }
+      ],
+      "browseId": "MPREb_peArX3ZTioT",
+      "audioPlaylistId": "OLAK5uy_knk4THJex0eu3lQLRQPL-SGxkkoboc-sI",
+      "thumbnails": [
+        {
+          "url": "https://lh3.googleusercontent.com/bbbpk1kCT5yFvDxsWtorxP_jcg8Zo0A9ctMM_0yXJUmg-5FcIn0xJFME7tpXwWFqovTLYIKCv3YqnK5pfg=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://lh3.googleusercontent.com/bbbpk1kCT5yFvDxsWtorxP_jcg8Zo0A9ctMM_0yXJUmg-5FcIn0xJFME7tpXwWFqovTLYIKCv3YqnK5pfg=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "Innocent Eyes",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCR5cuBNHX86pIwNEFwziGLw",
+          "name": "Delta Goodrem"
+        }
+      ],
+      "browseId": "MPREb_57Ohx0eZFVi",
+      "audioPlaylistId": "OLAK5uy_kyw5dDYkzR5ZHtC2k5TRIvjB5jibCNfaM",
+      "thumbnails": [
+        {
+          "url": "https://yt3.googleusercontent.com/fqm07I8Aq1V5BP49m7J0RC7JwOretDBl4BHC8zYAoMrK1ggfJEbgvLHs08GLmJ-iWvnFsy6i6Jsze-5Nkw=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://yt3.googleusercontent.com/fqm07I8Aq1V5BP49m7J0RC7JwOretDBl4BHC8zYAoMrK1ggfJEbgvLHs08GLmJ-iWvnFsy6i6Jsze-5Nkw=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "The Script",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCFGwp4FHyvU1pJv9w6Jcx8w",
+          "name": "The Script"
+        }
+      ],
+      "browseId": "MPREb_LG1hbu39Luk",
+      "audioPlaylistId": "OLAK5uy_mOOQVhYUX0FYRgYzzIPKOUaDplQz78Qnk",
+      "thumbnails": [
+        {
+          "url": "https://yt3.googleusercontent.com/fJjnh-uZsGYSZSyyNaU7Ga4ATl2lMsaCYaWItgyroCiBcQxK444ZVZLuzgOFZAJFVkmXr4UcfQrIc4W3zw=w226-h226-s-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://yt3.googleusercontent.com/fJjnh-uZsGYSZSyyNaU7Ga4ATl2lMsaCYaWItgyroCiBcQxK444ZVZLuzgOFZAJFVkmXr4UcfQrIc4W3zw=w544-h544-s-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": true
+    },
+    {
+      "title": "The Awakening",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCFTEZcsMSOzX6tZOGwkS-xw",
+          "name": "James Morrison"
+        }
+      ],
+      "browseId": "MPREb_4J5Eyyp45Np",
+      "audioPlaylistId": "OLAK5uy_mMXh1hEphviPdSBiF4ARX2hfrD6bJjLUA",
+      "thumbnails": [
+        {
+          "url": "https://yt3.googleusercontent.com/KS9W1vlc3th3SkeatfYMzJDUrGCdGiUZL-ayqbHHRwpEPPpRhvkcLZsjWyV97jXoKaVd3X4gL_qA1C0s=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://yt3.googleusercontent.com/KS9W1vlc3th3SkeatfYMzJDUrGCdGiUZL-ayqbHHRwpEPPpRhvkcLZsjWyV97jXoKaVd3X4gL_qA1C0s=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "Moon Landing (Special Apollo Edition)",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCCEzq-Gv6gU-bdM82rtZN4g",
+          "name": "James Blunt"
+        }
+      ],
+      "browseId": "MPREb_saFfsTEZJeK",
+      "audioPlaylistId": "OLAK5uy_kXLlwPaUAWGjn_ctMroxHJOBlVSzmRfXI",
+      "thumbnails": [
+        {
+          "url": "https://lh3.googleusercontent.com/UjiwIGuRypTX8aQutyZoj2t9NTQ5P8IhLQAdTydqXWKYC7AB1t0doKvMEnMbr02NUQKklWdR29FVqfBt2A=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://lh3.googleusercontent.com/UjiwIGuRypTX8aQutyZoj2t9NTQ5P8IhLQAdTydqXWKYC7AB1t0doKvMEnMbr02NUQKklWdR29FVqfBt2A=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "I Hope You Don't Mind Me Writing",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCBvVntOy1TH-T9hY4ii_RIA",
+          "name": "Lucy Spraggan"
+        }
+      ],
+      "browseId": "MPREb_uINB9J1PdYj",
+      "audioPlaylistId": "OLAK5uy_kQgj8qrrGMedoRqI0Wk8PVuABgtuJFrf4",
+      "thumbnails": [
+        {
+          "url": "https://lh3.googleusercontent.com/X1jDVeolJCpOpaMQ7SBS2mPHaFRYaOr-gXPI2HebUGj0gza88OMA6-RK2CLKvj3kVW-StenpQW0Pn_U=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://lh3.googleusercontent.com/X1jDVeolJCpOpaMQ7SBS2mPHaFRYaOr-gXPI2HebUGj0gza88OMA6-RK2CLKvj3kVW-StenpQW0Pn_U=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "Onward and Sideways",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UC1iwyfFGe60tleg8d3-mA5A",
+          "name": "Joshua Radin"
+        }
+      ],
+      "browseId": "MPREb_e2a9dDuOI9s",
+      "audioPlaylistId": "OLAK5uy_mQ69Sfxos1tKhASByJjhWvBzZy_yKsYow",
+      "thumbnails": [
+        {
+          "url": "https://lh3.googleusercontent.com/VV6ad0RkgnIgOny365kQdrCwl6-Ih5CAyZAQmHv2Dv-KBlziUkkVlaJU08ctUwOa5bpwUrE_nQtk0XOt=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://lh3.googleusercontent.com/VV6ad0RkgnIgOny365kQdrCwl6-Ih5CAyZAQmHv2Dv-KBlziUkkVlaJU08ctUwOa5bpwUrE_nQtk0XOt=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "Patchwork",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCc8dIcu6C_9TcVoM--vYxYQ",
+          "name": "Passenger"
+        }
+      ],
+      "browseId": "MPREb_O4sCckAAmdZ",
+      "audioPlaylistId": "OLAK5uy_lDDqILpObOc6B7vHrmojTf_PtC2-z2rTY",
+      "thumbnails": [
+        {
+          "url": "https://lh3.googleusercontent.com/Flzp-G7E5pa8cQJggZiIX0WgNPF1HkWZLchIH3AZYuP2Qx7ylm9gGLMkk5W2MX4w_lVxIzJqxdrOcPw=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://lh3.googleusercontent.com/Flzp-G7E5pa8cQJggZiIX0WgNPF1HkWZLchIH3AZYuP2Qx7ylm9gGLMkk5W2MX4w_lVxIzJqxdrOcPw=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "Cedar + Gold",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCOyySlv9w60cGodb9Kk9N3Q",
+          "name": "Tristan Prettyman"
+        }
+      ],
+      "browseId": "MPREb_AwtaOcn7veq",
+      "audioPlaylistId": "OLAK5uy_nhkyEVzZerXXkF9Cg3pfS0ieRKRRwNr00",
+      "thumbnails": [
+        {
+          "url": "https://lh3.googleusercontent.com/tD_StPAhOGMahHpFlNoahJ2Jtn-JmXARBFFNB4Q1XCpUZaC42sBbsgSVLBzs4vup35dpGXduxxrKEJWs=w226-h226-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://lh3.googleusercontent.com/tD_StPAhOGMahHpFlNoahJ2Jtn-JmXARBFFNB4Q1XCpUZaC42sBbsgSVLBzs4vup35dpGXduxxrKEJWs=w544-h544-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    },
+    {
+      "title": "Qui Je Suis",
+      "type": "Album",
+      "artists": [
+        {
+          "id": "UCmeml3AT2Jz-wOBxOGkIYQw",
+          "name": "Myriam Abel"
+        }
+      ],
+      "browseId": "MPREb_Wl05jgsVxaz",
+      "audioPlaylistId": "OLAK5uy_kU4hJYEcBKOlGr62wSnHO4LT8VxBQYMz0",
+      "thumbnails": [
+        {
+          "url": "https://lh3.googleusercontent.com/YpvUrx7Hf1FaGV1dYHIfb5z8Ic5geteKS6z1XedZH3RY-wjIaQh2H0f7-rGws4eFdD2mpj5qBqEAhbdd=w226-h226-s-l90-rj",
+          "width": 226,
+          "height": 226
+        },
+        {
+          "url": "https://lh3.googleusercontent.com/YpvUrx7Hf1FaGV1dYHIfb5z8Ic5geteKS6z1XedZH3RY-wjIaQh2H0f7-rGws4eFdD2mpj5qBqEAhbdd=w544-h544-s-l90-rj",
+          "width": 544,
+          "height": 544
+        }
+      ],
+      "isExplicit": false
+    }
+  ],
+  "duration_seconds": 296
+}

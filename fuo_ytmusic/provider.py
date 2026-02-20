@@ -431,12 +431,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         if cookiefile_path:
             ytdl_opts["cookiefile"] = cookiefile_path
 
-        debug_opts = dict(ytdl_opts)
-        debug_opts.pop("logger", None)
-        print(f"song_get_media yt-dlp options for {song.identifier}: {debug_opts}")
-
         url = self.song_get_web_url(song)
-        print(f"song_get_media source url for {song.identifier}: {url}")
         with _NoCookieSaveYoutubeDL(ytdl_opts) as inner:
             info = inner.extract_info(url, download=False)
         media_url = info.get("url")
@@ -477,9 +472,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         # hack(cosven): we use get_watch_playlist to try to get song detail.
         # It works for song like '如愿-王菲'.
         result = self.service.api.get_watch_playlist(identifier)
-        songs = [
-            YtmusicWatchPlaylistSong(**track).v2_model() for track in result["tracks"]
-        ]
+        songs = [YtmusicWatchPlaylistSong(**track).v2_model() for track in result["tracks"]]
         for song in songs:
             if song.identifier == identifier:
                 return song

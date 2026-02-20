@@ -132,6 +132,23 @@ class YtmusicDurationMixin:
         return int(timeparse(self.duration) * 1000)
 
 
+def _parse_album_type(raw_type) -> AlbumType:
+    text = str(raw_type or "").strip().lower()
+    if not text:
+        return AlbumType.standard
+    if "single" in text or "单曲" in text:
+        return AlbumType.single
+    if text == "ep" or re.search(r"\bep\b", text):
+        return AlbumType.ep
+    if "live" in text:
+        return AlbumType.live
+    if "compilation" in text:
+        return AlbumType.compilation
+    if "retrospective" in text:
+        return AlbumType.retrospective
+    return AlbumType.standard
+
+
 class YtmusicAlbumSong(BaseModel, YtmusicArtistsMixin, YtmusicDurationMixin):
     title: str
     album: str
@@ -144,7 +161,7 @@ class YtmusicAlbumSong(BaseModel, YtmusicArtistsMixin, YtmusicDurationMixin):
             title=self.title,
             artists_name=self.artists_name,
             album_name=self.album,
-            duration_ms=self.duration,
+            duration_ms=self.duration or "",
         )
 
     def v2_model_with_brief_album(self, album: BriefAlbumModel) -> SongModelV2:
@@ -192,7 +209,7 @@ class YtmusicSearchSong(
             title=self.title,
             artists_name=self.artists_name,
             album_name=self.album.name if self.album else "",
-            duration_ms=self.duration,
+            duration_ms=self.duration or "",
         )
         if not song.identifier:
             song.state = ModelState.not_exists
@@ -219,9 +236,17 @@ class YtmusicSearchSong(
 
 class YtmusicWatchPlaylistSong(YtmusicSearchSong):
     year: str  # This field exists in get_watch_playlist API.
+    length: str  # watch playlist uses `length` instead of `duration`.
+    watch_thumbnail: List[SearchNestedThumbnail] = Field(
+        default_factory=list, alias="thumbnail"
+    )  # watch playlist uses singular key.
 
     def v2_model(self) -> SongModelV2:
         song = super().v2_model()
+        if song.duration <= 0 and self.length:
+            song.duration = int(timeparse(self.length) * 1000)
+        if not song.pic_url and self.watch_thumbnail:
+            song.pic_url = self.watch_thumbnail[-1].url or ""
         song.date = self.year or ""
         return song
 
@@ -261,7 +286,7 @@ class YtmusicHomeSong(BaseModel, YtmusicCoverMixin, YtmusicArtistsMixin, Ytmusic
             title=self.title,
             artists_name=self.artists_name,
             album_name=self.album.name if self.album else "",
-            duration_ms=self.duration,
+            duration_ms=self.duration or "",
         )
         if not song.identifier:
             song.state = ModelState.not_exists
@@ -277,9 +302,7 @@ class YtmusicSearchAlbum(YtmusicSearchBase, YtmusicCoverMixin, YtmusicArtistsMix
 
     @property
     def album_type(self) -> AlbumType:
-        if self.type == "Single":
-            return AlbumType.single
-        return AlbumType.standard
+        return _parse_album_type(self.type)
 
     def v2_brief_model(self) -> BriefAlbumModel:
         return BriefAlbumModel(
@@ -334,9 +357,12 @@ class YtmusicSearchVideo(
             identifier=self.videoId,
             source=self.source,
             title=self.title,
-            cover=self.cover,
+            cover=self.cover or "",
             artists=self.v2_brief_artist_models(),
             duration=self.duration_ms,
+            # YTMusic list APIs expose localized text views (e.g. 2.8B/28亿次观看),
+            # which is not stable enough for reliable numeric parsing.
+            play_count=-1,
         )
 
 
@@ -406,8 +432,14 @@ class ArtistInfo(BaseModel):
             name=self.name,
             pic_url=(self.thumbnails[0].url if self.thumbnails else ""),
             aliases=[],
-            hot_songs=[],
+            hot_songs=[
+                song.v2_brief_model()
+                for song in (self.songs.results if self.songs else []) or []
+            ],
             description=self.description or "",
+            song_count=-1,
+            album_count=-1,
+            mv_count=-1,
         )
 
 
@@ -422,6 +454,10 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
     # ytmusicapi.get_album has this field. Not sure if other api has this field.
     description: str = ""
 
+    @property
+    def album_type(self) -> AlbumType:
+        return _parse_album_type(self.type)
+
     def v2_model_with_identifier(self, identifier) -> AlbumModelV2:
         brief_album = BriefAlbumModel(
             identifier=identifier,
@@ -434,7 +470,9 @@ class AlbumInfo(BaseModel, YtmusicArtistsMixin, YtmusicCoverMixin):
             source=self.source,
             name=self.title,
             cover=self.cover,
+            type_=self.album_type,
             songs=[t.v2_model_with_brief_album(brief_album) for t in self.tracks],
+            song_count=self.trackCount if self.trackCount is not None else -1,
             artists=self.v2_brief_artist_models(),
             description=self.description or "",  # description may be None
             released=self.year or "",  # year may be None
