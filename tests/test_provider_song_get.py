@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from fuo_ytmusic.provider import YtmusicProvider
 
 
-def test_song_get_normalizes_watch_playlist_cover_and_duration():
+def test_song_get_handles_watch_playlist_thumbnail_and_length_fields():
     song_id = "vid-1"
     expected_pic_url = "https://example.com/song-544.jpg"
 
@@ -41,10 +41,6 @@ def test_song_get_normalizes_watch_playlist_cover_and_duration():
     class _ServiceStub:
         api = _ApiStub()
 
-        @staticmethod
-        def song_info(_identifier):
-            raise AssertionError("song_info fallback should not be used")
-
     provider = YtmusicProvider()
     provider.service = _ServiceStub()
 
@@ -55,7 +51,7 @@ def test_song_get_normalizes_watch_playlist_cover_and_duration():
     assert song.duration > 0
 
 
-def test_song_list_similar_reuses_watch_playlist_normalization():
+def test_song_list_similar_handles_watch_playlist_thumbnail_and_length_fields():
     seed_song_id = "seed-song"
 
     class _ApiStub:

@@ -236,9 +236,17 @@ class YtmusicSearchSong(
 
 class YtmusicWatchPlaylistSong(YtmusicSearchSong):
     year: str  # This field exists in get_watch_playlist API.
+    length: str  # watch playlist uses `length` instead of `duration`.
+    watch_thumbnail: List[SearchNestedThumbnail] = Field(
+        default_factory=list, alias="thumbnail"
+    )  # watch playlist uses singular key.
 
     def v2_model(self) -> SongModelV2:
         song = super().v2_model()
+        if song.duration <= 0 and self.length:
+            song.duration = int(timeparse(self.length) * 1000)
+        if not song.pic_url and self.watch_thumbnail:
+            song.pic_url = self.watch_thumbnail[-1].url or ""
         song.date = self.year or ""
         return song
 
@@ -418,18 +426,6 @@ class ArtistInfo(BaseModel):
         # Note that the channelId is different from the identifier.
         # Though the channelId also refers to the artist,
         # it's songs is a empty list.
-        album_count = -1
-        if self.albums and self.albums.browseId is None:
-            album_count = len(self.albums.results or [])
-
-        song_count = -1
-        if self.songs and self.songs.browseId is None:
-            song_count = len(self.songs.results or [])
-
-        mv_count = -1
-        if self.videos and self.videos.browseId is None:
-            mv_count = len(self.videos.results or [])
-
         return ArtistModelV2(
             identifier=identifier,
             source=self.source,
@@ -441,9 +437,9 @@ class ArtistInfo(BaseModel):
                 for song in (self.songs.results if self.songs else []) or []
             ],
             description=self.description or "",
-            song_count=song_count,
-            album_count=album_count,
-            mv_count=mv_count,
+            song_count=-1,
+            album_count=-1,
+            mv_count=-1,
         )
 
 
@@ -524,12 +520,6 @@ class SongInfo(BaseModel):
 
     videoDetails: VideoDetails
     streamingData: StreamingData
-
-    def get_pic_url(self) -> str:
-        thumbnails = self.videoDetails.thumbnail if self.videoDetails else None
-        if thumbnails is None:
-            return ""
-        return thumbnails.cover or ""
 
     def list_formats(self) -> List[Quality.Audio]:
         qualities = set()

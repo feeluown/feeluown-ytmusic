@@ -49,7 +49,9 @@ def test_artist_info_v2_model_sets_hot_songs():
 
     assert len(model.hot_songs) == len(data["songs"]["results"])
     assert model.hot_songs[0].identifier
-    assert model.album_count == len(data["albums"]["results"])
+    assert model.song_count == -1
+    assert model.album_count == -1
+    assert model.mv_count == -1
 
 
 def test_song_info_supports_audio_quality_and_media_mapping():
@@ -68,10 +70,3 @@ def test_song_info_supports_audio_quality_and_media_mapping():
     if Quality.Audio.sq in audio_qualities:
         sq_itag, _, _ = song.get_media(Quality.Audio.sq)
         assert sq_itag is not None
-
-
-def test_song_info_extracts_pic_url_from_video_details():
-    data = _load_fixture("model_fields_get_song_xqoantj5pny.json")
-    song = SongInfo(**data)
-
-    assert song.get_pic_url() == data["videoDetails"]["thumbnail"]["thumbnails"][-1]["url"]
