@@ -1,6 +1,11 @@
+import json
+from pathlib import Path
+
 from feeluown.library import BriefSongModel, CollectionType
 
 from fuo_ytmusic.provider import YtmusicProvider
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 def _build_provider_with_home_sections(sections, expected_limit=None):
@@ -14,6 +19,24 @@ def _build_provider_with_home_sections(sections, expected_limit=None):
 
     provider.service = _ServiceStub()
     return provider
+
+
+def _load_fixture(name):
+    return json.loads((FIXTURES_DIR / name).read_text(encoding="utf-8"))
+
+
+def test_rec_list_collections_from_real_get_home_fixture():
+    sections = _load_fixture("get_home.json")
+    provider = _build_provider_with_home_sections(sections, expected_limit=8)
+
+    collections = provider.rec_list_collections(limit=8)
+
+    assert collections
+    types = {c.type_ for c in collections}
+    assert CollectionType.only_songs in types
+    assert CollectionType.only_playlists in types
+    assert CollectionType.only_albums in types
+    assert CollectionType.only_videos in types
 
 
 def test_rec_list_daily_songs_extracts_and_deduplicates():
