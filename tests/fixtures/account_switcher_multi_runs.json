@@ -1,0 +1,93 @@
+{
+  "responseContext": {
+    "mainAppWebResponseContext": {
+      "datasyncId": "GAIA_ACTIVE||GAIA_BACKUP",
+      "loggedOut": false
+    }
+  },
+  "actions": [
+    {
+      "openPopupAction": {
+        "popup": {
+          "channelSwitcherRenderer": {
+            "sections": [
+              {
+                "accountItemSectionRenderer": {
+                  "contents": [
+                    {
+                      "accountItem": {
+                        "accountName": {
+                          "runs": [
+                            {
+                              "text": "Cosven"
+                            },
+                            {
+                              "text": " Yin"
+                            }
+                          ]
+                        },
+                        "channelHandle": {
+                          "runs": [
+                            {
+                              "text": "@cosven"
+                            },
+                            {
+                              "text": "_yin"
+                            }
+                          ]
+                        },
+                        "accountPhoto": {
+                          "thumbnails": [
+                            {
+                              "url": "https://example.com/avatar_active.jpg"
+                            }
+                          ]
+                        },
+                        "isSelected": true,
+                        "hasChannel": true,
+                        "serviceEndpoint": {
+                          "selectActiveIdentityEndpoint": {
+                            "supportedTokens": [
+                              {
+                                "accountStateToken": {
+                                  "obfuscatedGaiaId": "GAIA_ACTIVE"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "accountItem": {
+                        "accountName": {
+                          "simpleText": "Backup User"
+                        },
+                        "channelHandle": {
+                          "simpleText": "@backup"
+                        },
+                        "isSelected": false,
+                        "hasChannel": true,
+                        "serviceEndpoint": {
+                          "selectActiveIdentityEndpoint": {
+                            "supportedTokens": [
+                              {
+                                "accountStateToken": {
+                                  "obfuscatedGaiaId": "GAIA_BACKUP"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

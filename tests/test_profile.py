@@ -3,7 +3,6 @@ from pathlib import Path
 
 from fuo_ytmusic.profile import YtmusicProfileManager
 
-
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
@@ -44,6 +43,18 @@ def test_list_profiles_filters_missing_handle(monkeypatch):
     assert all(name for name in names)
     selected = [p for p in profiles if p["isSelected"]]
     assert len(selected) == 1
+
+
+def test_list_profiles_keeps_full_text_from_multi_runs(monkeypatch):
+    switcher = load_fixture("account_switcher_multi_runs.json")
+    service = DummyService()
+    manager = YtmusicProfileManager(service)
+    monkeypatch.setattr(manager, "_get_account_switcher", lambda: switcher)
+
+    profiles = manager.list_profiles()
+    assert len(profiles) == 2
+    assert profiles[0]["accountName"] == "Cosven Yin"
+    assert profiles[0]["channelHandle"] == "@cosven_yin"
 
 
 def test_get_current_account_info_uses_menu_channel(monkeypatch):
