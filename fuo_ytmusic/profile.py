@@ -268,9 +268,9 @@ class YtmusicProfileManager:
         if isinstance(value, dict):
             runs = value.get("runs")
             if isinstance(runs, list) and runs:
-                # NOTE: YTM sometimes returns multiple runs; we intentionally
-                # take the first to avoid unexpected formatting (may truncate).
-                text = runs[0].get("text")
+                text = "".join(
+                    run.get("text", "") for run in runs if isinstance(run, dict)
+                ).strip()
                 if text:
                     return text
             simple_text = value.get("simpleText")
