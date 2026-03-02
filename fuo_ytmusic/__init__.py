@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from feeluown.app import App
 
 __alias__ = "ytmusic"
-__version__ = "0.4.16"
+__version__ = "0.4.17"
 __desc__ = "YouTube Music plugin"
 
 

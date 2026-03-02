@@ -38,6 +38,16 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.17 (2026-03-02)
+  - Add translation support for login and account switch UI text
+  - Enrich model fields with additional data
+  - Support image media conversion for cover proxy
+  - Add ytmusic toplist support
+  - Support sectioned recommendation collections
+  - Support ytmusic daily recommendations
+  - Improve test coverage with real get_home fixture
+  - Move watch playlist normalization into model
+  - Refine song/watch mapping and model fixtures
 - v0.4.16 (2026-02-12)
   - Support daily recommendation feed (songs/playlists)
   - Refactor home recommendation song model to avoid search-song coupling
