@@ -54,6 +54,13 @@ def test_artist_info_v2_model_sets_hot_songs():
     assert model.mv_count == -1
 
 
+def test_artist_info_v2_model_prefers_highest_resolution_thumbnail():
+    data = _load_fixture("model_fields_get_artist.json")
+    model = ArtistInfo(**data).v2_model("fixture-artist")
+
+    assert model.pic_url == data["thumbnails"][-1]["url"]
+
+
 def test_song_info_supports_audio_quality_and_media_mapping():
     data = _load_fixture("model_fields_get_song.json")
     song = SongInfo(**data)

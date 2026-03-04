@@ -261,7 +261,9 @@ class YtmusicHistorySong(YtmusicLibrarySong):
     played: str  # 上次播放 eg November 2021
 
 
-class YtmusicHomeSong(BaseModel, YtmusicCoverMixin, YtmusicArtistsMixin, YtmusicDurationMixin):
+class YtmusicHomeSong(
+    BaseModel, YtmusicCoverMixin, YtmusicArtistsMixin, YtmusicDurationMixin
+):
     """Home feed song item.
 
     Keep this model independent from YtmusicSearchSong:
@@ -430,7 +432,7 @@ class ArtistInfo(BaseModel):
             identifier=identifier,
             source=self.source,
             name=self.name,
-            pic_url=(self.thumbnails[0].url if self.thumbnails else ""),
+            pic_url=(self.thumbnails[-1].url if self.thumbnails else ""),
             aliases=[],
             hot_songs=[
                 song.v2_brief_model()
