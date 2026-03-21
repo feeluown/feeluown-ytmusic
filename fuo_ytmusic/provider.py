@@ -37,6 +37,7 @@ from fuo_ytmusic.models import (
     YtmusicWatchPlaylistSong,
 )
 from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicType
+from .i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +142,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     @property
     def name(self):
-        return self.meta.name
+        return t('provider-name')
 
     def auto_login(self):
         if HEADER_FILE.exists():
