@@ -37,7 +37,7 @@ default-groups = ["dev"]
 packages = ["fuo_ytmusic"]
 
 [tool.setuptools.package-data]
-fuo_ytmusic = ["assets/*.svg", "qml/*.qml", "qml/dummydata/*"]
+fuo_ytmusic = ["assets/*.svg", "qml/*.qml", "qml/dummydata/*", "locales/**/*.ftl"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

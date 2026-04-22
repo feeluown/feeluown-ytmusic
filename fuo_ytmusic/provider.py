@@ -25,13 +25,14 @@ from feeluown.utils.dispatch import Signal
 from yt_dlp import DownloadError, YoutubeDL
 from yt_dlp.version import __version__ as YTDLP_VERSION
 
-from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.consts import HEADER_FILE, domain
 from fuo_ytmusic.headerfile import (
     YtdlpCookiefileManager,
     get_profile_gaia_id,
     update_profile_gaia_id,
 )
 from fuo_ytmusic.home_recommendation import YtmusicHomeRecommendationBuilder
+from fuo_ytmusic.locales import t
 from fuo_ytmusic.models import (
     Categories,
     YtmusicWatchPlaylistSong,
@@ -118,7 +119,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             return ""
         if not self._should_use_ytdlp_cookiefile():
             return ""
-        headerfile_path = getattr(self.service.api, "headerfile_path", None) or HEADER_FILE
+        headerfile_path = (
+            getattr(self.service.api, "headerfile_path", None) or HEADER_FILE
+        )
         cookiefile_path = YtdlpCookiefileManager(headerfile_path).cookiefile_path
         return "" if cookiefile_path is None else str(cookiefile_path)
 
@@ -141,7 +144,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     @property
     def name(self):
-        return self.meta.name
+        return t('provider-name', domain=domain)
 
     def auto_login(self):
         if HEADER_FILE.exists():
@@ -454,7 +457,8 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         except DownloadError as e:
             logger.warning("yt-dlp extract info failed for %s: %s", song.identifier, e)
             raise ProviderIOError(
-                "failed to resolve media url; your YouTube cookies may be expired, please re-export ytmusic_header.json",
+                "failed to resolve media url; your YouTube cookies may be expired, "
+                "please re-export ytmusic_header.json",
                 provider=self,
             )
         if media is not None:
@@ -472,7 +476,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         # hack(cosven): we use get_watch_playlist to try to get song detail.
         # It works for song like '如愿-王菲'.
         result = self.service.api.get_watch_playlist(identifier)
-        songs = [YtmusicWatchPlaylistSong(**track).v2_model() for track in result["tracks"]]
+        songs = [
+            YtmusicWatchPlaylistSong(**track).v2_model() for track in result["tracks"]
+        ]
         for song in songs:
             if song.identifier == identifier:
                 return song

@@ -2,10 +2,10 @@ import json
 
 from fuo_ytmusic.headerfile import (
     PROFILE_GAIA_KEY,
+    YtdlpCookiefileManager,
     read_headerfile,
     update_profile_gaia_id,
     write_ytdlp_cookiefile,
-    YtdlpCookiefileManager,
 )
 
 
