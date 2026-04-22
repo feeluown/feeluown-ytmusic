@@ -27,7 +27,6 @@ def init_config(config):
 
 
 def enable(app: "App"):
-    global ui_mgr
 
     from pathlib import Path
 
@@ -38,7 +37,9 @@ def enable(app: "App"):
 
     locales_dir = Path(__file__).parent / "locales"
     resource_ids = ["provider.ftl"]
-    register_plugin_i18n(domain=domain, locales_dir=locales_dir, resource_ids=resource_ids)
+    register_plugin_i18n(
+        domain=domain, locales_dir=locales_dir, resource_ids=resource_ids
+    )
 
     # Use system http proxy by default.
     sys_proxies = getproxies()
