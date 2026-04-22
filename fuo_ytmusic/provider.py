@@ -25,19 +25,19 @@ from feeluown.utils.dispatch import Signal
 from yt_dlp import DownloadError, YoutubeDL
 from yt_dlp.version import __version__ as YTDLP_VERSION
 
-from fuo_ytmusic.consts import HEADER_FILE
+from fuo_ytmusic.consts import HEADER_FILE, domain
 from fuo_ytmusic.headerfile import (
     YtdlpCookiefileManager,
     get_profile_gaia_id,
     update_profile_gaia_id,
 )
 from fuo_ytmusic.home_recommendation import YtmusicHomeRecommendationBuilder
+from fuo_ytmusic.locales import t
 from fuo_ytmusic.models import (
     Categories,
     YtmusicWatchPlaylistSong,
 )
 from fuo_ytmusic.service import YtmusicPrivacyStatus, YtmusicService, YtmusicType
-from .i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
 
     @property
     def name(self):
-        return t('provider-name')
+        return t('provider-name', domain=domain)
 
     def auto_login(self):
         if HEADER_FILE.exists():

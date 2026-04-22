@@ -1,11 +1,13 @@
 from pathlib import Path
-from fluent.runtime import FluentLocalization, FluentResourceLoader
+
 from feeluown.i18n import _DEFAULT_LOCALE
+from fluent.runtime import FluentLocalization, FluentResourceLoader
 
 _DIR = Path(__file__).parent
 _l10n = None
 
-def t(msg_id: str, **kwargs) -> str:
+
+def t(msg_id: str, domain: str = None, **kwargs) -> str:
     global _l10n
     if _l10n is None:
         loader = FluentResourceLoader(roots=[str(_DIR / "{locale}")])
