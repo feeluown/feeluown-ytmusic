@@ -1,7 +1,7 @@
 from pathlib import Path
-
-HEADER_FILE = Path.home() / ".FeelUOwn" / "data" / "ytmusic_header.json"
+from feeluown.consts import DATA_DIR
 domain = "ytmusic"
+HEADER_FILE = Path(DATA_DIR) / "ytmusic_header.json"
 REQUIRED_COOKIE_FIELDS = [
     "HSID",
     "SSID",
