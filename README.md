@@ -38,6 +38,10 @@ Please make sure to compatible with [FeelUOwn](https://github.com/feeluown/FeelU
 - [ ] Discovering page
 
 ## Changelog
+- v0.4.18 (2026-06-24)
+  - Add ytmusic song lyrics support
+  - Convert timestamped lyrics to FeelUOwn-readable LRC
+  - Use anonymous YTMusic lyrics requests to avoid authenticated timestamped lyric failures
 - v0.4.17 (2026-03-02)
   - Add translation support for login and account switch UI text
   - Enrich model fields with additional data
