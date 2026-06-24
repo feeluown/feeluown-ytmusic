@@ -123,6 +123,8 @@ class TestService:
         self.service._api = auth_api
         self.service._anonymous_lyrics_api = anonymous_api
 
+        # Regression: authenticated/headerfile clients returned HTTP 400 for
+        # timestamped lyrics in manual testing, so lyrics must bypass self._api.
         assert self.service.song_lyrics("video-id") == "[00:01.00]anonymous line"
         assert auth_api.lyrics_requested is False
         assert anonymous_api.lyrics_requested is True

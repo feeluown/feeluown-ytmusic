@@ -289,6 +289,9 @@ class YtmusicService(metaclass=Singleton):
         if self._anonymous_lyrics_api is None:
             with self._anonymous_lyrics_api_lock:
                 if self._anonymous_lyrics_api is None:
+                    # Headerfile-authenticated clients can get HTTP 400 when
+                    # requesting timestamped lyrics, while anonymous requests
+                    # for the same lyrics browse id succeed.
                     session = requests.Session()
                     session.hooks["response"].append(self._do_logging)
                     session.proxies = dict(self._session.proxies)
