@@ -10,6 +10,7 @@ from feeluown.library import (
     BriefVideoModel,
     Collection,
     CollectionType,
+    LyricModel,
     ModelNotFound,
     PlaylistModel,
     ProviderV2,
@@ -118,7 +119,9 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
             return ""
         if not self._should_use_ytdlp_cookiefile():
             return ""
-        headerfile_path = getattr(self.service.api, "headerfile_path", None) or HEADER_FILE
+        headerfile_path = (
+            getattr(self.service.api, "headerfile_path", None) or HEADER_FILE
+        )
         cookiefile_path = YtdlpCookiefileManager(headerfile_path).cookiefile_path
         return "" if cookiefile_path is None else str(cookiefile_path)
 
@@ -472,12 +475,28 @@ class YtmusicProvider(AbstractProvider, ProviderV2):
         # hack(cosven): we use get_watch_playlist to try to get song detail.
         # It works for song like '如愿-王菲'.
         result = self.service.api.get_watch_playlist(identifier)
-        songs = [YtmusicWatchPlaylistSong(**track).v2_model() for track in result["tracks"]]
+        songs = [
+            YtmusicWatchPlaylistSong(**track).v2_model() for track in result["tracks"]
+        ]
         for song in songs:
             if song.identifier == identifier:
                 return song
         # I think this branch should not be reached (in most cases).
         return ModelNotFound(f"song:{identifier} not found")
+
+    def song_get_lyric(self, song: BriefSongProtocol) -> Optional[LyricModel]:
+        try:
+            content = self.service.song_lyrics(song.identifier)
+        except Exception as e:
+            logger.warning("fetch ytmusic lyrics failed for %s: %s", song.identifier, e)
+            raise ProviderIOError(f"get song lyric failed: {e}", provider=self)
+        if not content:
+            return None
+        return LyricModel(
+            identifier=song.identifier,
+            source=self.meta.identifier,
+            content=content,
+        )
 
     def song_list_similar(self, song):
         result = self.service.api.get_watch_playlist(song.identifier)

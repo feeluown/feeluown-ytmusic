@@ -14,6 +14,7 @@ from cachetools.func import ttl_cache
 from feeluown.library import SearchType
 from requests import Response
 from ytmusicapi import YTMusic as YTMusicBase
+from ytmusicapi.exceptions import YTMusicServerError
 from ytmusicapi.ytmusic import OAuthCredentials
 
 from fuo_ytmusic.headerfile import (
@@ -47,6 +48,122 @@ CACHE_SIZE = 1
 GLOBAL_LIMIT = 20
 
 logger = logging.getLogger(__name__)
+
+
+WATCH_NEXT_RENDERER_PATH = (
+    "contents",
+    "singleColumnMusicWatchNextResultsRenderer",
+    "tabbedRenderer",
+    "watchNextTabbedResultsRenderer",
+)
+
+
+def _nested_get(data, path):
+    current = data
+    for key in path:
+        if isinstance(key, int):
+            if not isinstance(current, list) or len(current) <= key:
+                return None
+            current = current[key]
+            continue
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+    return current
+
+
+def _build_watch_playlist_body(video_id: str) -> dict:
+    return {
+        "enablePersistentPlaylistPanel": True,
+        "isAudioOnly": True,
+        "tunerSettingValue": "AUTOMIX_SETTING_NORMAL",
+        "videoId": video_id,
+        "playlistId": f"RDAMVM{video_id}",
+        "watchEndpointMusicSupportedConfigs": {
+            "watchEndpointMusicConfig": {
+                "hasPersistentPlaylistPanel": True,
+                "musicVideoType": "MUSIC_VIDEO_TYPE_ATV",
+            }
+        },
+    }
+
+
+def _extract_lyrics_browse_id(watch_response) -> Optional[str]:
+    browse_id = _nested_get(
+        watch_response,
+        (
+            *WATCH_NEXT_RENDERER_PATH,
+            "tabs",
+            1,
+            "tabRenderer",
+            "endpoint",
+            "browseEndpoint",
+            "browseId",
+        ),
+    )
+    return browse_id if isinstance(browse_id, str) else None
+
+
+def _format_lrc_timestamp(milliseconds) -> Optional[str]:
+    try:
+        total_ms = max(0, int(milliseconds))
+    except (TypeError, ValueError):
+        return None
+    minutes = total_ms // 60000
+    seconds = (total_ms % 60000) // 1000
+    centiseconds = (total_ms % 1000) // 10
+    return f"[{minutes:02d}:{seconds:02d}.{centiseconds:02d}]"
+
+
+def _extract_timed_line_text(line) -> Optional[str]:
+    if isinstance(line, dict):
+        text = line.get("text", line.get("lyricLine"))
+    else:
+        text = getattr(line, "text", None)
+    return None if text is None else str(text)
+
+
+def _extract_timed_line_start_time(line):
+    if isinstance(line, dict):
+        if "start_time" in line:
+            return line.get("start_time")
+        if "startTime" in line:
+            return line.get("startTime")
+        cue_range = line.get("cueRange")
+        if isinstance(cue_range, dict):
+            return cue_range.get("startTimeMilliseconds")
+        return None
+    return getattr(line, "start_time", None)
+
+
+def _format_timed_lyrics(lyrics_lines) -> Optional[str]:
+    lines = []
+    for line in lyrics_lines:
+        text = _extract_timed_line_text(line)
+        timestamp = _format_lrc_timestamp(_extract_timed_line_start_time(line))
+        if text is None or timestamp is None:
+            continue
+        lines.append(f"{timestamp}{text}")
+    if not lines:
+        return None
+    return "\n".join(lines)
+
+
+def _extract_timestamped_lyrics_text(lyrics_payload) -> Optional[str]:
+    if lyrics_payload is None:
+        return None
+    if isinstance(lyrics_payload, dict):
+        lyrics = lyrics_payload.get("lyrics")
+    else:
+        lyrics = getattr(lyrics_payload, "lyrics", None)
+    if isinstance(lyrics, list):
+        return _format_timed_lyrics(lyrics)
+    return None
+
+
+def _is_timestamped_lyrics_unavailable_error(error: YTMusicServerError) -> bool:
+    message = str(error).lower()
+    return "400" in message and "invalid argument" in message
 
 
 class YtmusicType(Enum):
@@ -216,10 +333,13 @@ class YtmusicService(metaclass=Singleton):
     def __init__(self):
         self._session = requests.Session()
         self._api: Optional[YTMusic] = None
+        self._anonymous_lyrics_api: Optional[YTMusic] = None
+        self._timeout: Optional[int] = None
         self._session.hooks["response"].append(self._do_logging)
 
         self._signature_timestamp = 0
         self._api_lock = threading.Lock()
+        self._anonymous_lyrics_api_lock = threading.Lock()
         self._profile_manager = YtmusicProfileManager(self)
         self._language: Optional[str] = None
 
@@ -245,9 +365,12 @@ class YtmusicService(metaclass=Singleton):
         return 0
 
     def reinitialize_by_headerfile(self, headerfile=None):
+        self._api = self._create_api(headerfile, self._session)
+
+    def _create_api(self, headerfile, session: requests.Session) -> YTMusic:
         language = self._language or "zh_CN"
         options = dict(
-            requests_session=self._session,
+            requests_session=session,
             language=language,
             oauth_credentials=OAuthCredentials(
                 # In the new version of ytmusicapi, client_id and client_secret
@@ -259,7 +382,7 @@ class YtmusicService(metaclass=Singleton):
                     ".apps.googleusercontent.com"
                 ),
                 client_secret="SboVhoG9s0rNafixCSGGKXAT",
-                session=self._session,
+                session=session,
             ),
         )
         # Due to https://github.com/sigma67/ytmusicapi/issues/676,
@@ -267,27 +390,51 @@ class YtmusicService(metaclass=Singleton):
         # So initialize without auth file when 400 is returned.
         if headerfile is not None and headerfile.exists():
             logger.info("Initializing ytmusic api with headerfile.")
-            self._api = YTMusic(str(headerfile), **options)
-            self._api.set_headerfile_path(headerfile)
+            api = YTMusic(str(headerfile), **options)
+            api.set_headerfile_path(headerfile)
         else:
             logger.info("Initializing ytmusic api with no headerfile.")
-            self._api = YTMusic(**options)
+            api = YTMusic(**options)
+        return api
+
+    def _get_anonymous_lyrics_api(self) -> YTMusic:
+        if self._anonymous_lyrics_api is None:
+            with self._anonymous_lyrics_api_lock:
+                if self._anonymous_lyrics_api is None:
+                    session = requests.Session()
+                    session.hooks["response"].append(self._do_logging)
+                    session.proxies = dict(self._session.proxies)
+                    if self._timeout is not None:
+                        session.request = partial(
+                            session.request,
+                            timeout=self._timeout,
+                        )
+                    self._anonymous_lyrics_api = self._create_api(None, session)
+        return self._anonymous_lyrics_api
+
+    def _clear_anonymous_lyrics_api(self):
+        with self._anonymous_lyrics_api_lock:
+            self._anonymous_lyrics_api = None
 
     def setup_language(self, language: str):
         self._language = language
+        self._clear_anonymous_lyrics_api()
 
     def setup_http_proxy(self, http_proxy):
         self._session.proxies = {
             "http": http_proxy,
             "https": http_proxy,
         }
+        self._clear_anonymous_lyrics_api()
 
     def setup_timeout(self, timeout):
+        self._timeout = timeout
         if isinstance(self._session.request, partial):
             request = self._session.request.func
         else:
             request = self._session.request
         self._session.request = partial(request, timeout=timeout)
+        self._clear_anonymous_lyrics_api()
 
     def search(
         self,
@@ -364,6 +511,36 @@ class YtmusicService(metaclass=Singleton):
 
     def song_info(self, video_id: str) -> SongInfo:
         return SongInfo(**self.api.get_song(video_id, self.get_signature_timestamp()))
+
+    def _song_lyrics_browse_id(self, video_id: str, api=None) -> Optional[str]:
+        api = api or self.api
+        send_api_request = getattr(api, "send_api_request", None)
+        if callable(send_api_request):
+            response = send_api_request("next", _build_watch_playlist_body(video_id))
+            return _extract_lyrics_browse_id(response)
+
+        watch_playlist = api.get_watch_playlist(video_id)
+        if not isinstance(watch_playlist, dict):
+            return None
+        lyrics_browse_id = watch_playlist.get("lyrics")
+        return lyrics_browse_id if isinstance(lyrics_browse_id, str) else None
+
+    def song_lyrics(self, video_id: str) -> Optional[str]:
+        lyrics_api = self._get_anonymous_lyrics_api()
+        lyrics_browse_id = self._song_lyrics_browse_id(video_id, api=lyrics_api)
+        if not lyrics_browse_id:
+            return None
+        try:
+            lyrics_payload = lyrics_api.get_lyrics(lyrics_browse_id, timestamps=True)
+        except YTMusicServerError as e:
+            if _is_timestamped_lyrics_unavailable_error(e):
+                return None
+            raise
+        except TypeError as e:
+            if "timestamps" not in str(e):
+                raise
+            return None
+        return _extract_timestamped_lyrics_text(lyrics_payload)
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def categories(self) -> List[Categories]:
