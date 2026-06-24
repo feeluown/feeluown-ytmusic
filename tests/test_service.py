@@ -3,8 +3,8 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 
+import pytest
 from feeluown.library import SearchType
-from ytmusicapi.exceptions import YTMusicServerError
 
 from fuo_ytmusic import service
 from fuo_ytmusic.models import YtmusicSearchAlbum, YtmusicSearchSong
@@ -106,23 +106,15 @@ class TestService:
     def test_song_lyrics_returns_none_for_plain_text_payload(self):
         self._set_lyrics_api(
             _LyricsApi(
-                watch_playlist={"lyrics": "MPLYt_lyrics"},
                 lyrics_payload={"lyrics": "line 1\nline 2", "hasTimestamps": False},
             )
         )
 
         assert self.service.song_lyrics("video-id") is None
 
-    def test_song_lyrics_uses_anonymous_api_when_auth_api_rejects_timed_lyrics(self):
-        auth_api = _LyricsApi(
-            watch_playlist={"lyrics": "MPLYt_lyrics"},
-            lyrics_error=YTMusicServerError(
-                "Server returned HTTP 400: Bad Request.\n"
-                "Request contains an invalid argument."
-            ),
-        )
+    def test_song_lyrics_uses_anonymous_api(self):
+        auth_api = _LyricsApi()
         anonymous_api = _LyricsApi(
-            watch_playlist={"lyrics": "MPLYt_lyrics"},
             lyrics_payload={
                 "lyrics": [SimpleNamespace(text="anonymous line", start_time=1000)],
                 "hasTimestamps": True,
@@ -165,20 +157,9 @@ class TestService:
         assert create_count == 1
         assert results == [api] * 8
 
-    def test_song_lyrics_returns_none_for_plain_object_payload(self):
-        self._set_lyrics_api(
-            _LyricsApi(
-                watch_playlist={"lyrics": "MPLYt_lyrics"},
-                lyrics_payload=SimpleNamespace(lyrics="object lyric"),
-            )
-        )
-
-        assert self.service.song_lyrics("video-id") is None
-
     def test_song_lyrics_formats_timestamped_lines_as_lrc(self):
         self._set_lyrics_api(
             _LyricsApi(
-                watch_playlist={"lyrics": "MPLYt_lyrics"},
                 lyrics_payload={
                     "lyrics": [
                         SimpleNamespace(text="first line", start_time=9200),
@@ -194,31 +175,13 @@ class TestService:
             == "[00:09.20]first line\n[00:10.68]second line"
         )
 
-    def test_song_lyrics_formats_raw_timestamped_lines_as_lrc(self):
-        self._set_lyrics_api(
-            _LyricsApi(
-                watch_playlist={"lyrics": "MPLYt_lyrics"},
-                lyrics_payload={
-                    "lyrics": [
-                        {
-                            "lyricLine": "raw line",
-                            "cueRange": {"startTimeMilliseconds": "61500"},
-                        }
-                    ],
-                    "hasTimestamps": True,
-                },
-            )
-        )
-
-        assert self.service.song_lyrics("video-id") == "[01:01.50]raw line"
-
     def test_song_lyrics_returns_none_without_browse_id(self):
-        self._set_lyrics_api(_LyricsApi(watch_playlist={"lyrics": None}))
+        self._set_lyrics_api(_LyricsApi(lyrics_browse_id=None))
 
         assert self.service.song_lyrics("video-id") is None
 
     def test_song_lyrics_uses_raw_next_response_and_ignores_related_tab(self):
-        api = _RawLyricsApi(
+        api = _LyricsApi(
             watch_response=_watch_response("MPLYt_lyrics", related_has_endpoint=False),
             lyrics_payload={
                 "lyrics": [SimpleNamespace(text="raw lyric", start_time=1000)],
@@ -231,7 +194,7 @@ class TestService:
         assert api.timestamps_requested is True
 
     def test_song_lyrics_returns_none_when_raw_lyrics_tab_has_no_endpoint(self):
-        api = _RawLyricsApi(
+        api = _LyricsApi(
             watch_response=_watch_response(None, related_has_endpoint=False),
             lyrics_payload={"lyrics": "should not be requested"},
         )
@@ -240,18 +203,15 @@ class TestService:
         assert self.service.song_lyrics("video-id") is None
         assert api.lyrics_requested is False
 
-    def test_song_lyrics_returns_none_when_timestamped_request_is_invalid(self):
+    def test_song_lyrics_propagates_timestamped_request_error(self):
         self._set_lyrics_api(
             _LyricsApi(
-                watch_playlist={"lyrics": "MPLYt_lyrics"},
-                lyrics_error=YTMusicServerError(
-                    "Server returned HTTP 400: Bad Request.\n"
-                    "Request contains an invalid argument."
-                ),
+                lyrics_error=RuntimeError("invalid timed lyrics request"),
             )
         )
 
-        assert self.service.song_lyrics("video-id") is None
+        with pytest.raises(RuntimeError, match="invalid timed lyrics request"):
+            self.service.song_lyrics("video-id")
 
 
 class _StubApi:
@@ -271,30 +231,22 @@ class _ChartsApi:
 
 
 class _LyricsApi:
-    def __init__(self, watch_playlist, lyrics_payload=None, lyrics_error=None):
-        self.watch_playlist = watch_playlist
+    def __init__(
+        self,
+        lyrics_browse_id="MPLYt_lyrics",
+        lyrics_payload=None,
+        lyrics_error=None,
+        watch_response=None,
+    ):
+        self.watch_response = (
+            _watch_response(lyrics_browse_id)
+            if watch_response is None
+            else watch_response
+        )
         self.lyrics_payload = lyrics_payload
         self.lyrics_error = lyrics_error
         self.lyrics_requested = False
         self.timestamps_requested = None
-
-    def get_watch_playlist(self, video_id):
-        assert video_id == "video-id"
-        return self.watch_playlist
-
-    def get_lyrics(self, browse_id, timestamps=False):
-        assert browse_id == "MPLYt_lyrics"
-        self.lyrics_requested = True
-        self.timestamps_requested = timestamps
-        if self.lyrics_error is not None:
-            raise self.lyrics_error
-        return self.lyrics_payload
-
-
-class _RawLyricsApi(_LyricsApi):
-    def __init__(self, watch_response, lyrics_payload=None):
-        super().__init__(watch_playlist=None, lyrics_payload=lyrics_payload)
-        self.watch_response = watch_response
 
     def send_api_request(self, endpoint, body):
         assert endpoint == "next"
@@ -303,8 +255,13 @@ class _RawLyricsApi(_LyricsApi):
         assert body["isAudioOnly"] is True
         return self.watch_response
 
-    def get_watch_playlist(self, _video_id):
-        raise AssertionError("song_lyrics should use raw next response")
+    def get_lyrics(self, browse_id, timestamps=False):
+        assert browse_id == "MPLYt_lyrics"
+        self.lyrics_requested = True
+        self.timestamps_requested = timestamps
+        if self.lyrics_error is not None:
+            raise self.lyrics_error
+        return self.lyrics_payload
 
 
 def _watch_response(lyrics_browse_id, related_has_endpoint=True):

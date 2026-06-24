@@ -14,13 +14,17 @@ from cachetools.func import ttl_cache
 from feeluown.library import SearchType
 from requests import Response
 from ytmusicapi import YTMusic as YTMusicBase
-from ytmusicapi.exceptions import YTMusicServerError
 from ytmusicapi.ytmusic import OAuthCredentials
 
 from fuo_ytmusic.headerfile import (
     update_headerfile_cookie,
 )
 from fuo_ytmusic.helpers import Singleton
+from fuo_ytmusic.lyrics import (
+    build_watch_playlist_body,
+    extract_lyrics_browse_id,
+    timestamped_lyrics_to_lrc,
+)
 from fuo_ytmusic.models import (
     AlbumInfo,
     ArtistInfo,
@@ -48,122 +52,6 @@ CACHE_SIZE = 1
 GLOBAL_LIMIT = 20
 
 logger = logging.getLogger(__name__)
-
-
-WATCH_NEXT_RENDERER_PATH = (
-    "contents",
-    "singleColumnMusicWatchNextResultsRenderer",
-    "tabbedRenderer",
-    "watchNextTabbedResultsRenderer",
-)
-
-
-def _nested_get(data, path):
-    current = data
-    for key in path:
-        if isinstance(key, int):
-            if not isinstance(current, list) or len(current) <= key:
-                return None
-            current = current[key]
-            continue
-        if not isinstance(current, dict):
-            return None
-        current = current.get(key)
-    return current
-
-
-def _build_watch_playlist_body(video_id: str) -> dict:
-    return {
-        "enablePersistentPlaylistPanel": True,
-        "isAudioOnly": True,
-        "tunerSettingValue": "AUTOMIX_SETTING_NORMAL",
-        "videoId": video_id,
-        "playlistId": f"RDAMVM{video_id}",
-        "watchEndpointMusicSupportedConfigs": {
-            "watchEndpointMusicConfig": {
-                "hasPersistentPlaylistPanel": True,
-                "musicVideoType": "MUSIC_VIDEO_TYPE_ATV",
-            }
-        },
-    }
-
-
-def _extract_lyrics_browse_id(watch_response) -> Optional[str]:
-    browse_id = _nested_get(
-        watch_response,
-        (
-            *WATCH_NEXT_RENDERER_PATH,
-            "tabs",
-            1,
-            "tabRenderer",
-            "endpoint",
-            "browseEndpoint",
-            "browseId",
-        ),
-    )
-    return browse_id if isinstance(browse_id, str) else None
-
-
-def _format_lrc_timestamp(milliseconds) -> Optional[str]:
-    try:
-        total_ms = max(0, int(milliseconds))
-    except (TypeError, ValueError):
-        return None
-    minutes = total_ms // 60000
-    seconds = (total_ms % 60000) // 1000
-    centiseconds = (total_ms % 1000) // 10
-    return f"[{minutes:02d}:{seconds:02d}.{centiseconds:02d}]"
-
-
-def _extract_timed_line_text(line) -> Optional[str]:
-    if isinstance(line, dict):
-        text = line.get("text", line.get("lyricLine"))
-    else:
-        text = getattr(line, "text", None)
-    return None if text is None else str(text)
-
-
-def _extract_timed_line_start_time(line):
-    if isinstance(line, dict):
-        if "start_time" in line:
-            return line.get("start_time")
-        if "startTime" in line:
-            return line.get("startTime")
-        cue_range = line.get("cueRange")
-        if isinstance(cue_range, dict):
-            return cue_range.get("startTimeMilliseconds")
-        return None
-    return getattr(line, "start_time", None)
-
-
-def _format_timed_lyrics(lyrics_lines) -> Optional[str]:
-    lines = []
-    for line in lyrics_lines:
-        text = _extract_timed_line_text(line)
-        timestamp = _format_lrc_timestamp(_extract_timed_line_start_time(line))
-        if text is None or timestamp is None:
-            continue
-        lines.append(f"{timestamp}{text}")
-    if not lines:
-        return None
-    return "\n".join(lines)
-
-
-def _extract_timestamped_lyrics_text(lyrics_payload) -> Optional[str]:
-    if lyrics_payload is None:
-        return None
-    if isinstance(lyrics_payload, dict):
-        lyrics = lyrics_payload.get("lyrics")
-    else:
-        lyrics = getattr(lyrics_payload, "lyrics", None)
-    if isinstance(lyrics, list):
-        return _format_timed_lyrics(lyrics)
-    return None
-
-
-def _is_timestamped_lyrics_unavailable_error(error: YTMusicServerError) -> bool:
-    message = str(error).lower()
-    return "400" in message and "invalid argument" in message
 
 
 class YtmusicType(Enum):
@@ -513,34 +401,18 @@ class YtmusicService(metaclass=Singleton):
         return SongInfo(**self.api.get_song(video_id, self.get_signature_timestamp()))
 
     def _song_lyrics_browse_id(self, video_id: str, api=None) -> Optional[str]:
-        api = api or self.api
-        send_api_request = getattr(api, "send_api_request", None)
-        if callable(send_api_request):
-            response = send_api_request("next", _build_watch_playlist_body(video_id))
-            return _extract_lyrics_browse_id(response)
-
-        watch_playlist = api.get_watch_playlist(video_id)
-        if not isinstance(watch_playlist, dict):
-            return None
-        lyrics_browse_id = watch_playlist.get("lyrics")
-        return lyrics_browse_id if isinstance(lyrics_browse_id, str) else None
+        if api is None:
+            api = self.api
+        response = api.send_api_request("next", build_watch_playlist_body(video_id))
+        return extract_lyrics_browse_id(response)
 
     def song_lyrics(self, video_id: str) -> Optional[str]:
         lyrics_api = self._get_anonymous_lyrics_api()
         lyrics_browse_id = self._song_lyrics_browse_id(video_id, api=lyrics_api)
-        if not lyrics_browse_id:
+        if lyrics_browse_id is None:
             return None
-        try:
-            lyrics_payload = lyrics_api.get_lyrics(lyrics_browse_id, timestamps=True)
-        except YTMusicServerError as e:
-            if _is_timestamped_lyrics_unavailable_error(e):
-                return None
-            raise
-        except TypeError as e:
-            if "timestamps" not in str(e):
-                raise
-            return None
-        return _extract_timestamped_lyrics_text(lyrics_payload)
+        lyrics_payload = lyrics_api.get_lyrics(lyrics_browse_id, timestamps=True)
+        return timestamped_lyrics_to_lrc(lyrics_payload)
 
     @ttl_cache(maxsize=CACHE_SIZE, ttl=CACHE_TTL)
     def categories(self) -> List[Categories]:
