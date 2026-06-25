@@ -149,7 +149,7 @@ class YtmusicProfileManager:
         if text.startswith(")]}'"):
             newline = text.find("\n")
             if newline != -1:
-                return text[newline + 1 :]
+                return text[newline + 1:]
             return text[4:]
         return text
 

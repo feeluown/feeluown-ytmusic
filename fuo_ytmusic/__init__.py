@@ -27,9 +27,19 @@ def init_config(config):
 
 
 def enable(app: "App"):
-    global ui_mgr
 
+    from pathlib import Path
+
+    from feeluown.i18n import register_plugin_i18n
+
+    from fuo_ytmusic.consts import domain
     from fuo_ytmusic.provider import provider
+
+    locales_dir = Path(__file__).parent / "locales"
+    resource_ids = ["provider.ftl"]
+    register_plugin_i18n(
+        domain=domain, locales_dir=locales_dir, resource_ids=resource_ids
+    )
 
     # Use system http proxy by default.
     sys_proxies = getproxies()

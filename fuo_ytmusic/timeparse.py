@@ -50,6 +50,7 @@ DAYCLOCK = (
     r"(?P<mins>\d{2}):(?P<secs>\d{2}(?:\.\d+)?)"
 )
 
+
 def OPT(x):
     return r"(?:{x})?".format(x=x)
 
@@ -58,6 +59,7 @@ def OPTSEP(x):
     return r"(?:{x}\s*(?:{SEPARATORS}\s*)?)?".format(
         x=x, SEPARATORS=SEPARATORS
     )
+
 
 TIMEFORMATS = [
     r"{WEEKS}\s*{DAYS}\s*{HOURS}\s*{MINS}\s*{SECS}".format(
